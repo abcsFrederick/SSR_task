@@ -6,7 +6,7 @@ SSR_task |build-status| |codecov-io|
     :target: https://travis-ci.org/abcsFrederick/SSR_task?branch=master
     :alt: Build Status
 
-.. |codecov-io| image:: https://codecov.io/gh/abcsFrederick/SSR_task/branch/tymiao1220/graphs/badge.svg?branch=master
+.. |codecov-io| image:: https://codecov.io/gh/abcsFrederick/SSR_task/branch/master/graphs/badge.svg?branch=master
     :target: https://codecov.io/gh/abcsFrederick/SSR_task/branch/master
     :alt: codecov.io
 
