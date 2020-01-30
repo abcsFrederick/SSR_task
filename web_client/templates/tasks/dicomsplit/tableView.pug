@@ -1,0 +1,28 @@
+table.table
+  thead
+    tr
+      th Overview
+      th Axis
+      th # of split
+      th Order
+  tbody
+    each patient in patients
+      tr
+        td.name #{patient.name}
+          img(src="api/v1/file/" + patient.thumbnailId + "/download")
+        td.axis(style='vertical-align:middle')
+          select
+            option(value=1) Column
+            option(value=0) Row
+        td.nOfSplit(style='vertical-align:middle')
+          input(placeholder="number of split", pid=patient._id, value=3)
+        td.order(pid=patient._id)
+          label.patientBox
+            input(type="checkbox", checked)
+            span.checkmark
+          label.patientBox
+            input(type="checkbox", checked)
+            span.checkmark
+          label.patientBox
+            input(type="checkbox", checked)
+            span.checkmark

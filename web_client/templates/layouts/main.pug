@@ -1,0 +1,14 @@
+.g-analysis-nav-container
+  .g-global-nav-main
+    ul.nav.flex-column.bg-white.mb-0
+      each task in tasks
+        if currentTask === task
+          li.nav-item.enabledTask.active(id=task)
+            a #{task}
+        else
+          li.nav-item.enabledTask(id=task)
+            a #{task}
+    button#dataManagement.btn-primary
+      i.icon-left-hand
+      span data management
+.task-container
