@@ -36,6 +36,7 @@ def validateString(doc):
 
 
 # Default settings values
+# Need to modify for new Task
 SettingDefault.defaults.update({
     PluginSettings.GIRDER_WORKER_TMP: '/tmp/girder_worker',
     PluginSettings.TASKS: {
