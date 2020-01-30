@@ -111,7 +111,6 @@ install:
     # needs to be installed in dev mode for it to place binaries of cython/c extensions in place
     # - pip install -e .
     - cd $girder_path
-    - pip install -U --upgrade-strategy eager -r $slicer_cli_web_path/requirements.txt
     - npm-install-retry
     - BABEL_ENV=cover NYC_CWD="$main_path" girder-install web --plugins=jobs,worker,SSR_task --dev > /dev/null 
     - pip install jupyter sphinx sphinx_rtd_theme nbsphinx travis-sphinx
