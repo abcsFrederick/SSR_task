@@ -1,4 +1,5 @@
 from tests import base
+from girder.models.user import User
 
 
 def setUpModule():
@@ -15,11 +16,11 @@ class ColormapsTestCase(base.TestCase):
         base.TestCase.setUp(self)
 
         self.users = [
-              User().createUser(
-                  'user%d' % n,
-                  'testpassword',
-                  'Test',
-                  'User',
-                  'user%d@example.com' % n
-              ) for n in [0]
-          ]
+            User().createUser(
+                'user%d' % n,
+                'testpassword',
+                'Test',
+                'User',
+                'user%d@example.com' % n
+            ) for n in [0]
+        ]
