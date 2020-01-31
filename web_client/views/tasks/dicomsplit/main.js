@@ -176,7 +176,6 @@ var DicomSplit = View.extend({
                     timeout: 4000
                 });
             }
-            
         }
     },
     renderJobStatus: function (job) {
