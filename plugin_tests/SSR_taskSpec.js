@@ -1,5 +1,6 @@
 girderTest.importPlugin('jobs');
 girderTest.importPlugin('worker');
+girderTest.importPlugin('SSR_task');
 girderTest.startApp();
 
 $(function () {

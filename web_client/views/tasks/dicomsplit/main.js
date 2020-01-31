@@ -127,8 +127,8 @@ var DicomSplit = View.extend({
         return widget;
     },
     validation: function () {
-        console.log(this.selectedFolderName);
-        console.log(this.selectedFolderId);
+        // console.log(this.selectedFolderName);
+        // console.log(this.selectedFolderId);
         if (this.table === undefined || this.selectedFolderId === undefined) {
             events.trigger('g:alert', {
                 text: 'No folder opened or selected.',
@@ -146,27 +146,37 @@ var DicomSplit = View.extend({
                     return null;
                 }
             }
-            this.table.parseSpec();
-            this.dicomSplit.set({
-                subfolders: this.table.subfolders,
-                n: this.table.n,
-                axis: this.table.axis,
-                order: this.table.order,
-                pushFolderId: this.selectedFolderId,
-                pushFolderName: this.selectedFolderName
-            });
-            this.dicomSplit.createJob().done((job) => {
-                this.$('#cancelTask').show();
-                this.$('#submitTask').hide();
-                this.job = job;
-                this.listenTo(eventStream, 'g:event.job_status', _.bind(function (event) {
-                    var info = event.data;
-                    if (info._id === job.id) {
-                        job.set(info);
-                        this.renderJobStatus(job);
-                    }
-                }, this));
-            });
+            if (this.table.parseAndValidateSpec()) {
+                console.log(this.table);
+                this.dicomSplit.set({
+                    subfolders: this.table.subfolders,
+                    n: this.table.n,
+                    axis: this.table.axis,
+                    order: this.table.order,
+                    pushFolderId: this.selectedFolderId,
+                    pushFolderName: this.selectedFolderName
+                });
+                this.dicomSplit.createJob().done((job) => {
+                    this.$('#cancelTask').show();
+                    this.$('#submitTask').hide();
+                    this.job = job;
+                    this.listenTo(eventStream, 'g:event.job_status', _.bind(function (event) {
+                        var info = event.data;
+                        if (info._id === job.id) {
+                            job.set(info);
+                            this.renderJobStatus(job);
+                        }
+                    }, this));
+                });
+            } else {
+                events.trigger('g:alert', {
+                    icon: 'cancel',
+                    text: 'Params missing',
+                    type: 'danger',
+                    timeout: 4000
+                });
+            }
+            
         }
     },
     renderJobStatus: function (job) {

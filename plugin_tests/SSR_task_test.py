@@ -11,5 +11,15 @@ def tearDownModule():
 
 
 class ColormapsTestCase(base.TestCase):
-    def testPlaceholder(self):
-        self.assertTrue(True)
+    def setUp(self):
+        base.TestCase.setUp(self)
+
+        self.users = [
+              User().createUser(
+                  'user%d' % n,
+                  'testpassword',
+                  'Test',
+                  'User',
+                  'user%d@example.com' % n
+              ) for n in [0]
+          ]
