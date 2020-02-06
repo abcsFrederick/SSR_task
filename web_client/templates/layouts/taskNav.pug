@@ -1,0 +1,7 @@
+each task in tasks
+  if currentTask === task
+    li.nav-item.enabledTask.active(id=task)
+      a #{task}
+  else
+    li.nav-item.enabledTask(id=task)
+      a #{task}

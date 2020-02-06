@@ -3,6 +3,7 @@ import _ from 'underscore';
 
 import { restRequest } from 'girder/rest';
 import events from 'girder/events';
+import FolderModel from 'girder/models/FolderModel';
 import BrowserWidget from 'girder/views/widgets/BrowserWidget';
 import eventStream from 'girder/utilities/EventStream';
 
@@ -14,7 +15,31 @@ import TableView from './tableView';
 
 var DicomSplit = View.extend({
     events: {
-        'click #open-task-folder': 'openTaskFolder',
+        'dragover #open-task-folder': function (e) {
+            var dataTransfer = e.originalEvent.dataTransfer;
+            if (!dataTransfer) {
+                return;
+            }
+            // The following two lines enable drag and drop from the chrome download bar
+            var allowed = dataTransfer.effectAllowed;
+            dataTransfer.dropEffect = (allowed === 'move' || allowed === 'linkMove') ? 'move' : 'copy';
+
+            e.preventDefault();
+        },
+        'drop #open-task-folder': 'dropTaskFolder',
+        'dragover #select-split-folder': function (e) {
+            var dataTransfer = e.originalEvent.dataTransfer;
+            if (!dataTransfer) {
+                return;
+            }
+            // The following two lines enable drag and drop from the chrome download bar
+            var allowed = dataTransfer.effectAllowed;
+            dataTransfer.dropEffect = (allowed === 'move' || allowed === 'linkMove') ? 'move' : 'copy';
+
+            e.preventDefault();
+        },
+        'drop #select-split-folder': 'dropSplitFolder',
+
         'click #select-split-folder': 'selectSplitFolder',
         'click #submitTask': 'validation',
         'click #cancelTask': '_cancelJob',
@@ -49,9 +74,56 @@ var DicomSplit = View.extend({
     renderSelectFolder(model) {
         this.$('#select-split-folder .icon-folder-open').html(model.get('name'));
     },
-    openTaskFolder() {
-        let dialog = this.createDialogForOpenTaskFolder();
-        dialog.setElement($('#g-dialog-container')).render();
+    // openTaskFolder() {
+    //     let dialog = this.createDialogForOpenTaskFolder();
+    //     dialog.setElement($('#g-dialog-container')).render();
+    // },
+    dropTaskFolder(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        let dropedFolderId = event.dataTransfer.getData('folderId');
+        if (dropedFolderId) {
+            this.openedFolder = new FolderModel();
+            this.openedFolder.set({'_id': dropedFolderId});
+            this.openedFolder.on('g:saved', function (res) {
+                this.render(this.openedFolder);
+                this.openedFolderId = this.openedFolder.get('_id');
+                this.selectedFolderName = this.openedFolder.get('name');
+            }, this).save();
+        } else {
+            $(e.currentTarget)
+                .removeClass('g-dropzone-show')
+                .html('<i class="icon-folder-open"> Drog a "folder" with patients</i>');
+        }
+    },
+    dropSplitFolder(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        let dropedFolderId = event.dataTransfer.getData('folderId');
+        if (dropedFolderId) {
+            this.selectedFolder = new FolderModel();
+            this.selectedFolder.set({'_id': dropedFolderId});
+            this.selectedFolder.on('g:saved', function (res) {
+                this.renderSelectFolder(this.selectedFolder);
+                this.selectedFolderId = this.selectedFolder.get('_id');
+            }, this).save();
+            restRequest({
+                url: 'folder',
+                method: 'GET',
+                data: {
+                    'parentType': 'folder',
+                    'parentId': dropedFolderId
+                }
+            }).done((resp) => {
+                this.existFolders = resp.map((e) => e.name);
+            }).fail((err) => {
+                this.trigger('g:error', err);
+            });
+        } else {
+            $(e.currentTarget)
+                .removeClass('g-dropzone-show')
+                .html('<i class="icon-folder-open"> Drog a "folder" with patients</i>');
+        }
     },
     selectSplitFolder() {
         let dialog = this.createDialogForSelectSplitFolder();
@@ -60,39 +132,40 @@ var DicomSplit = View.extend({
             dialog.$('#g-input-element').val(this.selectedFolderName);
         }
     },
-    createDialogForOpenTaskFolder: function () {
-        let widget = new BrowserWidget({
-            parentView: null,
-            titleText: 'Select folder to process',
-            submitText: 'Open',
-            showItems: true,
-            selectItem: false,
-            helpText: 'Choose a folder to open.',
-            rootSelectorSettings: {
-                pageLimit: 50
-            }
-            // validate: function (item) {
-            //     if (!item.has('largeImage')) {
-            //         return $.Deferred().reject('Please select a folder').promise();
-            //     }
-            //     return $.Deferred().resolve().promise();
-            // }
-        });
+    // createDialogForOpenTaskFolder: function () {
+    //     let widget = new BrowserWidget({
+    //         parentView: null,
+    //         titleText: 'Select folder to process',
+    //         submitText: 'Open',
+    //         showItems: true,
+    //         selectItem: false,
+    //         helpText: 'Choose a folder to open.',
+    //         rootSelectorSettings: {
+    //             pageLimit: 50
+    //         }
+    //         // validate: function (item) {
+    //         //     if (!item.has('largeImage')) {
+    //         //         return $.Deferred().reject('Please select a folder').promise();
+    //         //     }
+    //         //     return $.Deferred().resolve().promise();
+    //         // }
+    //     });
 
-        widget.on('g:saved', (model) => {
-            if (!model) {
-                return;
-            }
-            this.render(model);
-            this.openedFolder = model;
-            this.openedFolderId = model.get('_id');
-            this.selectedFolderName = model.get('name');
-            $('.modal').girderModal('close');
-        });
-        return widget;
-    },
+    //     widget.on('g:saved', (model) => {
+    //         if (!model) {
+    //             return;
+    //         }
+    //         this.render(model);
+    //         this.openedFolder = model;
+    //         this.openedFolderId = model.get('_id');
+    //         this.selectedFolderName = model.get('name');
+    //         $('.modal').girderModal('close');
+    //     });
+    //     return widget;
+    // },
     createDialogForSelectSplitFolder: function () {
         let widget = new BrowserWidget({
+            root: this.selectedFolder || null,
             parentView: null,
             titleText: 'Select folder to save result',
             submitText: 'Select',
@@ -104,9 +177,9 @@ var DicomSplit = View.extend({
                 pageLimit: 50
             },
             validate: function (folder) {
-                this.existFolders = this.$('.g-folder-list-link');
+                this.existFolders = this.$('.g-folder-list-link').map((e) => this.$('.g-folder-list-link')[e].text);
                 for (let a = 0; a < this.existFolders.length; a++) {
-                    if (this.existFolders[a].text === this.$('#g-input-element').val() || this.$('#g-input-element').val() === '') {
+                    if (this.existFolders[a] === this.$('#g-input-element').val() || this.$('#g-input-element').val() === '') {
                         return $.Deferred().reject('No name present or same name existed in this folder.').promise();
                     }
                 }
@@ -137,9 +210,9 @@ var DicomSplit = View.extend({
             });
         } else {
             for (let a = 0; a < this.existFolders.length; a++) {
-                if (this.existFolders[a].text === this.selectedFolderName) {
+                if (this.existFolders[a] === this.selectedFolderName) {
                     events.trigger('g:alert', {
-                        text: `Default name ${this.selectedFolderName} exist in output folder`,
+                        text: `Default name ${this.selectedFolderName} exist in output folder, click split result folder to give a new name`,
                         type: 'danger',
                         timeout: 4000
                     });
@@ -147,7 +220,6 @@ var DicomSplit = View.extend({
                 }
             }
             if (this.table.parseAndValidateSpec()) {
-                console.log(this.table);
                 this.dicomSplit.set({
                     subfolders: this.table.subfolders,
                     n: this.table.n,

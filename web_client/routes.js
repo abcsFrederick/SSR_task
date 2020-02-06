@@ -10,7 +10,7 @@ router.route('plugins/SSR_task/config', 'SSR_taskConfig', function () {
     events.trigger('g:navigateTo', ConfigView);
 });
 
-router.route('analysis/:task', 'SSR_taskView', function (task) {
+router.route('apps/:task', 'SSR_taskView', function (task) {
     events.trigger('HeaderView:navigateTo', 'Analysis');
     events.trigger('panelContent:navigateTo', 'Analysis');
     TasksLayout.getSettings(task);

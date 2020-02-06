@@ -1,14 +1,53 @@
 .g-analysis-nav-container
   .g-global-nav-main
-    ul.nav.flex-column.bg-white.mb-0
-      each task in tasks
-        if currentTask === task
-          li.nav-item.enabledTask.active(id=task)
-            a #{task}
-        else
-          li.nav-item.enabledTask(id=task)
-            a #{task}
-    button#dataManagement.btn-primary
-      i.icon-left-hand
-      span data management
+    label Tasks
+    ul#taskNav.nav.flex-column.bg-white.mb-0
+      //- each task in tasks
+      //-   if currentTask === task
+      //-     li.nav-item.enabledTask.active(id=task)
+      //-       a #{task}
+      //-   else
+      //-     li.nav-item.enabledTask(id=task)
+      //-       a #{task}
+    //- button#dataManagement.btn-primary
+    //-   i.icon-left-hand
+    //-   span data management
+
+    label Data management
+    ul#mappingNav.list.components.g-global-nav
+      //- .mappingNavPanel.panel
+      //-   li.g-global-nav-li(data-toggle="collapse", 
+      //-       data-target='#mappingSAIPArch', 
+      //-       data-parent="#mappingNav")
+      //-     a.g-nav-link.qc-SAIP(g-name='qcSAIPProject' g-target='qcSAIPProject') 
+      //-       i.icon-download-cloud
+      //-       span SAIP
+      //-   .mappingArch#mappingSAIPArch.collapse
+
+      //- if SSR_Project.id
+      //-   .mappingNavPanel.panel
+      //-     li.g-global-nav-li(data-toggle="collapse", 
+      //-       data-target='#mappingSSRArch', 
+      //-       data-parent="#mappingNav")
+      //-       a.g-nav-link.qc-Filesystem(g-id=SSR_Project.id g-name='qcSSRProject' g-target='qcSSRProject') 
+      //-         i.icon-file-archive
+      //-         span #{SSR_Project.get('name')}
+      //-     .mappingArch#mappingSSRArch.collapse
+
+      //- if user.id
+      //-   .mappingNavPanel.panel
+      //-     li.g-global-nav-li(data-toggle="collapse", 
+      //-       data-target='#mappingUSERArch', 
+      //-       data-parent="#mappingNav")
+      //-       a.g-nav-link.qc-Girder(g-id=user.id g-name='qcUsers' g-target='qcUsers') 
+      //-         i.icon-edit
+      //-         span #{user.name()}
+      //-     .mappingArch#mappingUSERArch.collapse
+
+      //- ul.viewButton(style='list-style: none;')
+      //-   button.btn.btn-success#startLink
+      //-     i.icon-link
+      //-     a Link
+  .s-nav-siderBar
+    span.hideBar
 .task-container

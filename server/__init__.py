@@ -5,6 +5,7 @@ from girder.plugins.jobs.constants import JobStatus
 from girder.constants import SettingDefault
 from girder.utility import setting_utilities
 from .constants import PluginSettings
+from .models.link import Link
 
 
 def _updateJob(event):
@@ -40,6 +41,7 @@ def validateString(doc):
 SettingDefault.defaults.update({
     PluginSettings.GIRDER_WORKER_TMP: '/tmp/girder_worker',
     PluginSettings.TASKS: {
+        "Link": True,
         "DicomSplit": True,
         "ExampleTask": False
     }
@@ -48,5 +50,5 @@ SettingDefault.defaults.update({
 
 def load(info):
     info['apiRoot'].SSR_task = rest.SSR_task()
-
+    Link()
     events.bind('jobs.job.update.after', info['name'], _updateJob)

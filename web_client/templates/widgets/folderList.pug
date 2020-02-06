@@ -1,0 +1,28 @@
+ul.g-folder-list
+  each folder in folders
+    li.g-folder-list-entry(public=(folder.get('public') ? 'true' : 'false'))
+      if checkboxes
+        input.g-list-checkbox(type="checkbox", g-folder-cid=folder.cid)
+      a.g-folder-list-link(g-folder-cid=folder.cid, href=`#folder/${folder.id}`, draggable="true", ondragstart=`event.dataTransfer.setData('folderId','${folder.id}');event.dataTransfer.setData('folderName','${folder.get('name')}')`)
+        i.icon-folder
+        = folder.get('name')
+        i.icon-right-dir
+      .g-folder-privacy
+        if folder.get('public')
+          i.icon-globe
+          | Public
+        else
+          i.icon-lock
+          | Private
+      .g-folder-link
+        if links.length
+          each link in links
+            if link.get('originalId') === folder.get('_id')
+              span.icon-lock(data-toggle="tooltip", title="Original")
+            else if link.get('segmentationId') === folder.get('_id')
+              span.icon-attach(data-toggle="tooltip", title="Segmentation")
+  if hasMore
+    li.g-show-more
+      a.g-show-more-folders
+        i.icon-level-down
+        | Show more folders...
