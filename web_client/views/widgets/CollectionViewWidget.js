@@ -7,13 +7,12 @@ import EditCollectionWidget from 'girder/views/widgets/EditCollectionWidget';
 import FolderModel from 'girder/models/FolderModel';
 import router from 'girder/router';
 import View from 'girder/views/View';
-import { AccessType } from 'girder/constants';
 import { cancelRestRequests } from 'girder/rest';
 import { confirm } from 'girder/dialog';
-import { renderMarkdown, formatSize } from 'girder/misc';
+import { formatSize } from 'girder/misc';
 import events from 'girder/events';
+
 import HierarchyWidget from './hierarchyWidget';
-import CollectionPageTemplate from 'girder/templates/body/collectionPage.pug';
 
 import 'girder/stylesheets/body/collectionPage.styl';
 

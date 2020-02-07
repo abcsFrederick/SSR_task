@@ -156,7 +156,7 @@ var UserViewWidget = View.extend({
         user.set({
             _id: userId
         }).on('g:fetched', function (resp) {
-            UserView.settings = params;
+            UserViewWidget.settings = params;
         }, this).on('g:error', function () {
         }, this).fetch();
     }

@@ -22,7 +22,6 @@ import CollectionView from '../widgets/CollectionViewWidget';
 var Layout = View.extend({
     events: {
         'click .enabledTask': function (e) {
-            let link = $(event.currentTarget);
             let curRoute = Backbone.history.fragment,
                 routeParts = splitRoute(curRoute),
                 queryString = parseQueryString(routeParts.name);

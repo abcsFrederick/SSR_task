@@ -38,6 +38,7 @@ class Link(AccessControlledModel):
         events.bind('model.item.remove', 'SSR_task', self._onItemRemove)
         events.bind('model.folder.save.after', 'SSR_task', self._onFolderChange)
         events.bind('model.item.save.after', 'SSR_task', self._onItemChange)
+
     def _onFolderRemove(self, event):
         folder = event.info
         for originalFolder in self.find({'originalId': folder['_id']}):
@@ -70,6 +71,7 @@ class Link(AccessControlledModel):
             itemUnderFolder['access'] = folder['access']
             itemUnderFolder['public'] = folder['public']
             self.save(itemUnderFolder)
+
     def _onItemChange(self, event):
         item = event.info
         for originalItem in self.find({'originalId': item['_id']}):
