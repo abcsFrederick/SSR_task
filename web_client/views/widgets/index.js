@@ -1,7 +1,7 @@
-import * as userViewWidget from './userViewWidget';
+import * as UserViewWidget from './UserViewWidget';
 // import * as userFoldersWidget from './userFoldersWidget';
 
 export {
-    userViewWidget
+    UserViewWidget
     // userFoldersWidget
 };

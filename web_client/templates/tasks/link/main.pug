@@ -1,15 +1,19 @@
 #link-selection
+  .row
+    .col-md-5
+      .g-drop-zone.original
+        i.icon-folder-open Drop original folder to here
+    .col-md-5
+      .g-drop-zone.segmentation
+        i.icon-folder-open Drop segmentation folder to here
+    .col-md-2
+      button#submitTask.btn.btn-primary Link
+  .row
+    .col-md-5
+      label Link Name:
+      input#linkName(type='text', value='unnamed Link')
+#link-preview.prepareLinkZone
   .col-md-5
-    .g-drop-zone.original
-      i.icon-folder-open Drop original folder to here
-  .col-md-5
-    .g-drop-zone.segmentation
-      i.icon-folder-open Drop segmentation folder to here
-  .col-md-2
-    button#submitTask.btn.btn-primary Link
-
-#link-preview.row.prepareLinkZone
-  .col-md-6
     .prepared-zone.original
-  .col-md-6
+  .col-md-5
     .prepared-zone.segmentation

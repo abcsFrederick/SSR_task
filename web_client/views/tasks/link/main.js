@@ -138,6 +138,7 @@ var mappingSeg = View.extend({
         this.linkCollection = new LinkCollection();
         _.each(segList, _.bind(function (id, index) {
             let link = new LinkModel({
+                linkName: this.$('#linkName').val(),
                 segType: 'item',
                 originalId: oriList[index],
                 segmentationId: id
@@ -155,6 +156,7 @@ var mappingSeg = View.extend({
             });
         }, this));
         let link = new LinkModel({
+            linkName: this.$('#linkName').val(),
             segType: 'folder',
             originalId: $('.original .icon-folder-open').attr('folderId'),
             segmentationId: $('.segmentation .icon-folder-open').attr('folderId')

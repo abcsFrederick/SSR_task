@@ -11,6 +11,7 @@ class Link(AccessControlledModel):
         self.name = 'link'
         self.ensureIndices([
             'segType',
+            'linkName',
             'segParentId',
             'originalId',
             'segmentationId',
@@ -18,6 +19,7 @@ class Link(AccessControlledModel):
         ])
         fields = (
             '_id',
+            'linkName',
             'creatorId',
             'segType',
             'originalId',
@@ -29,11 +31,13 @@ class Link(AccessControlledModel):
             'access',
             'created',
             'updated',
+            'public',
         )
         self.exposeFields(AccessType.READ, fields)
         events.bind('model.folder.remove', 'SSR_task', self._onFolderRemove)
         events.bind('model.item.remove', 'SSR_task', self._onItemRemove)
-
+        events.bind('model.folder.save.after', 'SSR_task', self._onFolderChange)
+        events.bind('model.item.save.after', 'SSR_task', self._onItemChange)
     def _onFolderRemove(self, event):
         folder = event.info
         for originalFolder in self.find({'originalId': folder['_id']}):
@@ -50,6 +54,33 @@ class Link(AccessControlledModel):
         for segmentationItem in self.find({'segmentationId': item['_id']}):
             self.remove(segmentationItem)
 
+    def _onFolderChange(self, event):
+        folder = event.info
+        for originalFolder in self.find({'originalId': folder['_id']}):
+            originalFolder['originalName'] = folder['name']
+            originalFolder['oriParentId'] = folder['parentId']
+            self.save(originalFolder)
+        for segmentationFolder in self.find({'segmentationId': folder['_id']}):
+            segmentationFolder['segmentationName'] = folder['name']
+            segmentationFolder['segParentId'] = folder['parentId']
+            segmentationFolder['access'] = folder['access']
+            segmentationFolder['public'] = folder['public']
+            self.save(segmentationFolder)
+        for itemUnderFolder in self.find({'segParentId': folder['_id']}):
+            itemUnderFolder['access'] = folder['access']
+            itemUnderFolder['public'] = folder['public']
+            self.save(itemUnderFolder)
+    def _onItemChange(self, event):
+        item = event.info
+        for originalItem in self.find({'originalId': item['_id']}):
+            originalItem['originalName'] = item['name']
+            originalItem['oriParentId'] = item['folderId']
+            self.save(originalItem)
+        for segmentationItem in self.find({'segmentationId': item['_id']}):
+            segmentationItem['segmentationName'] = item['name']
+            segmentationItem['segParentId'] = item['folderId']
+            self.save(segmentationItem)
+
     def createSegmentation(self, segmentation, creator):
         now = datetime.datetime.utcnow()
         doc = {
@@ -64,6 +95,7 @@ class Link(AccessControlledModel):
 
     def validate(self, doc):
         validation = (
+            ('linkName', 'link must have a name (default: Unnamed Link)'),
             ('segType', 'Segmentation must have a type (folder or item)'),
             ('segParentId', 'Segmentation must have a segmentation parent ID'),
             ('originalId', 'Segmentation must have an original (folder or item) ID'),

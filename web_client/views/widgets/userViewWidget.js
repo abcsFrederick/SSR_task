@@ -20,7 +20,7 @@ import 'jquery-ui/ui/disable-selection';
 /**
  * This view shows a single user's page.
  */
-var UserView = View.extend({
+var UserViewWidget = View.extend({
     events: {
         'click a.g-edit-user': function () {
             var editUrl = 'useraccount/' + this.model.get('_id') + '/info';
@@ -66,9 +66,9 @@ var UserView = View.extend({
         this.folderEdit = settings.folderEdit || false;
         this.itemCreate = settings.itemCreate || false;
         this.baseRoute = settings.baseRoute || false;
+        console.log(settings);
         if (settings.user) {
             this.model = settings.user;
-
             if (settings.folderId) {
                 this.folder = new FolderModel();
                 this.folder.set({
@@ -85,7 +85,6 @@ var UserView = View.extend({
         } else if (settings.id) {
             this.model = new UserModel();
             this.model.set('_id', settings.id);
-
             this.model.on('g:fetched', function () {
                 this.render();
             }, this).fetch();
@@ -157,20 +156,10 @@ var UserView = View.extend({
         user.set({
             _id: userId
         }).on('g:fetched', function (resp) {
-            // if(params.workflow === 'ds'){
-            //     events.trigger('ds:navigateTo', UserView, _.extend({
-            //         user: user
-            //     }, params || {}));
-            // }else{
-            //     events.trigger('qc:navigateTo', UserView, _.extend({
-            //         user: user
-            //     }, params || {}));
-            // }
             UserView.settings = params;
         }, this).on('g:error', function () {
-            // events.trigger('qc:navigateTo', UsersView);
         }, this).fetch();
     }
 });
 
-export default UserView;
+export default UserViewWidget;

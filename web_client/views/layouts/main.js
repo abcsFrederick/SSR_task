@@ -17,19 +17,23 @@ import DicomSplit from '../tasks/dicomsplit/main';
 import Link from '../tasks/link/main';
 import router from '../../router';
 
-import UserView from '../widgets/userViewWidget';
-
+import UserView from '../widgets/UserViewWidget';
+import CollectionView from '../widgets/CollectionViewWidget';
 var Layout = View.extend({
     events: {
         'click .enabledTask': function (e) {
-            router.navigate('apps/' + e.currentTarget.id + this.unparsedQueryString, {trigger: true});
+            let link = $(event.currentTarget);
+            let curRoute = Backbone.history.fragment,
+                routeParts = splitRoute(curRoute),
+                queryString = parseQueryString(routeParts.name);
+            let unparsedQueryString = $.param(queryString);
+            if (unparsedQueryString.length > 0) {
+                unparsedQueryString = '?' + unparsedQueryString;
+            }
+            router.navigate('apps/' + e.currentTarget.id + unparsedQueryString, {trigger: true});
         },
-        // 'click #dataManagement': function () {
-        //     let user = getCurrentUser();
-        //     router.navigate('qc/user/' + user.id + this.unparsedQueryString, {trigger: true});
-        // },
         'click .s-nav-siderBar': '_collaspeSideBar',
-        'click .qc-Girder': function (event) {
+        'click .qc-User': function (event) {
             let link = $(event.currentTarget);
             let curRoute = Backbone.history.fragment,
                 routeParts = splitRoute(curRoute),
@@ -44,6 +48,23 @@ var Layout = View.extend({
                 parentView: this,
                 viewName: 'appsUserView',
                 el: '#mappingUSERArch',
+                id: link.attr('g-id')
+            });
+        },
+        'click .qc-Collection': function (event) {
+            let link = $(event.currentTarget);
+            let curRoute = Backbone.history.fragment,
+                routeParts = splitRoute(curRoute),
+                queryString = parseQueryString(routeParts.name);
+            let unparsedQueryString = $.param(queryString);
+            if (unparsedQueryString.length > 0) {
+                unparsedQueryString = '?' + unparsedQueryString;
+            }
+
+            this.girderArchive = new CollectionView({
+                parentView: this,
+                viewName: 'appsCollectionView',
+                el: '#mappingCollectionArch',
                 id: link.attr('g-id')
             });
         }

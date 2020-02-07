@@ -7,16 +7,16 @@
 
 if SSR_Project.id
   .mappingNavPanel.panel
-    li.g-global-nav-li(data-toggle="collapse", data-target='#mappingSSRArch', data-parent="#mappingNav")
-      a.g-nav-link.qc-Filesystem(g-id=SSR_Project.id, g-name='qcSSRProject', g-target='qcSSRProject') 
+    li.g-global-nav-li(data-toggle="collapse", data-target='#mappingCollectionArch', data-parent="#mappingNav")
+      a.g-nav-link.qc-Collection(g-id=SSR_Project.id, g-name='qcSSRProject', g-target='qcSSRProject') 
         i.icon-file-archive
         span #{SSR_Project.get('name')}
-    #mappingSSRArch.mappingArch.collapse
+    #mappingCollectionArch.mappingArch.collapse
 
 if user.id
   .mappingNavPanel.panel
     li.g-global-nav-li(data-toggle="collapse", data-target='#mappingUSERArch', data-parent="#mappingNav")
-      a.g-nav-link.qc-Girder(g-id=user.id, g-name='qcUsers', g-target='qcUsers') 
+      a.g-nav-link.qc-User(g-id=user.id, g-name='qcUsers', g-target='qcUsers') 
         i.icon-edit
         span #{user.name()}
     #mappingUSERArch.mappingArch.collapse

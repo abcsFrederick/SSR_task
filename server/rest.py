@@ -28,22 +28,34 @@ class SSR_task(Resource):
         self.route('POST', ('dicom_split', ':id',), self.dicom_split)
         self.route('GET', ('settings',), self.getSettings)
 
-    @access.public(scope=TokenScope.DATA_READ)
+    # Find link record based on original item ID or parentId(to check chirdren links)
+    # Return only record that have READ access(>=0) to user.
+    @access.user(scope=TokenScope.DATA_READ)
     @filtermodel(Link)
     @autoDescribeRoute(
         Description('Search for segmentation by certain properties.')
         .notes('You must pass a "parentId" field to specify which parent folder'
                'you are searching for children folders and items segmentation information.')
-        .param('parentId', "The ID of the folder's parent.", required=True)
+        .param('parentId', "The ID of the folder's parent to find "
+               "subfolders/items segmentation information.", required=False)
+        .param('originalId', "The ID of the original item.", required=False)
         .errorResponse()
         .errorResponse('Read access was denied on the parent resource.', 403)
     )
-    def findLink(self, parentId):
-        q = {
-            "$or": [{'oriParentId': ObjectId(parentId)},
-                    {'segParentId': ObjectId(parentId)}]
-        }
-        return list(Link().find(q))
+    def findLink(self, parentId, originalId):
+        user = self.getCurrentUser()
+        if parentId is not None:
+            q = {
+                "$or": [{'oriParentId': ObjectId(parentId)},
+                        {'segParentId': ObjectId(parentId)}]
+            }
+        if originalId is not None:
+            q = {'originalId': ObjectId(originalId)}
+        sort = [('segmentationId', 1)]
+        # check access Only return Read access segmentation record
+        return [link for link in Link().find(q, sort=sort, level=AccessType.READ) if
+                Link().getAccessLevel(link, user) >= 0]
+
     # item based link is necessary because item name need to be control by user and
     # how they want to link pairs are under their control
     # folder based link is easy to implement from client side
@@ -51,11 +63,12 @@ class SSR_task(Resource):
     @autoDescribeRoute(
         Description('Link a segmentation item to original item, and '
                     'link their parent folders at the same time')
+        .param('linkName', 'Name of link.', default='Unnamed Link')
         .param('originalId', 'Original folder or item Id.')
         .param('segmentationId', 'Segmentation folder or item Id.')
         .param('segType', 'Segmentation type folder or item.', enum=['folder', 'item'])
         .errorResponse())
-    def segmentationLink(self, originalId, segmentationId, segType):
+    def segmentationLink(self, linkName, originalId, segmentationId, segType):
         user = self.getCurrentUser()
         if segType == 'folder':
             original = Folder().load(originalId, user=user, level=AccessType.WRITE)
@@ -78,6 +91,7 @@ class SSR_task(Resource):
 
         if original is not None and segmentation is not None:
             doc = {
+                'linkName': linkName,
                 'segType': segType,
                 'originalId': original['_id'],
                 'originalName': original['name'],
@@ -91,10 +105,12 @@ class SSR_task(Resource):
                 doc['oriParentId'] = original['folderId']
                 doc['segParentId'] = segmentation['folderId']
                 doc['access'] = segmentationItemParent['access']
+                doc['public'] = segmentationItemParent['public']
             elif segType == 'folder':
                 doc['oriParentId'] = original['parentId']
                 doc['segParentId'] = segmentation['parentId']
                 doc['access'] = segmentation['access']
+                doc['public'] = segmentation['public']
             return Link().createSegmentation(doc, user)
         else:
             raise ValidationException('No such %s: %s or %s' %
