@@ -1,4 +1,4 @@
-.mappingNavPanel.panel
+.appsNavPanel.panel
   li.g-global-nav-li(data-toggle="collapse", data-target='#mappingSAIPArch', data-parent="#mappingNav")
     a.g-nav-link.qc-SAIP(g-name='qcSAIPProject', g-target='qcSAIPProject') 
       i.icon-download-cloud
@@ -6,7 +6,7 @@
   #mappingSAIPArch.mappingArch.collapse
 
 if SSR_Project.id
-  .mappingNavPanel.panel
+  .appsNavPanel.panel
     li.g-global-nav-li(data-toggle="collapse", data-target='#mappingCollectionArch', data-parent="#mappingNav")
       a.g-nav-link.qc-Collection(g-id=SSR_Project.id, g-name='qcSSRProject', g-target='qcSSRProject') 
         i.icon-file-archive
@@ -14,7 +14,7 @@ if SSR_Project.id
     #mappingCollectionArch.mappingArch.collapse
 
 if user.id
-  .mappingNavPanel.panel
+  .appsNavPanel.panel
     li.g-global-nav-li(data-toggle="collapse", data-target='#mappingUSERArch', data-parent="#mappingNav")
       a.g-nav-link.qc-User(g-id=user.id, g-name='qcUsers', g-target='qcUsers') 
         i.icon-edit

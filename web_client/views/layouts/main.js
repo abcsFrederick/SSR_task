@@ -66,6 +66,23 @@ var Layout = View.extend({
                 el: '#mappingCollectionArch',
                 id: link.attr('g-id')
             });
+        },
+        'click .qc-SAIP': function (event) {
+            let link = $(event.currentTarget);
+            let curRoute = Backbone.history.fragment,
+                routeParts = splitRoute(curRoute),
+                queryString = parseQueryString(routeParts.name);
+            let unparsedQueryString = $.param(queryString);
+            if (unparsedQueryString.length > 0) {
+                unparsedQueryString = '?' + unparsedQueryString;
+            }
+
+            this.girderArchive = new SAIPView({
+                parentView: this,
+                viewName: 'appsCollectionView',
+                el: '#mappingCollectionArch',
+                id: link.attr('g-id')
+            });
         }
     },
     initialize(settings) {

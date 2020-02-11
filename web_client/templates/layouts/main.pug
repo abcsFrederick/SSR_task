@@ -1,6 +1,7 @@
 .g-analysis-nav-container
   .g-global-nav-main
-    label Tasks
+    .appNavBlock
+      label Tasks
     ul#taskNav.nav.flex-column.bg-white.mb-0
       //- each task in tasks
       //-   if currentTask === task
@@ -12,8 +13,8 @@
     //- button#dataManagement.btn-primary
     //-   i.icon-left-hand
     //-   span data management
-
-    label Data management
+    .appNavBlock
+      label Data management
     ul#mappingNav.list.components.g-global-nav
       //- .mappingNavPanel.panel
       //-   li.g-global-nav-li(data-toggle="collapse", 
