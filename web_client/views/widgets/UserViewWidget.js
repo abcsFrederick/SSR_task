@@ -1,10 +1,4 @@
-import FolderModel from 'girder/models/FolderModel';
-import router from 'girder/router';
-import UserModel from 'girder/models/UserModel';
 import UserView from 'girder/views/body/UserView';
-import { cancelRestRequests } from 'girder/rest';
-import { confirm } from 'girder/dialog';
-import events from 'girder/events';
 
 import HierarchyWidget from './hierarchyWidget';
 

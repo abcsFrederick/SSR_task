@@ -1,16 +1,4 @@
-import $ from 'jquery';
-import _ from 'underscore';
-
-import AccessWidget from 'girder/views/widgets/AccessWidget';
-import CollectionModel from 'girder/models/CollectionModel';
-import EditCollectionWidget from 'girder/views/widgets/EditCollectionWidget';
-import FolderModel from 'girder/models/FolderModel';
-import router from 'girder/router';
 import CollectionView from 'girder/views/body/CollectionView';
-import { cancelRestRequests } from 'girder/rest';
-import { confirm } from 'girder/dialog';
-import { formatSize } from 'girder/misc';
-import events from 'girder/events';
 
 import HierarchyWidget from './hierarchyWidget';
 

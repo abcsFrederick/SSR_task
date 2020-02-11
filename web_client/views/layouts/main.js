@@ -19,6 +19,7 @@ import router from '../../router';
 
 import UserView from '../widgets/UserViewWidget';
 import CollectionView from '../widgets/CollectionViewWidget';
+
 var Layout = View.extend({
     events: {
         'click .enabledTask': function (e) {
@@ -68,21 +69,21 @@ var Layout = View.extend({
             });
         },
         'click .qc-SAIP': function (event) {
-            let link = $(event.currentTarget);
-            let curRoute = Backbone.history.fragment,
-                routeParts = splitRoute(curRoute),
-                queryString = parseQueryString(routeParts.name);
-            let unparsedQueryString = $.param(queryString);
-            if (unparsedQueryString.length > 0) {
-                unparsedQueryString = '?' + unparsedQueryString;
-            }
+            // let link = $(event.currentTarget);
+            // let curRoute = Backbone.history.fragment,
+            //     routeParts = splitRoute(curRoute),
+            //     queryString = parseQueryString(routeParts.name);
+            // let unparsedQueryString = $.param(queryString);
+            // if (unparsedQueryString.length > 0) {
+            //     unparsedQueryString = '?' + unparsedQueryString;
+            // }
 
-            this.girderArchive = new SAIPView({
-                parentView: this,
-                viewName: 'appsCollectionView',
-                el: '#mappingCollectionArch',
-                id: link.attr('g-id')
-            });
+            // this.girderArchive = new SAIPView({
+            //     parentView: this,
+            //     viewName: 'appsCollectionView',
+            //     el: '#mappingCollectionArch',
+            //     id: link.attr('g-id')
+            // });
         }
     },
     initialize(settings) {
