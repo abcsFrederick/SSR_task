@@ -20,7 +20,7 @@
         th Pattern Pool
     tbody
       each pattern, index in pool
-        if index%3 === 0
+        if index%1 === 0
           tr
         //- pattern --> "{'order': ['1', '1', '1'], 'axis': '1'}"
         td.patternOption(order=pattern.order, axis=pattern.axis, draggable='true', ondragstart=`event.dataTransfer.setData('order','${pattern.order}');event.dataTransfer.setData('axis','${pattern.axis}')`)

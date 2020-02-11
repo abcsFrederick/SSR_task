@@ -11,7 +11,7 @@ router.route('plugins/SSR_task/config', 'SSR_taskConfig', function () {
 });
 
 router.route('apps/:task', 'SSR_taskView', function (task) {
-    events.trigger('HeaderView:navigateTo', 'Analysis');
-    events.trigger('panelContent:navigateTo', 'Analysis');
+    events.trigger('HeaderView:navigateTo', 'Apps');
+    events.trigger('panelContent:navigateTo', 'Apps');
     TasksLayout.getSettings(task);
 });

@@ -162,7 +162,7 @@ var HierarchyWidget = HierarchyWidgetView.extend({
                 this._childCountCheck();
             }, this);
 
-        if (this.parentModel.resourceName === 'folder' || this.parentModel.resourceName === 'SSR/folder') {
+        if (this.parentModel.resourceName === 'folder') {
             this._fetchToRoot(this.parentModel);
         } else {
             this.itemCount = 0;
@@ -225,7 +225,7 @@ var HierarchyWidget = HierarchyWidgetView.extend({
                 route = this.breadcrumbs[0].resourceName + '/' +
                 this.breadcrumbs[0].get('_id');
             }
-            if (this.parentModel.resourceName === 'folder' || this.parentModel.resourceName === 'SSR/folder') {
+            if (this.parentModel.resourceName === 'folder') {
                 route += '/folder/' + this.parentModel.get('_id') + unparsedQueryString;
             } else {
                 route += unparsedQueryString;
@@ -262,7 +262,7 @@ var HierarchyWidget = HierarchyWidgetView.extend({
         this.checkedMenuWidget.setElement(this.$('.g-checked-actions-menu')).render();
         this.folderListView.setElement(this.$('.g-folder-list-container')).render();
 
-        if ((this.parentModel.resourceName === 'folder' || this.parentModel.resourceName === 'SSR/folder') && this._showItems) {
+        if ((this.parentModel.resourceName === 'folder') && this._showItems) {
             this._initFolderViewSubwidgets();
             this.itemListView.setElement(this.$('.g-item-list-container')).render();
             this.metadataWidget.setItem(this.parentModel);
@@ -328,7 +328,7 @@ var HierarchyWidget = HierarchyWidgetView.extend({
      * Prompt user to edit the current folder or collection.
      */
     editFolderDialog: function () {
-        if (this.parentModel.resourceName === 'folder' || this.parentModel.resourceName === 'SSR/folder') {
+        if (this.parentModel.resourceName === 'folder') {
             new EditFolderWidget({
                 el: $('#g-dialog-container'),
                 parentModel: this.parentModel,
@@ -505,7 +505,7 @@ var HierarchyWidget = HierarchyWidgetView.extend({
         }
         /* If we have an item picked but this page isn't a folder's list, then
          * you can't move or copy them here. */
-        if (this.parentModel.resourceName !== 'folder' || this.parentModel.resourceName !== 'SSR/folder') {
+        if (this.parentModel.resourceName !== 'folder') {
             if (pickedResources.resources.item &&
                     pickedResources.resources.item.length) {
                 return false;
