@@ -1,4 +1,5 @@
 from bson import ObjectId
+import os
 
 from girder.api.rest import Resource, filtermodel
 from girder.api.describe import Description, autoDescribeRoute
@@ -10,6 +11,7 @@ from girder.constants import AccessType, TokenScope
 from girder.exceptions import ValidationException
 from girder.models.setting import Setting
 
+from girder.plugins.Archive.models.folder import Folder as ArchiveFolder
 from .constants import PluginSettings
 from .models.dicom_split import DicomSplit
 from .models.link import Link
@@ -25,7 +27,7 @@ class SSR_task(Resource):
         self.route('DELETE', (':id',), self.segmentationRemove)
 
         self.route('GET', ('dicom_split',), self.getItemAndThumbnail)
-        self.route('POST', ('dicom_split', ':id',), self.dicom_split)
+        self.route('POST', ('dicom_split',), self.dicom_split)
         self.route('GET', ('settings',), self.getSettings)
 
     # Find link record based on original item ID or parentId(to check chirdren links)
@@ -192,28 +194,31 @@ class SSR_task(Resource):
     @access.public
     @autoDescribeRoute(
         Description('Split multiple in one dicom volumn.')
-        .modelParam('id', model=Folder, level=AccessType.READ)
+        .param('id', 'girder folder id or SAIP study id', required=True)
         .jsonParam('subfolders', 'subfolders', required=True)
         .jsonParam('n', 'number of split', required=True)
         .jsonParam('axis', 'axis of split', required=True)
         .jsonParam('order', 'order', required=True)
         .param('pushFolderId', 'folder id for split result', required=True)
         .param('pushFolderName', 'folder id for split result', required=True)
+        .param('inputType', 'Type of input', required=True,
+               enum=['girder', 'archive'], strip=True)
     )
-    def dicom_split(self, folder, subfolders, n, axis, order, pushFolderId, pushFolderName):
-
+    def dicom_split(self, id, inputType, subfolders, n, axis, order, pushFolderId, pushFolderName):
         self.user = self.getCurrentUser()
         self.token = self.getCurrentToken()
-        # subfolders = kwargs.get('subfolders')
-        # n_of_split = kwargs.get('n')
-        # axis = kwargs.get('axis')
-        fetchFolder = folder
-        # pushFolderId = kwargs.get('pushFolderId')
+        if inputType == 'archive':
+            # get full path by id
+            study_description, fetchFolder = ArchiveFolder().fullPath(id, 'study')
+            if not os.path.isdir(fetchFolder):
+                raise ValidationException('path %s is not exist' % fetchFolder)
+        elif inputType == 'girder':
+            fetchFolder = Folder().load(id, level=AccessType.READ, user=self.user)
+
         pushFolder = Folder().load(pushFolderId, level=AccessType.READ, user=self.user)
-        # order = kwargs.get('order')
 
         return DicomSplit().createJob(fetchFolder, self.user,
-                                      self.token, subfolders,
+                                      self.token, inputType, subfolders,
                                       axis, n, order, pushFolder, pushFolderName)
 
     @access.public

@@ -6,9 +6,11 @@ import events from 'girder/events';
 import FolderModel from 'girder/models/FolderModel';
 import BrowserWidget from 'girder/views/widgets/BrowserWidget';
 import eventStream from 'girder/utilities/EventStream';
+import ArchiveItemCollection from 'girder_plugins/Archive/collections/ItemCollection';
 
 import DicomSplitModel from '../../../models/tasks/dicomsplit/dicomsplit';
 import ViewTemplate from '../../../templates/tasks/dicomsplit/main.pug';
+
 import '../../../stylesheets/tasks/dicomsplit/main.styl';
 
 import TableView from './tableView';
@@ -65,10 +67,47 @@ var DicomSplit = View.extend({
             this.table = new TableView({
                 el: this.$('#dicomsplit-preview'),
                 patients: patients,
+                from: this.from,
                 parentView: this
             });
         });
         this.$('#open-task-folder .icon-folder-open').html(model.get('name'));
+        return this;
+    },
+    renderFromArchive(series, studyName, studyId) {
+        this.dicomSplit = new DicomSplitModel();
+        console.log(series);
+        this.dicomSplit.set({ _id: studyId });
+        let patients = [];
+        for (let a = 0; a < series.length; a++) {
+            restRequest({
+                url: 'Archive/SAIP/slice/download',
+                method: 'GET',
+                data: {
+                    'Type': 'thumbnail',
+                    'id': series.at(a).get('series_uid')
+                }
+            }).done((resp) => {
+                let patient = {
+                    name: series.at(a).get('series_description'),
+                    thumbnailId: series.at(a).get('series_uid'),
+                    series_path: series.at(a).get('series_path')
+                };
+                patients.push(patient);
+                if (this.table) {
+                    this.table.destroy();
+                }
+                this.table = new TableView({
+                    el: this.$('#dicomsplit-preview'),
+                    from: this.from,
+                    patients: patients,
+                    parentView: this
+                });
+            }).fail((err) => {
+                this.trigger('g:error', err);
+            });
+        }
+        this.$('#open-task-folder .icon-folder-open').html(studyName);
         return this;
     },
     renderSelectFolder(model) {
@@ -82,14 +121,27 @@ var DicomSplit = View.extend({
         e.stopPropagation();
         e.preventDefault();
         let dropedFolderId = event.dataTransfer.getData('folderId');
+        this.from = event.dataTransfer.getData('from') || 'Girder';
         if (dropedFolderId) {
-            this.openedFolder = new FolderModel();
-            this.openedFolder.set({'_id': dropedFolderId});
-            this.openedFolder.on('g:saved', function (res) {
-                this.render(this.openedFolder);
-                this.openedFolderId = this.openedFolder.get('_id');
-                this.selectedFolderName = this.openedFolder.get('name');
-            }, this).save();
+            if (this.from === 'Archive') {
+                this.inputType = 'archive';
+                let studyName = event.dataTransfer.getData('folderName');
+                this.seriesCollection = new ArchiveItemCollection();
+                this.seriesCollection.rename({archive: 'SAIP', type: 'series'});
+                this.seriesCollection.on('g:changed', function () {
+                    this.renderFromArchive(this.seriesCollection, studyName, dropedFolderId);
+                    this.trigger('g:changed');
+                }, this).fetch({id: dropedFolderId});
+            } else {
+                this.inputType = 'girder';
+                this.openedFolder = new FolderModel();
+                this.openedFolder.set({'_id': dropedFolderId});
+                this.openedFolder.on('g:saved', function (res) {
+                    this.render(this.openedFolder);
+                    this.openedFolderId = this.openedFolder.get('_id');
+                    this.selectedFolderName = this.openedFolder.get('name');
+                }, this).save();
+            }
         } else {
             $(e.currentTarget)
                 .removeClass('g-dropzone-show')
@@ -221,6 +273,7 @@ var DicomSplit = View.extend({
             }
             if (this.table.parseAndValidateSpec()) {
                 this.dicomSplit.set({
+                    inputType: this.inputType,
                     subfolders: this.table.subfolders,
                     n: this.table.n,
                     axis: this.table.axis,

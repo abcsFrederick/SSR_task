@@ -8,6 +8,8 @@ import { splitRoute, parseQueryString } from 'girder/misc';
 import { getCurrentUser } from 'girder/auth';
 import CollectionModel from 'girder/models/CollectionModel';
 
+import ArchiveView from 'girder_plugins/Archive/views/body/ArchiveView';
+
 import MainPageViewTemplate from '../../templates/layouts/main.pug';
 import TaskNavTemplate from '../../templates/layouts/taskNav.pug';
 import DataNavTemplate from '../../templates/layouts/dataNav.pug';
@@ -47,7 +49,7 @@ var Layout = View.extend({
             this.girderArchive = new UserView({
                 parentView: this,
                 viewName: 'appsUserView',
-                el: '#mappingUSERArch',
+                el: '#appsUSERArch',
                 id: link.attr('g-id')
             });
         },
@@ -64,26 +66,24 @@ var Layout = View.extend({
             this.girderArchive = new CollectionView({
                 parentView: this,
                 viewName: 'appsCollectionView',
-                el: '#mappingCollectionArch',
+                el: '#appsCollectionArch',
                 id: link.attr('g-id')
             });
         },
         'click .qc-SAIP': function (event) {
-            // let link = $(event.currentTarget);
-            // let curRoute = Backbone.history.fragment,
-            //     routeParts = splitRoute(curRoute),
-            //     queryString = parseQueryString(routeParts.name);
-            // let unparsedQueryString = $.param(queryString);
-            // if (unparsedQueryString.length > 0) {
-            //     unparsedQueryString = '?' + unparsedQueryString;
-            // }
-
-            // this.girderArchive = new SAIPView({
-            //     parentView: this,
-            //     viewName: 'appsCollectionView',
-            //     el: '#mappingCollectionArch',
-            //     id: link.attr('g-id')
-            // });
+            let link = $(event.currentTarget);
+            let curRoute = Backbone.history.fragment,
+                routeParts = splitRoute(curRoute),
+                queryString = parseQueryString(routeParts.name);
+            let unparsedQueryString = $.param(queryString);
+            if (unparsedQueryString.length > 0) {
+                unparsedQueryString = '?' + unparsedQueryString;
+            }
+            this.saipArchive = new ArchiveView({
+                parentView: this,
+                el: '#appsSAIPArch',
+                id: link.attr('g-id')
+            });
         }
     },
     initialize(settings) {
@@ -128,7 +128,7 @@ var Layout = View.extend({
             data: {'text': 'SSR Project'}
         }).then(_.bind((res) => {
             this.SSR_ProjectCollection = this.SSR_ProjectCollection.set(res[0]);
-            this.$('#mappingNav').html(DataNavTemplate({
+            this.$('#appsNav').html(DataNavTemplate({
                 SSR_Project: this.SSR_ProjectCollection,
                 user: getCurrentUser()
             }));

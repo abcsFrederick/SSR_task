@@ -439,7 +439,7 @@ axis = axis
 # if shared and not kwargs.get('study_instance_uids'):
 #     n = len(kwargs.get('series_instance_uids')) or kwargs.get('n')
 #     kwargs['study_instance_uids'] = [x667_uuid() for i in range(n)]
-subfolders = [subfolders for subfolders in os.listdir(topFolder)]
+# subfolders = [subfolders for subfolders in os.listdir(topFolder)]
 
 for index in range(len(subfolders)):
     directory = os.path.join(topFolder, subfolders[index])

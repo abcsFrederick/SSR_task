@@ -65,6 +65,7 @@ var DicomSplit = View.extend({
             'axis': '0'}];
         this.settings = settings;
         this.$el.html(TableTemplate({
+            from: settings.from,
             patients: settings.patients,
             pool: this.defualtPool
         }));

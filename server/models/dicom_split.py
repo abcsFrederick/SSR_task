@@ -57,9 +57,12 @@ class DicomSplit(AccessControlledModel):
     #                 File().remove(file_)
     #     return super(Histogram, self).remove(histogram, **kwargs)
 
-    def createJob(self, fetchFolder, user, token, subfolders,
+    def createJob(self, fetchFolder, user, token, inputType, subfolders,
                   axis, n_of_split, order, pushFolder, pushFolderName):
-        title = 'Dicom split for folder %s' % fetchFolder['_id']
+        if inputType == 'girder':
+            title = 'Dicom split for folder %s in girder' % fetchFolder['_id']
+        elif inputType == 'archive':
+            title = 'Dicom split for folder %s in SAIP archive' % fetchFolder
 
         job = Job().createJob(title=title, type='split',
                               handler='worker_handler', user=user)
@@ -112,9 +115,8 @@ class DicomSplit(AccessControlledModel):
                 'format': 'string',
             }],
         }
+
         inputs = {
-            'topFolder': utils.girderInputSpec(
-                fetchFolder, resourceType='folder', token=token),
             'subfolders': {
                 'mode': 'inline',
                 'type': 'string',
@@ -146,6 +148,14 @@ class DicomSplit(AccessControlledModel):
                 'data': outPath,
             }
         }
+        if inputType == 'girder':
+            inputs['topFolder'] = utils.girderInputSpec(
+                fetchFolder, resourceType='folder', token=token)
+        elif inputType == 'archive':
+            inputs['topFolder'] = {
+                'mode': 'local',
+                'path': fetchFolder,
+            }
         reference = json.dumps({'jobId': str(job['_id']), 'isDicomSplit': True})
         outputs = {
             'splitedVolumn': utils.girderOutputSpec(pushFolder, token,

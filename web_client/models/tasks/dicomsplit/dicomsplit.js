@@ -25,9 +25,11 @@ var dicomsplitModel = Model.extend({
     },
     createJob: function () {
         return restRequest({
-            url: `${this.resourceName}/${this.id}`,
+            url: `${this.resourceName}`,
             method: 'POST',
             data: {
+                'id': this.id,
+                'inputType': this.get('inputType'),
                 'subfolders': JSON.stringify(this.get('subfolders')),
                 'n': JSON.stringify(this.get('n')),
                 'axis': JSON.stringify(this.get('axis')),

@@ -8,10 +8,17 @@
     tbody
       each patient, index in patients
         tr
-          td.name #{patient.name}
-            img(src="api/v1/file/" + patient.thumbnailId + "/download")
-          td.pattern-drop-zone(pname=patient.name, index=index)
-            i.icon-docs Drop a pattern from pool
+          if from === 'Archive'
+            td.name #{patient.name}
+              img(src="api/v1/Archive/SAIP/slice/download?Type=thumbnail&id=" + 
+              patient.thumbnailId)
+            td.pattern-drop-zone(pname=patient.series_path, index=index)
+              i.icon-docs Drop a pattern from pool
+          else
+            td.name #{patient.name}
+              img(src="api/v1/file/" + patient.thumbnailId + "/download")
+            td.pattern-drop-zone(pname=patient.name, index=index)
+              i.icon-docs Drop a pattern from pool
 
 #optionPool.col-md-4
   table.table
