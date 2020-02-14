@@ -93,7 +93,7 @@ before_install:
       fi
 
     - Archive_path=$girder_path/plugins/Archive
-    - git clone https://github.com/abcsFrederick/Arvhice.git $Archive_path && git -C $Archive_path checkout $ARCHIVE_VERSION
+    - git clone https://github.com/abcsFrederick/Archive.git $Archive_path && git -C $Archive_path checkout $ARCHIVE_VERSION
 
     - export MONGO_VERSION=3.4.19
     - export PY_COVG="ON"
