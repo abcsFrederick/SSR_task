@@ -71,6 +71,7 @@ before_install:
     - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "3" ]; then export PY3="true"; else export PY2="true"; fi
     - GIRDER_VERSION=2.x-maintenance
     - GIRDER_WORKER_VERSION=v0.5.1
+    - ARCHIVE_VERSION=master
     - main_path=$PWD
     - SSR_task_PATH=$TRAVIS_BUILD_DIR
     - build_path=$HOME/build
@@ -91,6 +92,9 @@ before_install:
       pip install --no-cache-dir -U $girder_worker_path'[girder_io,docker]' ;
       fi
 
+    - Archive_path=$girder_path/plugins/Archive
+    - git clone https://github.com/abcsFrederick/Arvhice.git $Archive_path && git -C $Archive_path checkout $ARCHIVE_VERSION
+
     - export MONGO_VERSION=3.4.19
     - export PY_COVG="ON"
     - CACHE=$HOME/.cache source $girder_path/scripts/install_mongo.sh >/dev/null 2>/dev/null &
@@ -108,11 +112,14 @@ install:
 
     - cd $SSR_task_PATH
     - pip install -r script/*/requirements.txt
+
+    - cd $Archive_path
+    - pip install -r requirements.txt
     # needs to be installed in dev mode for it to place binaries of cython/c extensions in place
     # - pip install -e .
     - cd $girder_path
     - npm-install-retry
-    - BABEL_ENV=cover NYC_CWD="$main_path" girder-install web --plugins=jobs,worker,SSR_task --dev > /dev/null 
+    - BABEL_ENV=cover NYC_CWD="$main_path" girder-install web --plugins=jobs,worker,Archive,SSR_task --dev > /dev/null 
     - pip install jupyter sphinx sphinx_rtd_theme nbsphinx travis-sphinx
     # - pip install numpy==1.13.1  # pin numpy for now
     - pip freeze  # report what we have installed

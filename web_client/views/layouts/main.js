@@ -14,6 +14,7 @@ import MainPageViewTemplate from '../../templates/layouts/main.pug';
 import TaskNavTemplate from '../../templates/layouts/taskNav.pug';
 import DataNavTemplate from '../../templates/layouts/dataNav.pug';
 import '../../stylesheets/layouts/main.styl';
+import '../../stylesheets/layouts/navTask.styl';
 
 import DicomSplit from '../tasks/dicomsplit/main';
 import Link from '../tasks/link/main';
