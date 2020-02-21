@@ -14,3 +14,4 @@ Girder plugin for SSR Task deploy.
 
 Available Tasks:
  1. Dicom Split
+ 2. Link

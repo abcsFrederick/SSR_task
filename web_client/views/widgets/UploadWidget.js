@@ -7,6 +7,7 @@ import FileModel from 'girder/models/FileModel';
 import FolderModel from 'girder/models/FolderModel';
 import ItemModel from 'girder/models/ItemModel';
 
+import events from 'girder/events';
 import { formatSize } from 'girder/misc';
 import { handleClose, handleOpen } from 'girder/dialog';
 
@@ -60,7 +61,7 @@ var UploadWidget = UploadWidgetView.extend({
         this.overrideStart = settings.overrideStart || false;
         this.otherParams = settings.otherParams || {};
 
-        this._browseText = this.multiFile ? 'Browse or drop files here' : 'Browse or drop a file here';
+        this._browseText = this.multiFile ? 'Browse folder Or Drop a file here' : 'Browse or drop a file here';
         this._noneSelectedText = this.multiFile ? 'No files selected' : 'No file selected';
     },
 
@@ -229,7 +230,12 @@ var UploadWidget = UploadWidgetView.extend({
                 } else {
                     dcmFilesList.push(newFilesList[a]);
                     if (newFilesList[a].webkitRelativePath.match(/\//g).length > 3) {
-                        console.error('Do not have too many levels for your dicom files');
+                        events.trigger('g:alert', {
+                            icon: 'cancel',
+                            text: 'Do not have too many levels for your dicom files.',
+                            type: 'error',
+                            timeout: 4000
+                        });
                         return this;
                     }
                 }
@@ -323,78 +329,53 @@ var UploadWidget = UploadWidgetView.extend({
         let options = {};
         var folder = new FolderModel();
 
-        folder.set(_.extend(fields, {
-            parentType: this.parent.resourceName === 'SSR/folder' ? 'folder' : this.parent.resourceName,
-            parentId: this.parent.get('_id')
-        }));
-        folder.on('g:saved', function (res) {
-            let imageSetFolderId = folder.get('_id');
+        if (imageSetName === '') {
+            fields = {name: files[0].name, description: ''};
+            options = {folderId: this.parent.get('_id')};
+            this.createAnItemAndUploadFiles(fields, options, files);
+        } else {
+            folder.set(_.extend(fields, {
+                parentType: this.parent.resourceName,
+                parentId: this.parent.get('_id')
+            }));
+            folder.on('g:saved', function (res) {
+                let imageSetFolderId = folder.get('_id');
 
-            if (typeOfFile === 'unknowType' || typeOfFile === 'dcm') {
-                // Has at least one nrrd file in dicom dataset as label
-                if (segFilesList.length) {
-                    // For labels uploading
-                    // segFilesList that qualified will be under the same parent folder
-                    let dcmNumberOfSeparator = segFilesList[0].webkitRelativePath.match(/\//g);
-                    if (dcmNumberOfSeparator.length === 1) {
-                        // segFilesList should only content one
-                        for (let a = 0; a < segFilesList.length; a++) {
-                            let fileName = segFilesList[a].name;
+                if (typeOfFile === 'unknowType' || typeOfFile === 'dcm') {
+                    // Has at least one nrrd file in dicom dataset as label
+                    if (segFilesList.length) {
+                        // For labels uploading
+                        // segFilesList that qualified will be under the same parent folder
+                        let dcmNumberOfSeparator = segFilesList[0].webkitRelativePath.match(/\//g);
+                        if (dcmNumberOfSeparator.length === 1) {
+                            // segFilesList should only content one
+                            for (let a = 0; a < segFilesList.length; a++) {
+                                let fileName = segFilesList[a].name;
+                                fields = {
+                                    name: fileName,
+                                    description: 'Original nrrd file'
+                                };
+                                options = {
+                                    folderId: folder.get('_id')
+                                };
+                                this.createItemsAndUploadFiles(fields, options, segFilesList[a], segFilesList.length);
+                            }
+                        } else {
+                            let dcmLabelName = segFilesList[0].webkitRelativePath.split('/')[segFilesList[0].webkitRelativePath.split('/').length - 2];
                             fields = {
-                                name: fileName,
-                                description: 'Original nrrd file'
+                                name: dcmLabelName,
+                                description: 'Nrrd file labels'
                             };
                             options = {
                                 folderId: folder.get('_id')
                             };
-                            this.createItemsAndUploadFiles(fields, options, segFilesList[a], segFilesList.length);
-                        }
-                    } else {
-                        let dcmLabelName = segFilesList[0].webkitRelativePath.split('/')[segFilesList[0].webkitRelativePath.split('/').length - 2];
-                        fields = {
-                            name: dcmLabelName,
-                            description: 'Nrrd file labels'
-                        };
-                        options = {
-                            folderId: folder.get('_id')
-                        };
-                        this.createAnItemAndUploadFiles(fields, options, segFilesList);
-                    }
-                }
-                let dcmDcmNumberOfSeparator = dcmFilesList[0].webkitRelativePath.match(/\//g);
-                // For dcm uploading
-                if (dcmDcmNumberOfSeparator.length === 1) {
-                    let dcmLabelName = dcmFilesList[0].webkitRelativePath.split('/')[dcmFilesList[0].webkitRelativePath.split('/').length - 2];
-                    fields = {
-                        name: dcmLabelName,
-                        description: 'dicom files'
-                    };
-                    options = {
-                        folderId: folder.get('_id')
-                    };
-                    this.createAnItemAndUploadFiles(fields, options, dcmFilesList);
-                } else if (dcmDcmNumberOfSeparator.length === 2) {
-                    let allParentfolders  = [];
-                    for (let a = 0; a < dcmFilesList.length; a++) {
-                        let dcmParentfolderName = dcmFilesList[a].webkitRelativePath.split('/')[dcmFilesList[0].webkitRelativePath.split('/').length - 2];
-                        if (allParentfolders.indexOf(dcmParentfolderName) === -1) {
-                            allParentfolders.push(dcmParentfolderName);
+                            this.createAnItemAndUploadFiles(fields, options, segFilesList);
                         }
                     }
-                    let rearragedSubFolders = [];
-                    for (let a = 0; a < allParentfolders.length; a++) {
-                        let sub = [];
-                        for (let b = 0; b < dcmFilesList.length; b++) {
-                            let dcmParentfolderName = dcmFilesList[b].webkitRelativePath.split('/')[dcmFilesList[b].webkitRelativePath.split('/').length - 2];
-                            if (dcmParentfolderName === allParentfolders[a]) {
-                                sub.push(dcmFilesList[b]);
-                            }
-                        }
-                        rearragedSubFolders.push(sub);
-                    }
-
-                    for (let a = 0; a < rearragedSubFolders.length; a++) {
-                        let dcmLabelName = rearragedSubFolders[a][0].webkitRelativePath.split('/')[rearragedSubFolders[a][0].webkitRelativePath.split('/').length - 2];
+                    let dcmDcmNumberOfSeparator = dcmFilesList[0].webkitRelativePath.match(/\//g);
+                    // For dcm uploading
+                    if (dcmDcmNumberOfSeparator.length === 1) {
+                        let dcmLabelName = dcmFilesList[0].webkitRelativePath.split('/')[dcmFilesList[0].webkitRelativePath.split('/').length - 2];
                         fields = {
                             name: dcmLabelName,
                             description: 'dicom files'
@@ -402,20 +383,8 @@ var UploadWidget = UploadWidgetView.extend({
                         options = {
                             folderId: folder.get('_id')
                         };
-                        this.createAnItemAndUploadFiles(fields, options, rearragedSubFolders[a]);
-                    }
-                } else {
-                    let dcmSubfolder = new FolderModel();
-                    let oriFolderName = dcmFilesList[0].webkitRelativePath.split('/')[dcmFilesList[0].webkitRelativePath.split('/').length - 3];
-                    let fields = {
-                        name: oriFolderName,
-                        description: ''
-                    };
-                    dcmSubfolder.set(_.extend(fields, {
-                        parentType: 'folder',
-                        parentId: imageSetFolderId
-                    }));
-                    dcmSubfolder.on('g:saved', function (res) {
+                        this.createAnItemAndUploadFiles(fields, options, dcmFilesList);
+                    } else if (dcmDcmNumberOfSeparator.length === 2) {
                         let allParentfolders  = [];
                         for (let a = 0; a < dcmFilesList.length; a++) {
                             let dcmParentfolderName = dcmFilesList[a].webkitRelativePath.split('/')[dcmFilesList[0].webkitRelativePath.split('/').length - 2];
@@ -442,141 +411,152 @@ var UploadWidget = UploadWidgetView.extend({
                                 description: 'dicom files'
                             };
                             options = {
-                                folderId: dcmSubfolder.get('_id')
+                                folderId: folder.get('_id')
                             };
                             this.createAnItemAndUploadFiles(fields, options, rearragedSubFolders[a]);
                         }
-                    }, this).on('g:error', function (err) {
-                        this.$('.g-validation-failed-message').text(err.responseJSON.message);
-                        this.$('button.g-save-folder').girderEnable(true);
-                        this.$('#g-' + err.responseJSON.field).focus();
-                    }, this).save();
-                }
-            }
-            if (typeOfFile === 'nrrd') {
-                // nrrd should only have only one type
-                let numberOfSeparator = newFilesList[0].webkitRelativePath.match(/\//g);
-                // --Original(or label)
-                //    -a.nrrd
-                //    -b.nrrd
-                if (numberOfSeparator.length === 1) {
-                    if (!this.isLabel) {
-                        // create item with fileName
-                        for (let a = 0; a < newFilesList.length; a++) {
-                            let fileName = newFilesList[a].name;
-                            fields = {
-                                name: fileName,
-                                description: 'Original nrrd file'
-                            };
-                            options = {
-                                folderId: folder.get('_id')
-                            };
-                            this.createItemsAndUploadFiles(fields, options, newFilesList[a], newFilesList.length);
-                        }
                     } else {
-                        fields = {
-                            name: imageSetName,
-                            description: 'Nrrd file labels'
-                        };
-                        options = {
-                            folderId: folder.get('_id')
-                        };
-                        this.createAnItemAndUploadFiles(fields, options, newFilesList);
-                    }
-                } else if (numberOfSeparator.length === 2) {
-                    // ---Project1
-                    //     --Original
-                    //         -a.nrrd
-                    //         -b.nrrd
-                    //    (--Segmentation
-                    //         -aSeg.nrrd
-                    //         -bSeg.nrrd)
-                    let allSubfolders = [];
-                    for (let a = 0; a < newFilesList.length; a++) {
-                        let subfolderName = newFilesList[a].webkitRelativePath.split('/')[1];
-                        if (allSubfolders.indexOf(subfolderName) === -1) {
-                            allSubfolders.push(subfolderName);
-                        }
-                    }
-
-                    this.labelFolderName = $('#potentialLabelName').val();
-                    // Has segmentation folder
-                    // ---Project1
-                    //     --Original
-                    //         -a.nrrd
-                    //         -b.nrrd
-                    //    --Segmentation
-                    //         -aSeg.nrrd
-                    //         -bSeg.nrrd
-                    if (allSubfolders.indexOf(this.labelFolderName) !== -1 && allSubfolders.length < 3) {
-                        let oriFilesList = [];
-                        let segFilesList = [];
-                        for (let a = 0; a < newFilesList.length; a++) {
-                            if (newFilesList[a].webkitRelativePath.split('/')[1] === this.labelFolderName) {
-                                segFilesList.push(newFilesList[a]);
-                            }
-                            if (newFilesList[a].webkitRelativePath.split('/')[1] !== this.labelFolderName) {
-                                oriFilesList.push(newFilesList[a]);
-                            }
-                        }
-
-                        // Segmentation Item
+                        let dcmSubfolder = new FolderModel();
+                        let oriFolderName = dcmFilesList[0].webkitRelativePath.split('/')[dcmFilesList[0].webkitRelativePath.split('/').length - 3];
                         let fields = {
-                            name: this.labelFolderName,
-                            description: 'Nrrd file labels'
-                        };
-                        options = {
-                            folderId: imageSetFolderId
-                        };
-                        this.createAnItemAndUploadFiles(fields, options, segFilesList);
-
-                        // original folder
-                        let indexOfOri = (allSubfolders.length - 1 - allSubfolders.indexOf(this.labelFolderName));
-                        let oriFolderName = allSubfolders[indexOfOri];
-                        let subfolder = new FolderModel();
-                        fields = {
                             name: oriFolderName,
                             description: ''
                         };
-                        subfolder.set(_.extend(fields, {
+                        dcmSubfolder.set(_.extend(fields, {
                             parentType: 'folder',
                             parentId: imageSetFolderId
                         }));
-                        subfolder.on('g:saved', function (res) {
-                            /* create item with fileName */
-                            for (let a = 0; a < oriFilesList.length; a++) {
-                                let fileName = oriFilesList[a].name;
+                        dcmSubfolder.on('g:saved', function (res) {
+                            let allParentfolders  = [];
+                            for (let a = 0; a < dcmFilesList.length; a++) {
+                                let dcmParentfolderName = dcmFilesList[a].webkitRelativePath.split('/')[dcmFilesList[0].webkitRelativePath.split('/').length - 2];
+                                if (allParentfolders.indexOf(dcmParentfolderName) === -1) {
+                                    allParentfolders.push(dcmParentfolderName);
+                                }
+                            }
+                            let rearragedSubFolders = [];
+                            for (let a = 0; a < allParentfolders.length; a++) {
+                                let sub = [];
+                                for (let b = 0; b < dcmFilesList.length; b++) {
+                                    let dcmParentfolderName = dcmFilesList[b].webkitRelativePath.split('/')[dcmFilesList[b].webkitRelativePath.split('/').length - 2];
+                                    if (dcmParentfolderName === allParentfolders[a]) {
+                                        sub.push(dcmFilesList[b]);
+                                    }
+                                }
+                                rearragedSubFolders.push(sub);
+                            }
+
+                            for (let a = 0; a < rearragedSubFolders.length; a++) {
+                                let dcmLabelName = rearragedSubFolders[a][0].webkitRelativePath.split('/')[rearragedSubFolders[a][0].webkitRelativePath.split('/').length - 2];
                                 fields = {
-                                    name: fileName,
-                                    description: 'Original nrrd file'
+                                    name: dcmLabelName,
+                                    description: 'dicom files'
                                 };
                                 options = {
-                                    folderId: subfolder.get('_id')
+                                    folderId: dcmSubfolder.get('_id')
                                 };
-                                this.createItemsAndUploadFiles(fields, options, oriFilesList[a], oriFilesList.length);
+                                this.createAnItemAndUploadFiles(fields, options, rearragedSubFolders[a]);
                             }
                         }, this).on('g:error', function (err) {
                             this.$('.g-validation-failed-message').text(err.responseJSON.message);
                             this.$('button.g-save-folder').girderEnable(true);
                             this.$('#g-' + err.responseJSON.field).focus();
                         }, this).save();
-                    } else if (allSubfolders.length === 1) {
+                    }
+                }
+                if (typeOfFile === 'nrrd') {
+                    // nrrd should only have only one type
+                    let numberOfSeparator = newFilesList[0].webkitRelativePath.match(/\//g);
+                    // --Original(or label)
+                    //    -a.nrrd
+                    //    -b.nrrd
+                    if (numberOfSeparator.length === 1) {
+                        if (!this.isLabel) {
+                            // create item with fileName
+                            for (let a = 0; a < newFilesList.length; a++) {
+                                let fileName = newFilesList[a].name;
+                                fields = {
+                                    name: fileName,
+                                    description: 'Original nrrd file'
+                                };
+                                options = {
+                                    folderId: folder.get('_id')
+                                };
+                                this.createItemsAndUploadFiles(fields, options, newFilesList[a], newFilesList.length);
+                            }
+                        } else {
+                            fields = {
+                                name: imageSetName,
+                                description: 'Nrrd file labels'
+                            };
+                            options = {
+                                folderId: folder.get('_id')
+                            };
+                            this.createAnItemAndUploadFiles(fields, options, newFilesList);
+                        }
+                    } else if (numberOfSeparator.length === 2) {
                         // ---Project1
                         //     --Original
                         //         -a.nrrd
                         //         -b.nrrd
-                        if (!this.isLabel) {
+                        //    (--Segmentation
+                        //         -aSeg.nrrd
+                        //         -bSeg.nrrd)
+                        let allSubfolders = [];
+                        for (let a = 0; a < newFilesList.length; a++) {
+                            let subfolderName = newFilesList[a].webkitRelativePath.split('/')[1];
+                            if (allSubfolders.indexOf(subfolderName) === -1) {
+                                allSubfolders.push(subfolderName);
+                            }
+                        }
+
+                        this.labelFolderName = $('#potentialLabelName').val();
+                        // Has segmentation folder
+                        // ---Project1
+                        //     --Original
+                        //         -a.nrrd
+                        //         -b.nrrd
+                        //    --Segmentation
+                        //         -aSeg.nrrd
+                        //         -bSeg.nrrd
+                        if (allSubfolders.indexOf(this.labelFolderName) !== -1 && allSubfolders.length < 3) {
+                            let oriFilesList = [];
+                            let segFilesList = [];
+                            for (let a = 0; a < newFilesList.length; a++) {
+                                if (newFilesList[a].webkitRelativePath.split('/')[1] === this.labelFolderName) {
+                                    segFilesList.push(newFilesList[a]);
+                                }
+                                if (newFilesList[a].webkitRelativePath.split('/')[1] !== this.labelFolderName) {
+                                    oriFilesList.push(newFilesList[a]);
+                                }
+                            }
+
+                            // Segmentation Item
+                            let fields = {
+                                name: this.labelFolderName,
+                                description: 'Nrrd file labels'
+                            };
+                            options = {
+                                folderId: imageSetFolderId
+                            };
+                            this.createAnItemAndUploadFiles(fields, options, segFilesList);
+
+                            // original folder
+                            let indexOfOri = (allSubfolders.length - 1 - allSubfolders.indexOf(this.labelFolderName));
+                            let oriFolderName = allSubfolders[indexOfOri];
                             let subfolder = new FolderModel();
-                            let oriFolderName = allSubfolders[0];
-                            let fields = {name: oriFolderName, description: ''};
+                            fields = {
+                                name: oriFolderName,
+                                description: ''
+                            };
                             subfolder.set(_.extend(fields, {
                                 parentType: 'folder',
                                 parentId: imageSetFolderId
                             }));
                             subfolder.on('g:saved', function (res) {
                                 /* create item with fileName */
-                                for (let a = 0; a < newFilesList.length; a++) {
-                                    let fileName = newFilesList[a].name;
+                                for (let a = 0; a < oriFilesList.length; a++) {
+                                    let fileName = oriFilesList[a].name;
                                     fields = {
                                         name: fileName,
                                         description: 'Original nrrd file'
@@ -584,35 +564,67 @@ var UploadWidget = UploadWidgetView.extend({
                                     options = {
                                         folderId: subfolder.get('_id')
                                     };
-                                    this.createItemsAndUploadFiles(fields, options, newFilesList[a], newFilesList.length);
+                                    this.createItemsAndUploadFiles(fields, options, oriFilesList[a], oriFilesList.length);
                                 }
                             }, this).on('g:error', function (err) {
                                 this.$('.g-validation-failed-message').text(err.responseJSON.message);
                                 this.$('button.g-save-folder').girderEnable(true);
                                 this.$('#g-' + err.responseJSON.field).focus();
                             }, this).save();
+                        } else if (allSubfolders.length === 1) {
+                            // ---Project1
+                            //     --Original
+                            //         -a.nrrd
+                            //         -b.nrrd
+                            if (!this.isLabel) {
+                                let subfolder = new FolderModel();
+                                let oriFolderName = allSubfolders[0];
+                                let fields = {name: oriFolderName, description: ''};
+                                subfolder.set(_.extend(fields, {
+                                    parentType: 'folder',
+                                    parentId: imageSetFolderId
+                                }));
+                                subfolder.on('g:saved', function (res) {
+                                    /* create item with fileName */
+                                    for (let a = 0; a < newFilesList.length; a++) {
+                                        let fileName = newFilesList[a].name;
+                                        fields = {
+                                            name: fileName,
+                                            description: 'Original nrrd file'
+                                        };
+                                        options = {
+                                            folderId: subfolder.get('_id')
+                                        };
+                                        this.createItemsAndUploadFiles(fields, options, newFilesList[a], newFilesList.length);
+                                    }
+                                }, this).on('g:error', function (err) {
+                                    this.$('.g-validation-failed-message').text(err.responseJSON.message);
+                                    this.$('button.g-save-folder').girderEnable(true);
+                                    this.$('#g-' + err.responseJSON.field).focus();
+                                }, this).save();
+                            } else {
+                                let segItemName = allSubfolders[0];
+                                fields = {
+                                    name: segItemName,
+                                    description: 'Nrrd file labels'
+                                };
+                                options = {
+                                    folderId: imageSetFolderId
+                                };
+                                this.createAnItemAndUploadFiles(fields, options, newFilesList);
+                            }
                         } else {
-                            let segItemName = allSubfolders[0];
-                            fields = {
-                                name: segItemName,
-                                description: 'Nrrd file labels'
-                            };
-                            options = {
-                                folderId: imageSetFolderId
-                            };
-                            this.createAnItemAndUploadFiles(fields, options, newFilesList);
+                            console.error('Can only contain one original subfolder or ori+seg folders');
+                            return this;
                         }
-                    } else {
-                        console.error('Can only contain one original subfolder or ori+seg folders');
-                        return this;
                     }
                 }
-            }
-        }, this).on('g:error', function (err) {
-            this.$('.g-validation-failed-message').text(err.responseJSON.message);
-            this.$('button.g-save-folder').girderEnable(true);
-            this.$('#g-' + err.responseJSON.field).focus();
-        }, this).save();
+            }, this).on('g:error', function (err) {
+                this.$('.g-validation-failed-message').text(err.responseJSON.message);
+                this.$('button.g-save-folder').girderEnable(true);
+                this.$('#g-' + err.responseJSON.field).focus();
+            }, this).save();
+        }
     },
     createFolder: function (fields, options) {
         var folder = new FolderModel();

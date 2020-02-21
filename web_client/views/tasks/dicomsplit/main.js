@@ -140,7 +140,13 @@ var DicomSplit = View.extend({
                     this.render(this.openedFolder);
                     this.openedFolderId = this.openedFolder.get('_id');
                     this.selectedFolderName = this.openedFolder.get('name');
-                }, this).save();
+                }, this).on('g:error', function (res) {
+                    events.trigger('g:alert', {
+                        text: res.responseJSON.message,
+                        type: 'danger',
+                        timeout: 4000
+                    });
+                }).save();
             }
         } else {
             $(e.currentTarget)

@@ -11,7 +11,7 @@ def tearDownModule():
     base.stopServer()
 
 
-class ColormapsTestCase(base.TestCase):
+class LinkTestCase(base.TestCase):
     def setUp(self):
         base.TestCase.setUp(self)
 
@@ -22,5 +22,5 @@ class ColormapsTestCase(base.TestCase):
                 'Test',
                 'User',
                 'user%d@example.com' % n
-            ) for n in [0]
+            ) for n in [0, 1]
         ]

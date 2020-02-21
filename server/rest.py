@@ -8,7 +8,7 @@ from girder.models.file import File
 from girder.models.item import Item
 from girder.models.folder import Folder
 from girder.constants import AccessType, TokenScope
-from girder.exceptions import ValidationException
+from girder.exceptions import ValidationException, GirderException
 from girder.models.setting import Setting
 
 from girder.plugins.Archive.models.folder import Folder as ArchiveFolder
@@ -185,9 +185,10 @@ class SSR_task(Resource):
                 'itemId': item['_id'],
                 'exts': 'jpg'
             }
-
-            item['thumbnailId'] = list(File().find(q, limit=limit))[0]['_id']
-
+            try:
+                item['thumbnailId'] = list(File().find(q, limit=limit))[0]['_id']
+            except Exception:
+                raise GirderException('%s does not have thumbnail' % item['name'])
             itemWithThumbs.append(item)
         return itemWithThumbs
 
