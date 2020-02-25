@@ -10,6 +10,7 @@ import ItemModel from 'girder/models/ItemModel';
 import events from 'girder/events';
 import { formatSize } from 'girder/misc';
 import { handleClose, handleOpen } from 'girder/dialog';
+import { restRequest } from 'girder/rest';
 
 import UploadWidgetTemplate from '../../templates/widgets/uploadWidget.pug';
 import UploadWidgetNonModalTemplate from '../../templates/widgets/uploadWidgetNonModal.pug';
@@ -31,7 +32,8 @@ var UploadWidget = UploadWidgetView.extend({
         return _.extend({}, UploadWidgetView.prototype.events, {
             'submit #g-upload-form': function (e) {
                 e.preventDefault();
-                this.validateFileType(this.files);
+                this.startUpload();
+                // this.validateFileTypeBak(this.files);
             },
             'change #g-files': function () {
                 var files = this.$('#g-files')[0].files;
@@ -39,7 +41,7 @@ var UploadWidget = UploadWidgetView.extend({
                 if (files.length) {
                     this.files = files;
                     this.filesChanged();
-                    this.autoParsePotentialLabelName(this.files);
+                    // this.autoParsePotentialLabelName(this.files);
                 }
             }
         });
@@ -99,54 +101,77 @@ var UploadWidget = UploadWidgetView.extend({
         }
         return this;
     },
-
-    autoParsePotentialLabelName: function (files) {
+    startUpload: function () {
+        this.currentIndex = 0;
+        this.folderLevel = [];
         let newFilesList = [];
-
-        for (let a = 0; a < files.length; a++) {
-            if (files[a].name !== '.DS_Store') {
-                newFilesList.push(files[a]);
+        for (let a = 0; a < this.files.length; a++) {
+            if (this.files[a].name !== '.DS_Store') {
+                newFilesList.push(this.files[a]);
             }
         }
+        this.files = newFilesList;
+        this.setUploadEnabled(false);
+        this.$('.g-drop-zone').addClass('hide');
+        this.$('.g-progress-overall').removeClass('hide');
+        this.$('.g-upload-error-message').empty();
 
-        let typeOfFile;
-        for (let a = 0; a < newFilesList.length; a++) {
-            if (newFilesList[a].name.lastIndexOf('.') === -1) {
-                typeOfFile = 'unknowType';
-            } else {
-                typeOfFile = newFilesList[a].name.substr(newFilesList[a].name.lastIndexOf('.') + 1);
-            }
-            if (typeOfFile === 'unknowType' || typeOfFile === 'dcm') {
-                break;
-            }
-        }
-        let potentialNames = [];
-        if (typeOfFile === 'nrrd') {
-            for (let a = 0; a < newFilesList.length; a++) {
-                let potentialName = newFilesList[a].webkitRelativePath.split('/')[newFilesList[a].webkitRelativePath.split('/').length - 2];
-                potentialNames.indexOf(potentialName) === -1 ? potentialNames.push(potentialName) : console.log('This item already exists');
-            }
+        if (this.multiFile) {
+            this.$('.g-progress-current').removeClass('hide');
         }
 
-        if (typeOfFile === 'dcm' || typeOfFile === 'unknowType') {
-            let segFilesList = [];
-            for (let a = 0; a < newFilesList.length; a++) {
-                let subFileTypeOfFile = newFilesList[a].name.substr(newFilesList[a].name.lastIndexOf('.') + 1);
-                if (subFileTypeOfFile === 'nrrd') {
-                    segFilesList.push(newFilesList[a]);
-
-                    let potentialName = newFilesList[a].webkitRelativePath.split('/')[newFilesList[a].webkitRelativePath.split('/').length - 2];
-                    potentialNames.indexOf(potentialName) === -1 ? potentialNames.push(potentialName) : console.log('This item already exists');
-                }
-            }
-        }
-        // console.log(potentialNames);
-        // $('#labelTemplate').html(labelTemplate({
-        //     potentialLabelName:potentialNames
-        // }))
-
-        // $('#isLabel').click(_.bind(function(){this._isLabel()},this));
+        this.currentIndex = 0;
+        this.overallProgress = 0;
+        this.trigger('g:uploadStarted');
+        this.validateFileType();
     },
+    // autoParsePotentialLabelName: function (files) {
+    //     let newFilesList = [];
+
+    //     for (let a = 0; a < files.length; a++) {
+    //         if (files[a].name !== '.DS_Store') {
+    //             newFilesList.push(files[a]);
+    //         }
+    //     }
+
+    //     let typeOfFile;
+    //     for (let a = 0; a < newFilesList.length; a++) {
+    //         if (newFilesList[a].name.lastIndexOf('.') === -1) {
+    //             typeOfFile = 'unknowType';
+    //         } else {
+    //             typeOfFile = newFilesList[a].name.substr(newFilesList[a].name.lastIndexOf('.') + 1);
+    //         }
+    //         if (typeOfFile === 'unknowType' || typeOfFile === 'dcm') {
+    //             break;
+    //         }
+    //     }
+    //     let potentialNames = [];
+    //     if (typeOfFile === 'nrrd') {
+    //         for (let a = 0; a < newFilesList.length; a++) {
+    //             let potentialName = newFilesList[a].webkitRelativePath.split('/')[newFilesList[a].webkitRelativePath.split('/').length - 2];
+    //             potentialNames.indexOf(potentialName) === -1 ? potentialNames.push(potentialName) : console.log('This item already exists');
+    //         }
+    //     }
+
+    //     if (typeOfFile === 'dcm' || typeOfFile === 'unknowType') {
+    //         let segFilesList = [];
+    //         for (let a = 0; a < newFilesList.length; a++) {
+    //             let subFileTypeOfFile = newFilesList[a].name.substr(newFilesList[a].name.lastIndexOf('.') + 1);
+    //             if (subFileTypeOfFile === 'nrrd') {
+    //                 segFilesList.push(newFilesList[a]);
+
+    //                 let potentialName = newFilesList[a].webkitRelativePath.split('/')[newFilesList[a].webkitRelativePath.split('/').length - 2];
+    //                 potentialNames.indexOf(potentialName) === -1 ? potentialNames.push(potentialName) : console.log('This item already exists');
+    //             }
+    //         }
+    //     }
+    //     // console.log(potentialNames);
+    //     // $('#labelTemplate').html(labelTemplate({
+    //     //     potentialLabelName:potentialNames
+    //     // }))
+
+    //     // $('#isLabel').click(_.bind(function(){this._isLabel()},this));
+    // },
     // _isLabel:function(e){
     //     if ($('#isLabel').is(':checked')){
     //         this.isLabel = true;
@@ -156,7 +181,317 @@ var UploadWidget = UploadWidgetView.extend({
     //         $('#potentialLabelNameDom').hide()
     //     }
     // },
-    validateFileType(files) {
+    validateFileType() {
+        // Type of uploads
+        if (this.currentIndex >= this.files.length) {
+            // All files have finished
+            if (this.modal) {
+                this.$el.modal('hide');
+            }
+            this.trigger('g:uploadFinished', {
+                files: this.files,
+                totalSize: this.totalSize
+            });
+            return;
+        }
+        this.folderLevelIndex = 0;
+        if (this.files[this.currentIndex].name.substr(this.files[this.currentIndex].name.lastIndexOf('.') + 1) === 'nrrd') {
+            let names = this.files[this.currentIndex].webkitRelativePath.split('/');
+            this.recusivelyCreateFolder(names, 1, this.files[this.currentIndex], this.parent.get('_id'));
+        } else {
+            let names = this.files[this.currentIndex].webkitRelativePath.split('/');
+            this.recusivelyCreateFolder(names, 2, this.files[this.currentIndex], this.parent.get('_id'));
+        }
+    },
+    recusivelyCreateFolder: function (names, type, file, parentId) {
+        // type: 1 file as volume
+        //       2 folder as volume
+        if (type === 1) {
+            if (names.length === 1) {
+                let item = new ItemModel();
+                item.set({
+                    name: names.shift(),
+                    folderId: parentId
+                }).on('g:saved', function (res) {
+                    let newFile = new FileModel();
+                    this.fileupload(newFile, item, file);
+                }, this).save();
+            } else {
+                let folderName = names.shift();
+                let fields = {name: folderName, description: ''};
+                let folder = new FolderModel();
+                if (this.folderLevel[this.folderLevelIndex] === undefined) {
+                    this.folderLevel[this.folderLevelIndex] = {};
+                }
+                if (this.folderLevel[this.folderLevelIndex][folderName] === undefined) {
+                    folder.set(_.extend(fields, {
+                        parentType: 'folder',
+                        parentId: parentId
+                    })).on('g:saved', function () {
+                        this.folderLevel[this.folderLevelIndex][folder.get('name')] = folder.get('_id');
+                        this.folderLevelIndex += 1;
+                        this.recusivelyCreateFolder(names, type, file, folder.get('_id'));
+                    }, this).save();
+                } else {
+                    this.folderLevelIndex += 1;
+                    this.recusivelyCreateFolder(names, type, file, this.folderLevel[this.folderLevelIndex - 1][folderName]);
+                }
+                // folder.set(_.extend(fields, {
+                //     parentType: 'folder',
+                //     parentId: parentId
+                // })).on('g:saved', function () {
+                //     folderLevel[this.folderLevelIndex] = {};
+                //     folderLevel[this.folderLevelIndex][folder.get('name')] = folder.get('_id');
+                //     this.folderLevelIndex += 1;
+                //     this.recusivelyCreateFolder(names, type, file, folder.get('_id'));
+                // }, this).on('g:error', function () {
+                //     restRequest({
+                //         url: 'folder',
+                //         method: 'GET',
+                //         data: {
+                //             parentId: parentId,
+                //             parentType: 'folder',
+                //             name: folderName
+                //         }
+                //     }).done((res) => {
+                //         this.recusivelyCreateFolder(names, type, file, res[0]['_id']);
+                //     });
+                // }, this).save();
+            }
+        } else if (type === 2) {
+            if (names.length === 2) {
+                let itemName = names.shift();
+                let newFile = new FileModel();
+                restRequest({
+                    url: 'item',
+                    method: 'GET',
+                    data: {
+                        folderId: parentId,
+                        name: itemName
+                    }
+                }).done((res) => {
+                    if (res.length) {
+                        let existItem = new ItemModel(res[0]);
+                        this.fileupload(newFile, existItem, file);
+                    } else {
+                        let newItem = new ItemModel();
+                        newItem.set({
+                            name: itemName,
+                            folderId: parentId
+                        }).on('g:saved', function (res) {
+                            this.fileupload(newFile, newItem, file);
+                        }, this).save();
+                    }
+                });
+            } else {
+                let folderName = names.shift();
+                let fields = {name: folderName, description: ''};
+                let folder = new FolderModel();
+                if (this.folderLevel[this.folderLevelIndex] === undefined) {
+                    this.folderLevel[this.folderLevelIndex] = {};
+                }
+                if (this.folderLevel[this.folderLevelIndex][folderName] === undefined) {
+                    folder.set(_.extend(fields, {
+                        parentType: 'folder',
+                        parentId: parentId
+                    })).on('g:saved', function () {
+                        this.folderLevel[this.folderLevelIndex][folder.get('name')] = folder.get('_id');
+                        this.folderLevelIndex += 1;
+                        this.recusivelyCreateFolder(names, type, file, folder.get('_id'));
+                    }, this).save();
+                } else {
+                    this.folderLevelIndex += 1;
+                    this.recusivelyCreateFolder(names, type, file, this.folderLevel[this.folderLevelIndex - 1][folderName]);
+                }
+            }
+        }
+    },
+    fileupload: function (newFile, item, file) {
+        newFile.on('g:upload.complete', function () {
+            this.currentIndex += 1;
+            this.validateFileType();
+        }, this).on('g:upload.chunkSent', function (info) {
+            this.overallProgress += info.bytes;
+        }, this).on('g:upload.progress', function (info) {
+            var currentProgress = info.startByte + info.loaded;
+
+            this.$('.g-progress-current>.progress-bar').css('width',
+                Math.ceil(100 * currentProgress / info.total) + '%');
+            this.$('.g-progress-overall>.progress-bar').css('width',
+                Math.ceil(100 * (this.overallProgress + info.loaded) /
+                          this.totalSize) + '%');
+            this.$('.g-current-progress-message').html(
+                '<i class="icon-doc-text"/>' + (this.currentIndex + 1) + ' of ' +
+                    this.files.length + ' - <b>' + info.file.name + '</b>: ' +
+                    formatSize(currentProgress) + ' / ' +
+                    formatSize(info.total)
+            );
+            this.$('.g-overall-progress-message').html('Overall progress: ' +
+                formatSize(this.overallProgress + info.loaded) + ' / ' +
+                formatSize(this.totalSize));
+        }, this).on('g:upload.error', function (info) {
+            var html = info.message + ' <a class="g-resume-upload">' +
+                'Click to resume upload</a>';
+            $('.g-upload-error-message').html(html);
+        }, this).on('g:upload.errorStarting', function (info) {
+            var html = info.message + ' <a class="g-restart-upload">' +
+                'Click to restart upload</a>';
+            $('.g-upload-error-message').html(html);
+        }, this);
+        newFile.upload(item, file, null);
+    },
+    createFolder: function (fields, options) {
+        var folder = new FolderModel();
+        folder.set(_.extend(fields, options));
+        folder.on('g:saved', function (res) {
+            this.parentFolder = new FolderModel(res);
+            this.parentFolderId = this.parentFolder.get('id');
+        }, this).on('g:error', function (err) {
+            this.$('.g-validation-failed-message').text(err.responseJSON.message);
+            this.$('button.g-save-folder').girderEnable(true);
+            this.$('#g-' + err.responseJSON.field).focus();
+        }, this).save();
+    },
+    createItemsAndUploadFiles: function (fields, options, file, numOfFiles) {
+        var item = new ItemModel();
+        item.set(_.extend(fields, options));
+
+        this.currentIndex = 0;
+        this.overallProgress = 0;
+        this.$('.g-drop-zone').addClass('hide');
+        this.$('.g-progress-overall').removeClass('hide');
+        this.$('.g-progress-current').removeClass('hide');
+        this.$('.g-upload-error-message').empty();
+
+        item.on('g:saved', function (res) {
+            let otherParams = {};
+
+            let parentItem = item;
+            // console.log(item.get('_id'))
+            let newFile = new FileModel();
+
+            newFile.on('g:upload.complete', function () {
+                // this.files[this.currentIndex].id = this.newFile.id;
+                this.currentIndex += 1;
+                // this.uploadNextFile();
+                if (this.currentIndex >= numOfFiles) {
+                    // All files have finished
+                    if (this.modal) {
+                        this.$el.modal('hide');
+                    }
+                    this.trigger('g:uploadFinished', {
+                        files: file,
+                        totalSize: this.totalSize
+                    });
+                }
+            }, this).on('g:upload.chunkSent', function (info) {
+                this.overallProgress += info.bytes;
+            }, this).on('g:upload.progress', function (info) {
+                var currentProgress = info.startByte + info.loaded;
+
+                this.$('.g-progress-current>.progress-bar').css('width',
+                    Math.ceil(100 * currentProgress / info.total) + '%');
+                this.$('.g-progress-overall>.progress-bar').css('width',
+                    Math.ceil(100 * (this.overallProgress + info.loaded) /
+                              this.totalSize) + '%');
+                this.$('.g-current-progress-message').html(
+                    '<i class="icon-doc-text"/>' + (this.currentIndex + 1) + ' of ' +
+                        this.files.length + ' - <b>' + info.file.name + '</b>: ' +
+                        formatSize(currentProgress) + ' / ' +
+                        formatSize(info.total)
+                );
+                this.$('.g-overall-progress-message').html('Overall progress: ' +
+                    formatSize(this.overallProgress + info.loaded) + ' / ' +
+                    formatSize(this.totalSize));
+            }, this).on('g:upload.error', function (info) {
+                var html = info.message + ' <a class="g-resume-upload">' +
+                    'Click to resume upload</a>';
+                $('.g-upload-error-message').html(html);
+            }, this).on('g:upload.errorStarting', function (info) {
+                var html = info.message + ' <a class="g-restart-upload">' +
+                    'Click to restart upload</a>';
+                $('.g-upload-error-message').html(html);
+            }, this);
+
+            newFile.upload(parentItem, file, null, otherParams);
+        }, this).on('g:error', function (err) {
+            this.$('.g-validation-failed-message').text(err.responseJSON.message);
+            this.$('button.g-save-item').girderEnable(true);
+            this.$('#g-' + err.responseJSON.field).focus();
+        }, this).save();
+    },
+    createAnItemAndUploadFiles: function (fields, options, files) {
+        var item = new ItemModel();
+        item.set(_.extend(fields, options));
+
+        this.currentIndex = 0;
+        this.overallProgress = 0;
+        this.$('.g-drop-zone').addClass('hide');
+        this.$('.g-progress-overall').removeClass('hide');
+        this.$('.g-progress-current').removeClass('hide');
+        this.$('.g-upload-error-message').empty();
+
+        item.on('g:saved', function (res) {
+            let otherParams = {};
+
+            let parentItem = item;
+            let newFile = new FileModel();
+            // this.$el.modal('hide');
+            // this.trigger('g:saved', item);
+
+            newFile.on('g:upload.complete', function () {
+                // this.files[this.currentIndex].id = this.newFile.id;
+                this.currentIndex += 1;
+                // this.uploadNextFile();
+                if (this.currentIndex >= this.files.length) {
+                    // All files have finished
+                    if (this.modal) {
+                        this.$el.modal('hide');
+                    }
+                    this.trigger('g:uploadFinished', {
+                        files: this.files,
+                        totalSize: this.totalSize
+                    });
+                }
+            }, this).on('g:upload.chunkSent', function (info) {
+                this.overallProgress += info.bytes;
+            }, this).on('g:upload.progress', function (info) {
+                var currentProgress = info.startByte + info.loaded;
+
+                this.$('.g-progress-current>.progress-bar').css('width',
+                    Math.ceil(100 * currentProgress / info.total) + '%');
+                this.$('.g-progress-overall>.progress-bar').css('width',
+                    Math.ceil(100 * (this.overallProgress + info.loaded) /
+                              this.totalSize) + '%');
+                this.$('.g-current-progress-message').html(
+                    '<i class="icon-doc-text"/>' + (this.currentIndex + 1) + ' of ' +
+                        this.files.length + ' - <b>' + info.file.name + '</b>: ' +
+                        formatSize(currentProgress) + ' / ' +
+                        formatSize(info.total)
+                );
+                this.$('.g-overall-progress-message').html('Overall progress: ' +
+                    formatSize(this.overallProgress + info.loaded) + ' / ' +
+                    formatSize(this.totalSize));
+            }, this).on('g:upload.error', function (info) {
+                var html = info.message + ' <a class="g-resume-upload">' +
+                    'Click to resume upload</a>';
+                $('.g-upload-error-message').html(html);
+            }, this).on('g:upload.errorStarting', function (info) {
+                var html = info.message + ' <a class="g-restart-upload">' +
+                    'Click to restart upload</a>';
+                $('.g-upload-error-message').html(html);
+            }, this);
+
+            for (let a = 0; a < files.length; a++) {
+                newFile.upload(parentItem, files[a], null, otherParams);
+            }
+        }, this).on('g:error', function (err) {
+            this.$('.g-validation-failed-message').text(err.responseJSON.message);
+            this.$('button.g-save-item').girderEnable(true);
+            this.$('#g-' + err.responseJSON.field).focus();
+        }, this).save();
+    },
+    validateFileTypeBak(files) {
         let newFilesList = [];
         for (let a = 0; a < files.length; a++) {
             if (files[a].name !== '.DS_Store') {
@@ -176,7 +511,6 @@ var UploadWidget = UploadWidgetView.extend({
                 break;
             }
         }
-
         // + Check label and original file number match
         // +
         // +
@@ -625,157 +959,6 @@ var UploadWidget = UploadWidgetView.extend({
                 this.$('#g-' + err.responseJSON.field).focus();
             }, this).save();
         }
-    },
-    createFolder: function (fields, options) {
-        var folder = new FolderModel();
-        folder.set(_.extend(fields, options));
-        folder.on('g:saved', function (res) {
-            this.parentFolder = new FolderModel(res);
-            this.parentFolderId = this.parentFolder.get('id');
-        }, this).on('g:error', function (err) {
-            this.$('.g-validation-failed-message').text(err.responseJSON.message);
-            this.$('button.g-save-folder').girderEnable(true);
-            this.$('#g-' + err.responseJSON.field).focus();
-        }, this).save();
-    },
-    createItemsAndUploadFiles: function (fields, options, file, numOfFiles) {
-        var item = new ItemModel();
-        item.set(_.extend(fields, options));
-
-        this.currentIndex = 0;
-        this.overallProgress = 0;
-        this.$('.g-drop-zone').addClass('hide');
-        this.$('.g-progress-overall').removeClass('hide');
-        this.$('.g-progress-current').removeClass('hide');
-        this.$('.g-upload-error-message').empty();
-
-        item.on('g:saved', function (res) {
-            let otherParams = {};
-
-            let parentItem = item;
-            // console.log(item.get('_id'))
-            let newFile = new FileModel();
-
-            newFile.on('g:upload.complete', function () {
-                // this.files[this.currentIndex].id = this.newFile.id;
-                this.currentIndex += 1;
-                // this.uploadNextFile();
-                if (this.currentIndex >= numOfFiles) {
-                    // All files have finished
-                    if (this.modal) {
-                        this.$el.modal('hide');
-                    }
-                    this.trigger('g:uploadFinished', {
-                        files: file,
-                        totalSize: this.totalSize
-                    });
-                }
-            }, this).on('g:upload.chunkSent', function (info) {
-                this.overallProgress += info.bytes;
-            }, this).on('g:upload.progress', function (info) {
-                var currentProgress = info.startByte + info.loaded;
-
-                this.$('.g-progress-current>.progress-bar').css('width',
-                    Math.ceil(100 * currentProgress / info.total) + '%');
-                this.$('.g-progress-overall>.progress-bar').css('width',
-                    Math.ceil(100 * (this.overallProgress + info.loaded) /
-                              this.totalSize) + '%');
-                this.$('.g-current-progress-message').html(
-                    '<i class="icon-doc-text"/>' + (this.currentIndex + 1) + ' of ' +
-                        this.files.length + ' - <b>' + info.file.name + '</b>: ' +
-                        formatSize(currentProgress) + ' / ' +
-                        formatSize(info.total)
-                );
-                this.$('.g-overall-progress-message').html('Overall progress: ' +
-                    formatSize(this.overallProgress + info.loaded) + ' / ' +
-                    formatSize(this.totalSize));
-            }, this).on('g:upload.error', function (info) {
-                var html = info.message + ' <a class="g-resume-upload">' +
-                    'Click to resume upload</a>';
-                $('.g-upload-error-message').html(html);
-            }, this).on('g:upload.errorStarting', function (info) {
-                var html = info.message + ' <a class="g-restart-upload">' +
-                    'Click to restart upload</a>';
-                $('.g-upload-error-message').html(html);
-            }, this);
-
-            newFile.upload(parentItem, file, null, otherParams);
-        }, this).on('g:error', function (err) {
-            this.$('.g-validation-failed-message').text(err.responseJSON.message);
-            this.$('button.g-save-item').girderEnable(true);
-            this.$('#g-' + err.responseJSON.field).focus();
-        }, this).save();
-    },
-    createAnItemAndUploadFiles: function (fields, options, files) {
-        var item = new ItemModel();
-        item.set(_.extend(fields, options));
-
-        this.currentIndex = 0;
-        this.overallProgress = 0;
-        this.$('.g-drop-zone').addClass('hide');
-        this.$('.g-progress-overall').removeClass('hide');
-        this.$('.g-progress-current').removeClass('hide');
-        this.$('.g-upload-error-message').empty();
-
-        item.on('g:saved', function (res) {
-            let otherParams = {};
-
-            let parentItem = item;
-            let newFile = new FileModel();
-            // this.$el.modal('hide');
-            // this.trigger('g:saved', item);
-
-            newFile.on('g:upload.complete', function () {
-                // this.files[this.currentIndex].id = this.newFile.id;
-                this.currentIndex += 1;
-                // this.uploadNextFile();
-                if (this.currentIndex >= this.files.length) {
-                    // All files have finished
-                    if (this.modal) {
-                        this.$el.modal('hide');
-                    }
-                    this.trigger('g:uploadFinished', {
-                        files: this.files,
-                        totalSize: this.totalSize
-                    });
-                }
-            }, this).on('g:upload.chunkSent', function (info) {
-                this.overallProgress += info.bytes;
-            }, this).on('g:upload.progress', function (info) {
-                var currentProgress = info.startByte + info.loaded;
-
-                this.$('.g-progress-current>.progress-bar').css('width',
-                    Math.ceil(100 * currentProgress / info.total) + '%');
-                this.$('.g-progress-overall>.progress-bar').css('width',
-                    Math.ceil(100 * (this.overallProgress + info.loaded) /
-                              this.totalSize) + '%');
-                this.$('.g-current-progress-message').html(
-                    '<i class="icon-doc-text"/>' + (this.currentIndex + 1) + ' of ' +
-                        this.files.length + ' - <b>' + info.file.name + '</b>: ' +
-                        formatSize(currentProgress) + ' / ' +
-                        formatSize(info.total)
-                );
-                this.$('.g-overall-progress-message').html('Overall progress: ' +
-                    formatSize(this.overallProgress + info.loaded) + ' / ' +
-                    formatSize(this.totalSize));
-            }, this).on('g:upload.error', function (info) {
-                var html = info.message + ' <a class="g-resume-upload">' +
-                    'Click to resume upload</a>';
-                $('.g-upload-error-message').html(html);
-            }, this).on('g:upload.errorStarting', function (info) {
-                var html = info.message + ' <a class="g-restart-upload">' +
-                    'Click to restart upload</a>';
-                $('.g-upload-error-message').html(html);
-            }, this);
-
-            for (let a = 0; a < files.length; a++) {
-                newFile.upload(parentItem, files[a], null, otherParams);
-            }
-        }, this).on('g:error', function (err) {
-            this.$('.g-validation-failed-message').text(err.responseJSON.message);
-            this.$('button.g-save-item').girderEnable(true);
-            this.$('#g-' + err.responseJSON.field).focus();
-        }, this).save();
     }
 });
 
