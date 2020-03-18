@@ -22,11 +22,12 @@ def _notifyUser(event):
     params = {}
     params['host'] = Setting().get(SettingKey.EMAIL_FROM_ADDRESS)
     text = template.render(**params)
+    print text
     mail_utils.sendEmail(
         to=email,
         toAdmins=False,
         subject='Task finished',
-        text=text)
+        text='Please go ahead to download.')
 
 
 def _updateJob(event):
