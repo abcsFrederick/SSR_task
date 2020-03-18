@@ -2,10 +2,23 @@ from . import rest
 import shutil
 from girder import events
 from girder.plugins.jobs.constants import JobStatus
-from girder.constants import SettingDefault
-from girder.utility import setting_utilities
+from girder.constants import SettingDefault, SettingKey
+from girder.utility import setting_utilities, mail_utils
+from girder.models.user import User as UserModel
 from .constants import PluginSettings
 from .models.link import Link
+
+
+def _notifyUser(event):
+    userId = event.info['job']['userId']
+    user = UserModel().load(userId, force=True, fields=['email'])
+    print event.info['job'].get('meta', {})
+    email = user['email']
+    mail_utils.sendEmail(
+        to=email,
+        toAdmins=False,
+        subject='Task finished',
+        text='please go ahead to download')
 
 
 def _updateJob(event):
@@ -24,6 +37,8 @@ def _updateJob(event):
         if status == JobStatus.SUCCESS or status == JobStatus.CANCELED or status == JobStatus.ERROR:
             tmpPath = job.get('kwargs')['inputs']['outPath']['data']
             shutil.rmtree(tmpPath)
+        if status == JobStatus.SUCCESS:
+            _notifyUser(event)
     else:
         return
 
@@ -45,6 +60,9 @@ SettingDefault.defaults.update({
         "DicomSplit": True,
         "ExampleTask": False
     }
+})
+SettingDefault.defaults.update({
+    SettingKey.EMAIL_FROM_ADDRESS: 'https://fr-s-ivg-ssr-d1.ncifcrf.gov/'
 })
 
 
