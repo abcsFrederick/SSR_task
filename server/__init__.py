@@ -17,12 +17,12 @@ def _notifyUser(event):
     user = UserModel().load(userId, force=True, fields=['email'])
     print event.info['job'].get('meta', {})
     email = user['email']
-    template = _templateLookup.get_template('job_done.mako')
+    # template = _templateLookup.get_template('job_done.mako')
 
-    params = {}
-    params['host'] = Setting().get(SettingKey.EMAIL_FROM_ADDRESS)
-    text = template.render(**params)
-    print text
+    # params = {}
+    # params['host'] = Setting().get(SettingKey.EMAIL_FROM_ADDRESS)
+    # text = template.render(**params)
+    # print text
     mail_utils.sendEmail(
         to=email,
         toAdmins=False,
@@ -73,8 +73,8 @@ SettingDefault.defaults.update({
 SettingDefault.defaults.update({
     SettingKey.EMAIL_FROM_ADDRESS: 'https://fr-s-ivg-ssr-d1.ncifcrf.gov/'
 })
-_templateDir = os.path.join(os.path.dirname(__file__), 'mail_templates')
-_templateLookup = TemplateLookup(directories=[_templateDir], collection_size=50)
+# _templateDir = os.path.join(os.path.dirname(__file__), 'mail_templates')
+# _templateLookup = TemplateLookup(directories=[_templateDir], collection_size=50)
 
 
 def load(info):
