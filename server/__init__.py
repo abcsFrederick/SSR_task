@@ -18,13 +18,12 @@ def _notifyUser(event):
     outputName = event.info['job'].get('kwargs')['inputs']['outPath']['data'].split('/')[-1]
     email = user['email']
     template = _templateLookup.get_template('job_done.mako')
-
     params = {}
     params['host'] = Setting().get(SettingKey.EMAIL_FROM_ADDRESS)
+    params['brandName'] = Setting().get(SettingKey.BRAND_NAME)
     params['outputName'] = outputName
     text = template.render(**params)
 
-    print text
     mail_utils.sendEmail(
         to=email,
         toAdmins=False,
