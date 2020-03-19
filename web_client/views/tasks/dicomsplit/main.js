@@ -165,18 +165,6 @@ var DicomSplit = View.extend({
                 this.renderSelectFolder(this.selectedFolder);
                 this.selectedFolderId = this.selectedFolder.get('_id');
             }, this).save();
-            restRequest({
-                url: 'folder',
-                method: 'GET',
-                data: {
-                    'parentType': 'folder',
-                    'parentId': dropedFolderId
-                }
-            }).done((resp) => {
-                this.existFolders = resp.map((e) => e.name);
-            }).fail((err) => {
-                this.trigger('g:error', err);
-            });
         } else {
             $(e.currentTarget)
                 .removeClass('g-dropzone-show')
@@ -267,49 +255,62 @@ var DicomSplit = View.extend({
                 timeout: 4000
             });
         } else {
-            for (let a = 0; a < this.existFolders.length; a++) {
-                if (this.existFolders[a] === this.selectedFolderName) {
+            restRequest({
+                url: 'folder',
+                method: 'GET',
+                data: {
+                    'parentType': 'folder',
+                    'parentId': this.selectedFolder.id
+                }
+            }).done((resp) => {
+                this.existFolders = resp.map((e) => e.name);
+                for (let a = 0; a < this.existFolders.length; a++) {
+                    if (this.existFolders[a] === this.selectedFolderName) {
+                        events.trigger('g:alert', {
+                            text: `Default name ${this.selectedFolderName} exist in output folder, click split result folder to give a new name`,
+                            type: 'danger',
+                            timeout: 4000
+                        });
+                        return null;
+                    }
+                }
+                if (this.table.parseAndValidateSpec()) {
+                    this.dicomSplit.set({
+                        inputType: this.inputType,
+                        subfolders: this.table.subfolders,
+                        n: this.table.n,
+                        axis: this.table.axis,
+                        order: this.table.order,
+                        pushFolderId: this.selectedFolderId,
+                        pushFolderName: this.selectedFolderName
+                    });
+                    this.dicomSplit.createJob().done((job) => {
+                        this.$('#cancelTask').show();
+                        this.$('#submitTask').hide();
+                        this.job = job;
+                        this.listenTo(eventStream, 'g:event.job_status', _.bind(function (event) {
+                            var info = event.data;
+                            if (info._id === job.id) {
+                                job.set(info);
+                                this.renderJobStatus(job);
+                            }
+                        }, this));
+                    });
+                } else {
                     events.trigger('g:alert', {
-                        text: `Default name ${this.selectedFolderName} exist in output folder, click split result folder to give a new name`,
+                        icon: 'cancel',
+                        text: 'Params missing',
                         type: 'danger',
                         timeout: 4000
                     });
-                    return null;
                 }
-            }
-            if (this.table.parseAndValidateSpec()) {
-                this.dicomSplit.set({
-                    inputType: this.inputType,
-                    subfolders: this.table.subfolders,
-                    n: this.table.n,
-                    axis: this.table.axis,
-                    order: this.table.order,
-                    pushFolderId: this.selectedFolderId,
-                    pushFolderName: this.selectedFolderName
-                });
-                this.dicomSplit.createJob().done((job) => {
-                    this.$('#cancelTask').show();
-                    this.$('#submitTask').hide();
-                    this.job = job;
-                    this.listenTo(eventStream, 'g:event.job_status', _.bind(function (event) {
-                        var info = event.data;
-                        if (info._id === job.id) {
-                            job.set(info);
-                            this.renderJobStatus(job);
-                        }
-                    }, this));
-                });
-            } else {
-                events.trigger('g:alert', {
-                    icon: 'cancel',
-                    text: 'Params missing',
-                    type: 'danger',
-                    timeout: 4000
-                });
-            }
+            }).fail((err) => {
+                this.trigger('g:error', err);
+            });
         }
     },
     renderJobStatus: function (job) {
+        console.log(job.get('status'));
         if (job.get('status') === 3) {
             this.$('#cancelTask').hide();
             this.$('#submitTask').show();

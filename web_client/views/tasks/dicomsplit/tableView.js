@@ -60,9 +60,7 @@ var DicomSplit = View.extend({
         {'order': ['0', '1'],
             'axis': '1'},
         {'order': ['1', '0'],
-            'axis': '1'},
-        {'order': ['1'],
-            'axis': '0'}];
+            'axis': '1'}];
         this.settings = settings;
         this.$el.html(TableTemplate({
             from: settings.from,
