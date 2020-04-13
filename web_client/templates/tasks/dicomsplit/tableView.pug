@@ -3,20 +3,23 @@
   table.table
     thead
       tr
-        th Overview
-        th Pattern
+        th.overviewHead View
+        th.nameHead Name
+        th.patternHead Pattern
     tbody
       each patient, index in patients
         tr
           if from === 'Archive'
-            td.name #{patient.name}
+            td.thumb
               img(src="api/v1/Archive/SAIP/slice/download?Type=thumbnail&id=" + 
               patient.thumbnailId)
+            td.name #{patient.name}
             td.pattern-drop-zone(pname=patient.series_path, index=index)
               i.icon-docs Drop a pattern from pool
           else
-            td.name #{patient.name}
+            td.thumb
               img(src="api/v1/file/" + patient.thumbnailId + "/download")
+            td.name #{patient.name}
             td.pattern-drop-zone(pname=patient.name, index=index)
               i.icon-docs Drop a pattern from pool
 

@@ -1,10 +1,10 @@
-
 import copy
 import math
 import os
 import sys
 import uuid
 import warnings
+import re
 
 import numpy
 
@@ -122,8 +122,7 @@ def parse_patient(patient, delimiter='_'):
         warnings.warn('patient %s ends with %s, removing...' % (patient,
                                                                 ids[-1]))
         trailing = delimiter + ids.pop()
-    return [delimiter.join((root, id_)) for id_ in ids], trailing
-
+    return [delimiter.join((root, re.sub("[^0-9]", "", id_))) for id_ in ids], trailing
 
 def affine(dataset):
     S = numpy.array(dataset.ImagePositionPatient, numpy.float64)

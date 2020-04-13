@@ -310,16 +310,20 @@ var DicomSplit = View.extend({
         }
     },
     renderJobStatus: function (job) {
-        console.log(job.get('status'));
-        if (job.get('status') === 3) {
+        if (job.get('status') === 823) {
             this.$('#cancelTask').hide();
-            this.$('#submitTask').show();
-            events.trigger('g:alert', {
-                icon: 'ok',
-                text: 'Split successfully done.',
-                type: 'success',
-                timeout: 4000
-            });
+            this.$('#savingTaskResult').show();
+            window.job = job;
+            // while (1) {
+            //     console.log(job.get('status'));
+            // }
+            // this.$('#submitTask').show();
+            // events.trigger('g:alert', {
+            //     icon: 'ok',
+            //     text: 'Split successfully done.',
+            //     type: 'success',
+            //     timeout: 4000
+            // });
         }
     },
     _cancelJob: function () {
