@@ -25,6 +25,9 @@ import CollectionView from '../widgets/CollectionViewWidget';
 
 var Layout = View.extend({
     events: {
+        // 'change input[type=radio][name=modality]': function (e) {
+        //     events.trigger('SSR_taskView', 'DicomSplit');
+        // },
         'click .enabledTask': function (e) {
             let curRoute = Backbone.history.fragment,
                 routeParts = splitRoute(curRoute),

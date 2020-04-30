@@ -4,6 +4,7 @@ import TableTemplate from '../../../templates/tasks/dicomsplit/tableView.pug';
 import PatternTemplate from '../../../templates/tasks/dicomsplit/PatternView.pug';
 
 import  '../../../stylesheets/tasks/dicomsplit/tableView.styl';
+import  '../../../stylesheets/tasks/dicomsplit/taskNav.styl';
 
 var DicomSplit = View.extend({
     events: {
@@ -62,18 +63,28 @@ var DicomSplit = View.extend({
         {'order': ['1', '0'],
             'axis': '1'}];
         this.settings = settings;
+        // if (this.settings.modality === 'MRI') {
         this.$el.html(TableTemplate({
             from: settings.from,
             patients: settings.patients,
             pool: this.defualtPool
         }));
-        this.subfolders = new Array(settings.patients.length);
+        // } else if (this.settings.modality === 'PTCT') {
+        //     this.$el.html(TableTemplate({
+        //         from: settings.from,
+        //         patients: settings.patients,
+        //         pool: this.defualtPool,
+        //         modality: 'PTCT'
+        //     }));
+        // }
+        this.allPatientsLength = settings.patients['MRI'].length + settings.patients['PTCT'].length;
+        this.subfolders = new Array(this.allPatientsLength);
         this.n = new Array(settings.patients.length);
         this.axis = new Array(settings.patients.length);
         this.order = new Array(settings.patients.length);
     },
     parseAndValidateSpec: function () {
-        for (let index = 0; index < this.settings.patients.length; index++) {
+        for (let index = 0; index < this.allPatientsLength; index++) {
             if (this.subfolders[index] === undefined) {
                 return 0;
             }

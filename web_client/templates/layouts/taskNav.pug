@@ -1,7 +1,14 @@
 each task in tasks
   if currentTask === task
     li.nav-item.enabledTask.active(id=task)
-      a #{task}
+      if task === 'DicomSplit'
+        a #{task}
+          //- input#ptct.modality(type='radio' name='modality' value='PTCT')
+          //- label.modality PET/CT
+          //- input#mri.modality(type='radio' name='modality' value='MRI' checked='true')
+          //- label.modality MRI
+      else
+        a #{task}
   else
     li.nav-item.enabledTask(id=task)
       a #{task}

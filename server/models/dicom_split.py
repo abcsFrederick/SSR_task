@@ -148,6 +148,7 @@ class DicomSplit(AccessControlledModel):
                 'data': outPath,
             }
         }
+
         if inputType == 'girder':
             inputs['topFolder'] = utils.girderInputSpec(
                 fetchFolder, resourceType='folder', token=token)

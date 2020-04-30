@@ -23,6 +23,16 @@ var dicomsplitModel = Model.extend({
             this.trigger('g:error', err);
         });
     },
+    // getItemAndThumbnails_PTCT: function () {
+    //     return restRequest({
+    //         url: `${this.resourceName}?folderId=${this.id}`,
+    //         data: {modality: 'PTCT'}
+    //     }).then((resp) => {
+    //         return resp;
+    //     }).fail((err) => {
+    //         this.trigger('g:error', err);
+    //     });
+    // },
     createJob: function () {
         return restRequest({
             url: `${this.resourceName}`,
@@ -35,7 +45,8 @@ var dicomsplitModel = Model.extend({
                 'axis': JSON.stringify(this.get('axis')),
                 'order': JSON.stringify(this.get('order')),
                 'pushFolderId': this.get('pushFolderId'),
-                'pushFolderName': this.get('pushFolderName')
+                'pushFolderName': this.get('pushFolderName'),
+                'modality': this.get('modality')
             }
         }).then((resp) => {
             return new JobModel(resp);

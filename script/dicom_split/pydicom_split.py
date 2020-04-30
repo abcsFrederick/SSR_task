@@ -227,8 +227,10 @@ def checkDirectory(directory, output_dir=None):
     for root, subdirs, files in os.walk(directory):
         if len(files):
             if files.pop(0) != '.DS_Store':
-                # print(root.split('/')[-1])
-                newRoot = os.path.join(output_dir, root.split('/')[-1])
+                newRoot = os.path.join(output_dir, root.split('/')[-4])
+                newRoot = os.path.join(newRoot, root.split('/')[-3])
+                newRoot = os.path.join(newRoot, root.split('/')[-2])
+                newRoot = os.path.join(newRoot, root.split('/')[-1])
                 if not os.path.exists(newRoot):
                     os.makedirs(newRoot)
                 yield root, newRoot
@@ -371,7 +373,12 @@ def split_dicom_directory(directory, axis=0, n=3, keep_origin=False,
                     if series_descriptions:
                         split_dataset.SeriesDescription = series_descriptions[i]
                     else:
-                        split_dataset.SeriesDescription += ' split'
+                        if split_dataset.Modality == 'PT':
+                            split_dataset.SeriesDescription = parsed_patient_ids[i] + ' split'
+                        elif split_dataset.Modality == 'CT':
+                            split_dataset.SeriesDescription = parsed_patient_ids[i] + ' split'
+                        else:
+                            split_dataset.SeriesDescription += ' split'
 
                     split_dataset.PatientName = parsed_patient_names[i]
                     split_dataset.PatientID = parsed_patient_ids[i]
@@ -440,11 +447,19 @@ axis = axis
 #     kwargs['study_instance_uids'] = [x667_uuid() for i in range(n)]
 # subfolders = [subfolders for subfolders in os.listdir(topFolder)]
 
+# if modality == 'MRI':
 for index in range(len(subfolders)):
     directory = os.path.join(topFolder, subfolders[index])
+    print directory
     kwargs = {"axis": int(axis[index]), "n": int(n_of_split[index]), "order": order[index], "output_dir": Outdir}
 
     split_dicom_directory(directory, **kwargs)
+# elif modality == 'PTCT':
+#     for index in range(len(subfolders)):
+#         directory = os.path.join(topFolder, subfolders[index])
+#         kwargs = {"axis": int(axis[index]), "n": int(n_of_split[index]), "order": order[index], "output_dir": Outdir, "modality": modality}
+
+#         split_dicom_directory(directory, **kwargs)
 # print(len(kwargs['order'].split(',')))
 
 # for directory in directories:

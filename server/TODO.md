@@ -23,3 +23,6 @@ http://localhost:8080/api/v1/SSR_task/link?originalId=5e3898ab9f9f60b596757ba1&s
 }
 When event.bind('model.folder.save', updateAccess)
 find doc where (segmentationId === folder.id || parentId === folder.id), update access.
+
+For CT/PT
+subfolder could be '["aaaa/bbbb", "aaaa/cccc", ...recusively all levels]', in script os.path.join(topfolder, subfolder[index])

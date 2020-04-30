@@ -7,21 +7,60 @@
         th.nameHead Name
         th.patternHead Pattern
     tbody
-      each patient, index in patients
+      if patients['MRI'].length
         tr
-          if from === 'Archive'
-            td.thumb
-              img(src="api/v1/Archive/SAIP/slice/download?Type=thumbnail&id=" + 
-              patient.thumbnailId)
-            td.name #{patient.name}
-            td.pattern-drop-zone(pname=patient.series_path, index=index)
-              i.icon-docs Drop a pattern from pool
-          else
-            td.thumb
-              img(src="api/v1/file/" + patient.thumbnailId + "/download")
-            td.name #{patient.name}
-            td.pattern-drop-zone(pname=patient.name, index=index)
-              i.icon-docs Drop a pattern from pool
+          td.modalityLabel(colspan='3')
+            label MRI
+        each patient, index in patients['MRI']
+          tr
+            if from === 'Archive'
+              td.thumb
+                img(src="api/v1/Archive/SAIP/slice/download?Type=thumbnail&id=" + 
+                patient.thumbnailId)
+              td.name #{patient.name}
+              td.pattern-drop-zone(pname=patient.series_path, index=index)
+                i.icon-docs Drop a pattern from pool
+            else
+              td.thumb
+                img(src="api/v1/file/" + patient.thumbnailId + "/download")
+              td.name #{patient.name}
+              td.pattern-drop-zone(pname=patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=index)
+                i.icon-docs Drop a pattern from pool
+      if patients['PTCT'].length
+        tr
+          td.modalityLabel(colspan='3')
+            label PTCT
+        each patient, index in patients['PTCT']
+          tr
+            if from === 'Archive'
+              td.thumb
+                img(src="api/v1/Archive/SAIP/slice/download?Type=thumbnail&id=" + 
+                patient.thumbnailId)
+              td.name #{patient.name}
+              td.pattern-drop-zone(pname=patient.series_path, index=index)
+                i.icon-docs Drop a pattern from pool
+            else
+              if index % 2 === 0
+                tr
+                  td.patientNameLabel(colspan='3')
+                    label #{patient.patient_name}
+              td.thumb
+                img(src="api/v1/file/" + patient.thumbnailId + "/download")
+              td.name #{patient.name}
+              td.pattern-drop-zone(pname=patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=patients['MRI'].length + index)
+                i.icon-docs Drop a pattern from pool
+      //- else if modality === 'PTCT'
+      //-   each patient, index in patients
+      //-       if index % 2 === 0
+      //-         tr
+      //-           td.patientNameLabel(colspan='3')
+      //-             label #{patient.patient_name}
+      //-       tr
+      //-         td.thumb
+      //-           img(src="api/v1/file/" + patient.thumbnailId + "/download")
+      //-         td.name #{patient.name}
+      //-         td.pattern-drop-zone(pname=patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=index)
+      //-           i.icon-docs Drop a pattern from pool
 
 #optionPool.col-md-4
   table.table

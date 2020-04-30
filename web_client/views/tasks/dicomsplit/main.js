@@ -60,10 +60,31 @@ var DicomSplit = View.extend({
     render(model) {
         this.dicomSplit = new DicomSplitModel();
         this.dicomSplit.set({ _id: model.get('_id') });
+        this.modality = $('input[type=radio][name=modality]:checked').val();
+        // if (this.modality === 'MRI') {
         this.dicomSplit.getItemAndThumbnails().done((patients) => {
             if (this.table) {
                 this.table.destroy();
             }
+            patients['MRI'].sort(function (a, b) {
+                let patientNameA = a.patient_name.toLowerCase(),
+                    patientNameB = b.patient_name.toLowerCase();
+                if (patientNameA > patientNameB) {
+                    return 1;
+                }
+                return 0;
+            });
+            patients['PTCT'].sort(function (a, b) {
+                let patientNameA = a.patient_name.toLowerCase(),
+                    patientNameB = b.patient_name.toLowerCase();
+                if (patientNameA < patientNameB) {
+                    return -1;
+                }
+                if (patientNameA > patientNameB) {
+                    return 1;
+                }
+                return 0;
+            });
             this.table = new TableView({
                 el: this.$('#dicomsplit-preview'),
                 patients: patients,
@@ -71,6 +92,20 @@ var DicomSplit = View.extend({
                 parentView: this
             });
         });
+        // } else if (this.modality === 'PTCT') {
+        //     this.dicomSplit.getItemAndThumbnails_PTCT().done((patients) => {
+        //         if (this.table) {
+        //             this.table.destroy();
+        //         }
+        //         this.table = new TableView({
+        //             el: this.$('#dicomsplit-preview'),
+        //             patients: patients,
+        //             from: this.from,
+        //             modality: 'PTCT',
+        //             parentView: this
+        //         });
+        //     });
+        // }
         this.$('#open-task-folder .icon-folder-open').html(model.get('name'));
         return this;
     },
@@ -282,7 +317,8 @@ var DicomSplit = View.extend({
                         axis: this.table.axis,
                         order: this.table.order,
                         pushFolderId: this.selectedFolderId,
-                        pushFolderName: this.selectedFolderName
+                        pushFolderName: this.selectedFolderName,
+                        modality: this.modality
                     });
                     this.dicomSplit.createJob().done((job) => {
                         this.$('#cancelTask').show();
@@ -313,10 +349,13 @@ var DicomSplit = View.extend({
         if (job.get('status') === 823) {
             this.$('#cancelTask').hide();
             this.$('#savingTaskResult').show();
-            window.job = job;
-            // while (1) {
-            //     console.log(job.get('status'));
-            // }
+            this.status = 0;
+            // FIXED: girder worker success status send error
+            setTimeout(function () {
+                this.$('#cancelTask').hide();
+                this.$('#savingTaskResult').hide();
+                this.$('#submitTask').show();
+            }, 10000);
             // this.$('#submitTask').show();
             // events.trigger('g:alert', {
             //     icon: 'ok',

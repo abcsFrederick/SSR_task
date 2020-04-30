@@ -12,7 +12,7 @@ from .constants import PluginSettings
 from .models.link import Link
 
 
-def _notifyUser(event):
+def _notifyUser(event, meta):
     userId = event.info['job']['userId']
     user = UserModel().load(userId, force=True, fields=['email'])
     outputName = event.info['job'].get('kwargs')['inputs']['outPath']['data'].split('/')[-1]
@@ -48,7 +48,7 @@ def _updateJob(event):
             tmpPath = job.get('kwargs')['inputs']['outPath']['data']
             shutil.rmtree(tmpPath)
         if status == JobStatus.SUCCESS:
-            _notifyUser(event)
+            _notifyUser(event, meta)
     else:
         return
 

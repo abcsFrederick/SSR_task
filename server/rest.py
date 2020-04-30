@@ -8,7 +8,7 @@ from girder.models.file import File
 from girder.models.item import Item
 from girder.models.folder import Folder
 from girder.constants import AccessType, TokenScope
-from girder.exceptions import ValidationException, GirderException
+from girder.exceptions import ValidationException  # , GirderException
 from girder.models.setting import Setting
 
 from girder.plugins.Archive.models.folder import Folder as ArchiveFolder
@@ -172,25 +172,79 @@ class SSR_task(Resource):
     @autoDescribeRoute(
         Description('Get items and thumbnails list')
         .param('folderId', 'folder id for searching')
+        # .param('modality', 'Type of modality', required=True,
+        #        enum=['MRI', 'PTCT'], strip=True)
     )
     def getItemAndThumbnail(self, folderId):
+        # if modality == 'MRI':
+        #     limit = 1000
+        #     self.user = self.getCurrentUser()
+        #     folder = Folder().load(id=folderId, user=self.user, level=AccessType.READ, exc=True)
+        #     items = Folder().childItems(folder=folder, limit=limit)
+        #     itemWithThumbs = []
+        #     for itemObj in items:
+        #         item = Item().load(id=itemObj['_id'], user=self.user, level=AccessType.READ)
+        #         q = {
+        #             'itemId': item['_id'],
+        #             'exts': 'jpg'
+        #         }
+        #         try:
+        #             item['thumbnailId'] = list(File().find(q, limit=limit))[0]['_id']
+        #         except Exception:
+        #             raise GirderException('%s does not have thumbnail' % item['name'])
+        #         itemWithThumbs.append(item)
+        # elif modality == 'PTCT':
         limit = 1000
         self.user = self.getCurrentUser()
-        folder = Folder().load(id=folderId, user=self.user, level=AccessType.READ, exc=True)
-        items = Folder().childItems(folder=folder, limit=limit)
-        itemWithThumbs = []
-        for itemObj in items:
-            item = Item().load(id=itemObj['_id'], user=self.user, level=AccessType.READ)
-            q = {
-                'itemId': item['_id'],
-                'exts': 'jpg'
-            }
-            try:
-                item['thumbnailId'] = list(File().find(q, limit=limit))[0]['_id']
-            except Exception:
-                raise GirderException('%s does not have thumbnail' % item['name'])
-            itemWithThumbs.append(item)
-        return itemWithThumbs
+        rootFolder = Folder().load(id=folderId, user=self.user, level=AccessType.READ, exc=True)
+        experimentFolders = Folder().childFolders(parent=rootFolder,
+                                                  parentType='folder', limit=limit)
+
+        result = {}
+        result['MRI'] = []
+        result['PTCT'] = []
+        for experiment in experimentFolders:
+            patientFolders = Folder().childFolders(parent=experiment,
+                                                   parentType='folder', limit=limit)
+            for patient in patientFolders:
+                # samePatient = {}
+                studyFolders = Folder().childFolders(parent=patient,
+                                                     parentType='folder', limit=limit)
+                for study in studyFolders:
+                    seriesItems = Folder().childItems(folder=study, limit=limit)
+                    for itemObj in seriesItems:
+                        item = Item().load(id=itemObj['_id'], user=self.user, level=AccessType.READ)
+                        q = {
+                            'itemId': item['_id'],
+                            'exts': 'jpg'
+                        }
+                        try:
+                            # if item['name'][-2:] == 'MR':
+                            #     item['modality'] = 'MRI'
+                            # elif item['name'][-2:] == 'PT':
+                            #     item['modality'] = 'PT'
+                            # elif item['name'][-2:] == 'CT':
+                            #     item['modality'] = 'CT'
+                            item['thumbnailId'] = list(File().find(q, limit=limit))[0]['_id']
+                            item['experiment'] = experiment['name']
+                            item['patient_name'] = patient['name']
+                            item['study_name'] = study['name']
+                            # itemWithThumbs.append(item)
+                            if item['name'][-2:] == 'MR':
+                                item['modality'] = 'MRI'
+                                result['MRI'].append(item)
+                            elif item['name'][-2:] == 'PT':
+                                item['modality'] = 'PT'
+                                result['PTCT'].append(item)
+                            elif item['name'][-2:] == 'CT':
+                                item['modality'] = 'CT'
+                                result['PTCT'].append(item)
+                        except Exception:
+                            pass
+                    # studiesUnderSamePatient[patient['name']] =
+                            # raise GirderException('%s does not have thumbnail' % item['name'])
+                # result[patient['name']] = itemWithThumbs
+        return result
 
     @access.public
     @autoDescribeRoute(
