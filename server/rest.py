@@ -197,7 +197,7 @@ class SSR_task(Resource):
         limit = 1000
         self.user = self.getCurrentUser()
         rootFolder = Folder().load(id=folderId, user=self.user, level=AccessType.READ, exc=True)
-        experimentFolders = Folder().childFolders(parent=rootFolder,
+        experimentFolders = Folder().childFolders(parent=rootFolder, user=self.user,
                                                   parentType='folder', limit=limit)
 
         result = {}
@@ -205,11 +205,11 @@ class SSR_task(Resource):
         result['PTCT'] = []
         for experiment in experimentFolders:
             patientFolders = Folder().childFolders(parent=experiment,
-                                                   parentType='folder', limit=limit)
+                                                   parentType='folder', user=self.user, limit=limit)
             for patient in patientFolders:
                 # samePatient = {}
                 studyFolders = Folder().childFolders(parent=patient,
-                                                     parentType='folder', limit=limit)
+                                                     parentType='folder', user=self.user, limit=limit)
                 for study in studyFolders:
                     seriesItems = Folder().childItems(folder=study, limit=limit)
                     for itemObj in seriesItems:
