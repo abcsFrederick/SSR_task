@@ -1,8 +1,10 @@
 from . import rest
 import os
 import shutil
+import datetime
 from girder import events
 from mako.lookup import TemplateLookup
+from girder.models.notification import Notification
 from girder.plugins.jobs.constants import JobStatus
 from girder.constants import SettingDefault, SettingKey
 from girder.utility import setting_utilities, mail_utils
@@ -16,18 +18,23 @@ def _notifyUser(event, meta):
     userId = event.info['job']['userId']
     user = UserModel().load(userId, force=True, fields=['email'])
     outputName = event.info['job'].get('kwargs')['inputs']['outPath']['data'].split('/')[-1]
+    inputName = 'testing'
     email = user['email']
     template = _templateLookup.get_template('job_done.mako')
     params = {}
     params['host'] = Setting().get(SettingKey.EMAIL_FROM_ADDRESS)
     params['brandName'] = Setting().get(SettingKey.BRAND_NAME)
+    params['inputName'] = inputName
     params['outputName'] = outputName
     text = template.render(**params)
-
+    if meta.get('task') == 'splitDicom':
+        taskName = 'DICOM Split'
+    else:
+        taskName = meta.get('task')
     mail_utils.sendEmail(
         to=email,
         toAdmins=False,
-        subject='Task ' + meta.get('task') + ' finished',
+        subject='Job Status: ' + taskName + ' finished',
         text=text)
 
 
@@ -40,6 +47,8 @@ def _updateJob(event):
         job = event.info['job']
     else:
         job = event.info
+    userId = event.info['job']['userId']
+    user = UserModel().load(userId, force=True, fields=['email'])
     meta = job.get('meta', {})
     if (meta.get('creator') == 'dicom_split' and
             meta.get('task') == 'splitDicom'):
@@ -48,6 +57,9 @@ def _updateJob(event):
             tmpPath = job.get('kwargs')['inputs']['outPath']['data']
             shutil.rmtree(tmpPath)
         if status == JobStatus.SUCCESS:
+            Notification().createNotification(
+                type='job_email_sent', data=job, user=user,
+                expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
             _notifyUser(event, meta)
     else:
         return

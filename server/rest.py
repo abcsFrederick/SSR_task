@@ -209,7 +209,8 @@ class SSR_task(Resource):
             for patient in patientFolders:
                 # samePatient = {}
                 studyFolders = Folder().childFolders(parent=patient,
-                                                     parentType='folder', user=self.user, limit=limit)
+                                                     parentType='folder',
+                                                     user=self.user, limit=limit)
                 for study in studyFolders:
                     seriesItems = Folder().childItems(folder=study, limit=limit)
                     for itemObj in seriesItems:

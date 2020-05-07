@@ -324,12 +324,15 @@ var DicomSplit = View.extend({
                         this.$('#cancelTask').show();
                         this.$('#submitTask').hide();
                         this.job = job;
-                        this.listenTo(eventStream, 'g:event.job_status', _.bind(function (event) {
-                            var info = event.data;
-                            if (info._id === job.id) {
-                                job.set(info);
-                                this.renderJobStatus(job);
-                            }
+                        this.listenTo(eventStream, 'g:event.job_email_sent', _.bind(function (event) {
+                            // var info = event.data;
+                            // if (info._id === job.id) {
+                            //     job.set(info);
+                            //     this.renderJobStatus(job);
+                            // }
+                            this.$('#cancelTask').hide();
+                            // this.$('#savingTaskResult').hide();
+                            this.$('#submitTask').show();
                         }, this));
                     });
                 } else {
