@@ -2,7 +2,7 @@
             margin-bottom: 15px; font-family: Arial, sans-serif; font-size: 16px;\
             font-weight: bold;">${brandName}</div>
 
-<p>Your datase is ready to download at output folder ${outputName}.</p>
+<p>Your dataset ${outputName} is ready at output folder ${outputName}.</p>
 
 <p>Imaging and Visualization Group, ABCS.<p>
 

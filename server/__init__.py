@@ -18,12 +18,12 @@ def _notifyUser(event, meta):
     userId = event.info['job']['userId']
     user = UserModel().load(userId, force=True, fields=['email'])
     outputName = event.info['job'].get('kwargs')['inputs']['outPath']['data'].split('/')[-1]
-    inputName = 'testing'
+    inputName = event.info['job'].get('kwargs')['inputs']['topFolder']['name']
     email = user['email']
     template = _templateLookup.get_template('job_done.mako')
     params = {}
     params['host'] = Setting().get(SettingKey.EMAIL_FROM_ADDRESS)
-    params['brandName'] = Setting().get(SettingKey.BRAND_NAME)
+    params['brandName'] = 'SSR'  # Setting().get(SettingKey.BRAND_NAME)
     params['inputName'] = inputName
     params['outputName'] = outputName
     text = template.render(**params)
