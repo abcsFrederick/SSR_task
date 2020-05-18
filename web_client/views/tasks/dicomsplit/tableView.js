@@ -1,6 +1,7 @@
 import View from 'girder/views/View';
 
 import TableTemplate from '../../../templates/tasks/dicomsplit/tableView.pug';
+import HierarchyAlertTemplate from '../../../templates/tasks/dicomsplit/hierarchyAlert.pug';
 import PatternTemplate from '../../../templates/tasks/dicomsplit/PatternView.pug';
 
 import  '../../../stylesheets/tasks/dicomsplit/tableView.styl';
@@ -64,11 +65,16 @@ var DicomSplit = View.extend({
             'axis': '1'}];
         this.settings = settings;
         // if (this.settings.modality === 'MRI') {
-        this.$el.html(TableTemplate({
-            from: settings.from,
-            patients: settings.patients,
-            pool: this.defualtPool
-        }));
+        if (!(settings.patients['MRI'].length && settings.patients['PTCT'].length)) {
+            this.$el.html(HierarchyAlertTemplate());
+        } else {
+            this.$el.html(TableTemplate({
+                from: settings.from,
+                patients: settings.patients,
+                pool: this.defualtPool
+            }));
+        }
+
         // } else if (this.settings.modality === 'PTCT') {
         //     this.$el.html(TableTemplate({
         //         from: settings.from,

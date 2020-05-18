@@ -157,6 +157,7 @@ var DicomSplit = View.extend({
         e.preventDefault();
         let dropedFolderId = event.dataTransfer.getData('folderId');
         this.from = event.dataTransfer.getData('from') || 'Girder';
+        // this.validateHierarchy(dropedFolderId, this.from);
         if (dropedFolderId) {
             if (this.from === 'Archive') {
                 this.inputType = 'archive';
