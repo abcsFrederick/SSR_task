@@ -114,7 +114,7 @@ install:
     - pip install -r script/*/requirements.txt
 
     - cd $Archive_path
-    - pip install networkx=1.1
+    - pip install networkx==1.1
     - pip install -r requirements.txt
     # needs to be installed in dev mode for it to place binaries of cython/c extensions in place
     # - pip install -e .
