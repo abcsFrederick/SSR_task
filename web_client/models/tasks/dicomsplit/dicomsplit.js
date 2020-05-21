@@ -16,7 +16,18 @@ var dicomsplitModel = Model.extend({
 
     getItemAndThumbnails: function () {
         return restRequest({
-            url: `${this.resourceName}?folderId=${this.id}`
+            url: `${this.resourceName}?folderId=${this.id}`,
+            data: {'resource': 'Girder'}
+        }).then((resp) => {
+            return resp;
+        }).fail((err) => {
+            this.trigger('g:error', err);
+        });
+    },
+    getItemAndThumbnailsArchive: function (projectId) {
+        return restRequest({
+            url: `${this.resourceName}?folderId=${projectId}`,
+            data: {'resource': 'Archive'}
         }).then((resp) => {
             return resp;
         }).fail((err) => {

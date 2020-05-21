@@ -6,7 +6,6 @@ import events from 'girder/events';
 import FolderModel from 'girder/models/FolderModel';
 import BrowserWidget from 'girder/views/widgets/BrowserWidget';
 import eventStream from 'girder/utilities/EventStream';
-import ArchiveItemCollection from 'girder_plugins/Archive/collections/ItemCollection';
 
 import DicomSplitModel from '../../../models/tasks/dicomsplit/dicomsplit';
 import ViewTemplate from '../../../templates/tasks/dicomsplit/main.pug';
@@ -109,42 +108,75 @@ var DicomSplit = View.extend({
         this.$('#open-task-folder .icon-folder-open').html(model.get('name'));
         return this;
     },
-    renderFromArchive(series, studyName, studyId) {
+    renderFromArchive(projectId) {
         this.dicomSplit = new DicomSplitModel();
-        console.log(series);
-        this.dicomSplit.set({ _id: studyId });
-        let patients = [];
-        for (let a = 0; a < series.length; a++) {
-            restRequest({
-                url: 'Archive/SAIP/slice/download',
-                method: 'GET',
-                data: {
-                    'Type': 'thumbnail',
-                    'id': series.at(a).get('series_uid')
+        this.dicomSplit.getItemAndThumbnailsArchive(projectId).done((patients) => {
+            if (this.table) {
+                this.table.destroy();
+            }
+            patients['MRI'].sort(function (a, b) {
+                let patientNameA = a.patient_name.toLowerCase(),
+                    patientNameB = b.patient_name.toLowerCase();
+                if (patientNameA > patientNameB) {
+                    return 1;
                 }
-            }).done((resp) => {
-                let patient = {
-                    name: series.at(a).get('series_description'),
-                    thumbnailId: series.at(a).get('series_uid'),
-                    series_path: series.at(a).get('series_path')
-                };
-                patients.push(patient);
-                if (this.table) {
-                    this.table.destroy();
-                }
-                this.table = new TableView({
-                    el: this.$('#dicomsplit-preview'),
-                    from: this.from,
-                    patients: patients,
-                    parentView: this
-                });
-            }).fail((err) => {
-                this.trigger('g:error', err);
+                return 0;
             });
-        }
-        this.$('#open-task-folder .icon-folder-open').html(studyName);
-        return this;
+            patients['PTCT'].sort(function (a, b) {
+                let patientNameA = a.patient_name.toLowerCase(),
+                    patientNameB = b.patient_name.toLowerCase();
+                if (patientNameA < patientNameB) {
+                    return -1;
+                }
+                if (patientNameA > patientNameB) {
+                    return 1;
+                }
+                return 0;
+            });
+            this.table = new TableView({
+                el: this.$('#dicomsplit-preview'),
+                patients: patients,
+                from: this.from,
+                parentView: this
+            });
+        });
     },
+    // renderFromArchive(series, studyName, studyId) {
+    //     this.dicomSplit = new DicomSplitModel();
+    //     console.log(series);
+    //     this.dicomSplit.set({ _id: studyId });
+    //     let patients = [];
+    //     for (let a = 0; a < series.length; a++) {
+    //         restRequest({
+    //             url: 'Archive/SAIP/slice/download',
+    //             method: 'GET',
+    //             data: {
+    //                 'Type': 'thumbnail',
+    //                 'id': series.at(a).get('series_uid')
+    //             }
+    //         }).done((resp) => {
+    //             let patient = {
+    //                 name: series.at(a).get('series_description'),
+    //                 thumbnailId: series.at(a).get('series_uid'),
+    //                 series_path: series.at(a).get('series_path')
+    //             };
+    //             patients.push(patient);
+    //             if (this.table) {
+    //                 this.table.destroy();
+    //             }
+    //             this.table = new TableView({
+    //                 el: this.$('#dicomsplit-preview'),
+    //                 from: this.from,
+    //                 patients: patients,
+    //                 parentView: this
+    //             });
+    //         }).fail((err) => {
+    //             this.trigger('g:error', err);
+    //         });
+    //     }
+    //     this.$('#open-task-folder .icon-folder-open').html(studyName);
+    //     return this;
+    // },
     renderSelectFolder(model) {
         this.$('#select-split-folder .icon-folder-open').html(model.get('name'));
     },
@@ -161,13 +193,15 @@ var DicomSplit = View.extend({
         if (dropedFolderId) {
             if (this.from === 'Archive') {
                 this.inputType = 'archive';
-                let studyName = event.dataTransfer.getData('folderName');
-                this.seriesCollection = new ArchiveItemCollection();
-                this.seriesCollection.rename({archive: 'SAIP', type: 'series'});
-                this.seriesCollection.on('g:changed', function () {
-                    this.renderFromArchive(this.seriesCollection, studyName, dropedFolderId);
-                    this.trigger('g:changed');
-                }, this).fetch({id: dropedFolderId});
+                this.renderFromArchive(dropedFolderId);
+                // let studyName = event.dataTransfer.getData('folderName');
+                // this.seriesCollection = new ArchiveItemCollection();
+                // this.seriesCollection.rename({archive: 'SAIP', type: 'projects'});
+                // this.seriesCollection.on('g:changed', function () {
+                //     console.log(this.seriesCollection)
+                //     this.renderFromArchive(this.seriesCollection, studyName, dropedFolderId);
+                //     this.trigger('g:changed');
+                // }, this).fetch({id: dropedFolderId});
             } else {
                 this.inputType = 'girder';
                 this.openedFolder = new FolderModel();

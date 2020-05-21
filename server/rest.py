@@ -12,6 +12,7 @@ from girder.exceptions import ValidationException  # , GirderException
 from girder.models.setting import Setting
 
 from girder.plugins.Archive.models.folder import Folder as ArchiveFolder
+from girder.plugins.Archive.models.item import Item as ArchiveItem
 from .constants import PluginSettings
 from .models.dicom_split import DicomSplit
 from .models.link import Link
@@ -172,10 +173,10 @@ class SSR_task(Resource):
     @autoDescribeRoute(
         Description('Get items and thumbnails list')
         .param('folderId', 'folder id for searching')
-        # .param('modality', 'Type of modality', required=True,
-        #        enum=['MRI', 'PTCT'], strip=True)
+        .param('resource', 'Type of resource', required=True,
+               enum=['Girder', 'Archive'], strip=True)
     )
-    def getItemAndThumbnail(self, folderId):
+    def getItemAndThumbnail(self, folderId, resource):
         # if modality == 'MRI':
         #     limit = 1000
         #     self.user = self.getCurrentUser()
@@ -195,56 +196,90 @@ class SSR_task(Resource):
         #         itemWithThumbs.append(item)
         # elif modality == 'PTCT':
         limit = 1000
-        self.user = self.getCurrentUser()
-        rootFolder = Folder().load(id=folderId, user=self.user, level=AccessType.READ, exc=True)
-        experimentFolders = Folder().childFolders(parent=rootFolder, user=self.user,
-                                                  parentType='folder', limit=limit)
-
         result = {}
         result['MRI'] = []
         result['PTCT'] = []
-        for experiment in experimentFolders:
-            patientFolders = Folder().childFolders(parent=experiment,
-                                                   parentType='folder', user=self.user, limit=limit)
-            for patient in patientFolders:
-                # samePatient = {}
-                studyFolders = Folder().childFolders(parent=patient,
-                                                     parentType='folder',
-                                                     user=self.user, limit=limit)
-                for study in studyFolders:
-                    seriesItems = Folder().childItems(folder=study, limit=limit)
-                    for itemObj in seriesItems:
-                        item = Item().load(id=itemObj['_id'], user=self.user, level=AccessType.READ)
-                        q = {
-                            'itemId': item['_id'],
-                            'exts': 'jpg'
-                        }
-                        try:
-                            # if item['name'][-2:] == 'MR':
-                            #     item['modality'] = 'MRI'
-                            # elif item['name'][-2:] == 'PT':
-                            #     item['modality'] = 'PT'
-                            # elif item['name'][-2:] == 'CT':
-                            #     item['modality'] = 'CT'
-                            item['thumbnailId'] = list(File().find(q, limit=limit))[0]['_id']
-                            item['experiment'] = experiment['name']
-                            item['patient_name'] = patient['name']
-                            item['study_name'] = study['name']
-                            # itemWithThumbs.append(item)
-                            if item['name'][-2:] == 'MR':
-                                item['modality'] = 'MRI'
-                                result['MRI'].append(item)
-                            elif item['name'][-2:] == 'PT':
-                                item['modality'] = 'PT'
-                                result['PTCT'].append(item)
-                            elif item['name'][-2:] == 'CT':
-                                item['modality'] = 'CT'
-                                result['PTCT'].append(item)
-                        except Exception:
-                            pass
-                    # studiesUnderSamePatient[patient['name']] =
-                            # raise GirderException('%s does not have thumbnail' % item['name'])
-                # result[patient['name']] = itemWithThumbs
+        if resource == 'Girder':
+            self.user = self.getCurrentUser()
+            rootFolder = Folder().load(id=folderId, user=self.user, level=AccessType.READ, exc=True)
+            experimentFolders = Folder().childFolders(parent=rootFolder, user=self.user,
+                                                      parentType='folder', limit=limit)
+
+            for experiment in experimentFolders:
+                patientFolders = Folder().childFolders(parent=experiment,
+                                                       parentType='folder',
+                                                       user=self.user, limit=limit)
+                for patient in patientFolders:
+                    # samePatient = {}
+                    studyFolders = Folder().childFolders(parent=patient,
+                                                         parentType='folder',
+                                                         user=self.user, limit=limit)
+                    for study in studyFolders:
+                        seriesItems = Folder().childItems(folder=study, limit=limit)
+                        for itemObj in seriesItems:
+                            item = Item().load(id=itemObj['_id'],
+                                               user=self.user, level=AccessType.READ)
+                            q = {
+                                'itemId': item['_id'],
+                                'exts': 'jpg'
+                            }
+                            try:
+                                # if item['name'][-2:] == 'MR':
+                                #     item['modality'] = 'MRI'
+                                # elif item['name'][-2:] == 'PT':
+                                #     item['modality'] = 'PT'
+                                # elif item['name'][-2:] == 'CT':
+                                #     item['modality'] = 'CT'
+                                item['thumbnailId'] = list(File().find(q, limit=limit))[0]['_id']
+                                item['experiment'] = experiment['name']
+                                item['patient_name'] = patient['name']
+                                item['study_name'] = study['name']
+                                # itemWithThumbs.append(item)
+                                if item['name'][-2:] == 'MR':
+                                    item['modality'] = 'MRI'
+                                    result['MRI'].append(item)
+                                elif item['name'][-2:] == 'PT':
+                                    item['modality'] = 'PT'
+                                    result['PTCT'].append(item)
+                                elif item['name'][-2:] == 'CT':
+                                    item['modality'] = 'CT'
+                                    result['PTCT'].append(item)
+                            except Exception:
+                                pass
+                        # studiesUnderSamePatient[patient['name']] =
+                                # raise GirderException('%s does not have thumbnail' % item['name'])
+                    # result[patient['name']] = itemWithThumbs
+        elif resource == 'Archive':
+            experimentFolders = ArchiveFolder().find(folderId, parentType='project')
+            for experiment in experimentFolders:
+                patientFolders = ArchiveFolder().find(experiment['id'], parentType='experiment')
+                for patient in patientFolders:
+                    studyFolders = ArchiveFolder().find(patient['id'], parentType='patient')
+                    for study in studyFolders:
+                        seriesItems = ArchiveItem().find(study['id'])
+                        for itemObj in seriesItems:
+                            item = {}
+                            try:
+                                print itemObj
+                                item['name'] = patient['pat_name']
+                                item['thumbnailId'] = 'thmb_' + itemObj['series_uid'] + '.jpg'
+                                item['experiment'] = experiment['title']
+                                item['patient_name'] = patient['pat_name']
+                                item['study_name'] = study['study_description']
+                                item['patient_path'] = patient['pat_path']
+                                item['study_path'] = study['study_path']
+                                # itemWithThumbs.append(item)
+                                if itemObj['modality'] == 'MR':
+                                    item['modality'] = 'MRI'
+                                    result['MRI'].append(item)
+                                elif itemObj['modality'] == 'PT':
+                                    item['modality'] = 'PT'
+                                    result['PTCT'].append(item)
+                                elif itemObj['modality'] == 'CT':
+                                    item['modality'] = 'CT'
+                                    result['PTCT'].append(item)
+                            except Exception:
+                                pass
         return result
 
     @access.public
