@@ -268,6 +268,7 @@ class SSR_task(Resource):
                                 item['study_name'] = study['study_description']
                                 item['patient_path'] = patient['pat_path']
                                 item['study_path'] = study['study_path']
+                                item['series_path'] = itemObj['series_path']
                                 # itemWithThumbs.append(item)
                                 if itemObj['modality'] == 'MR':
                                     item['modality'] = 'MRI'
