@@ -17,7 +17,7 @@
               td.thumb
                 img(src="static/built/mnt/scippy_images/" + patient.patient_path + '/' + patient.study_path + '/' + patient.series_path + '/' + patient.thumbnailId)
               td.name #{patient.name}
-              td.pattern-drop-zone(pname=patient.series_path, index=index)
+              td.pattern-drop-zone(pname="/mnt/scippy_images/" + patient.experiment + '/' + patient.patient_path + '/' + patient.study_path + '/' + patient.series_path, index=index)
                 i.icon-docs Drop a pattern from pool
             else
               td.thumb
@@ -39,7 +39,7 @@
               td.thumb
                 img(src="static/built/mnt/scippy_images/" + patient.patient_path + '/' + patient.study_path + '/' + patient.series_path + '/' + patient.thumbnailId)
               td.name #{patient.name}
-              td.pattern-drop-zone(pname=patient.series_path, index=index)
+              td.pattern-drop-zone(pname="/mnt/scippy_images/" + patient.experiment + '/' + patient.patient_path + '/' + patient.study_path + '/' + patient.series_path, index=index)
                 i.icon-docs Drop a pattern from pool
             else
               if index % 2 === 0

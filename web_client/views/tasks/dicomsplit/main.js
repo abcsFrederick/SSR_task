@@ -140,6 +140,9 @@ var DicomSplit = View.extend({
                 parentView: this
             });
         });
+
+        this.$('#open-task-folder .icon-folder-open').html(this.archiveFolderName);
+        return this;
     },
     // renderFromArchive(series, studyName, studyId) {
     //     this.dicomSplit = new DicomSplitModel();
@@ -193,7 +196,11 @@ var DicomSplit = View.extend({
         if (dropedFolderId) {
             if (this.from === 'Archive') {
                 this.inputType = 'archive';
+                this.archiveFolderName = event.dataTransfer.getData('folderName');
                 this.renderFromArchive(dropedFolderId);
+                this.openedFolderId = dropedFolderId;
+                this.openedFolder = this.archiveFolderName;
+                this.selectedFolderName = this.archiveFolderName;
                 // let studyName = event.dataTransfer.getData('folderName');
                 // this.seriesCollection = new ArchiveItemCollection();
                 // this.seriesCollection.rename({archive: 'SAIP', type: 'projects'});

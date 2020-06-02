@@ -64,7 +64,6 @@ var DicomSplit = View.extend({
         {'order': ['1', '0'],
             'axis': '1'}];
         this.settings = settings;
-        console.log(settings.patients);
         // if (this.settings.modality === 'MRI') {
         if (!(settings.patients['MRI'].length + settings.patients['PTCT'].length)) {
             this.$el.html(HierarchyAlertTemplate());

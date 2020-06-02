@@ -260,7 +260,6 @@ class SSR_task(Resource):
                         for itemObj in seriesItems:
                             item = {}
                             try:
-                                print itemObj
                                 item['name'] = patient['pat_name']
                                 item['thumbnailId'] = 'thmb_' + itemObj['series_uid'] + '.jpg'
                                 item['experiment'] = experiment['title']
@@ -269,6 +268,13 @@ class SSR_task(Resource):
                                 item['patient_path'] = patient['pat_path']
                                 item['study_path'] = study['study_path']
                                 item['series_path'] = itemObj['series_path']
+                                mount = Setting().get('Archive.SCIPPYMOUNT')
+                                jpgFilePath = os.path.join(mount,
+                                                           item['patient_path'],
+                                                           item['study_path'],
+                                                           item['series_path'], item['thumbnailId'])
+                                if not os.path.exists(jpgFilePath):
+                                    break
                                 # itemWithThumbs.append(item)
                                 if itemObj['modality'] == 'MR':
                                     item['modality'] = 'MRI'
