@@ -498,27 +498,6 @@ var HierarchyWidget = HierarchyWidgetView.extend({
         }, this).render();
     },
 
-    getPickedCopyAllowed: function () {
-        /* We must have something picked */
-        if (!pickedResources) {
-            return false;
-        }
-        /* If we have an item picked but this page isn't a folder's list, then
-         * you can't move or copy them here. */
-        if (this.parentModel.resourceName !== 'folder') {
-            if (pickedResources.resources.item &&
-                    pickedResources.resources.item.length) {
-                return false;
-            }
-        }
-        /* We must have permission to write to this folder to be allowed to
-         * copy. */
-        if (this.parentModel.getAccessLevel() < AccessType.WRITE) {
-            return false;
-        }
-        return true;
-    },
-
     redirectViaForm: function (method, url, data) {
         var form = $('<form/>').attr({action: url, method: method});
         _.each(data, function (value, key) {
@@ -529,9 +508,6 @@ var HierarchyWidget = HierarchyWidgetView.extend({
     },
 
     editAccess: function () {
-        console.log('938');
-        console.log(this.parentModel);
-        console.log(this.parentModel.resourceName);
         new AccessWidget({
             el: $('#g-dialog-container'),
             modelType: this.parentModel.resourceName,
@@ -575,15 +551,6 @@ var HierarchyWidget = HierarchyWidgetView.extend({
             }
         }
         this._lastCheckbox = checkbox;
-    }
-}, {
-    /* Because we need to be able to clear picked resources when the current user
-     * changes, this function is placed in the girder namespace. */
-    resetPickedResources: function (val) {
-        pickedResources = val || null;
-    },
-    getPickedResources: function () {
-        return pickedResources;
     }
 });
 
