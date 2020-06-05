@@ -7,6 +7,9 @@
         th.nameHead Name
         th.patternHead Pattern
     tbody
+      tr
+        td.experimentLabel(colspan='3')
+          label #{experimentName}
       if patients['MRI'].length
         tr
           td.modalityLabel(colspan='3')

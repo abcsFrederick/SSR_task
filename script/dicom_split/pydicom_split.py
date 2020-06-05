@@ -437,8 +437,9 @@ import argparse
 # print subfolders 
 # print topFolder
 
+tmpDir = os.path.dirname(topFolder0)
 Outdir = outPath
-topFolder = topFolder
+# topFolder = topFolder
 subfolders = subfolders
 axis = axis
 # shared = not kwargs.pop('unique_study_instance_uids')
@@ -447,20 +448,12 @@ axis = axis
 #     kwargs['study_instance_uids'] = [x667_uuid() for i in range(n)]
 # subfolders = [subfolders for subfolders in os.listdir(topFolder)]
 
-# if modality == 'MRI':
 for index in range(len(subfolders)):
-    directory = os.path.join(topFolder, subfolders[index])
+    directory = os.path.join(tmpDir, subfolders[index])
     print directory
     kwargs = {"axis": int(axis[index]), "n": int(n_of_split[index]), "order": order[index], "output_dir": Outdir}
 
     split_dicom_directory(directory, **kwargs)
-# elif modality == 'PTCT':
-#     for index in range(len(subfolders)):
-#         directory = os.path.join(topFolder, subfolders[index])
-#         kwargs = {"axis": int(axis[index]), "n": int(n_of_split[index]), "order": order[index], "output_dir": Outdir, "modality": modality}
-
-#         split_dicom_directory(directory, **kwargs)
-# print(len(kwargs['order'].split(',')))
 
 # for directory in directories:
 #     split_dicom_directory(directory, **kwargs)

@@ -201,54 +201,56 @@ class SSR_task(Resource):
         result['PTCT'] = []
         if resource == 'Girder':
             self.user = self.getCurrentUser()
-            rootFolder = Folder().load(id=folderId, user=self.user, level=AccessType.READ, exc=True)
-            experimentFolders = Folder().childFolders(parent=rootFolder, user=self.user,
-                                                      parentType='folder', limit=limit)
+            # rootFolder = Folder().load(id=folderId, user=self.user,
+            #                            level=AccessType.READ, exc=True)
+            # experimentFolders = Folder().childFolders(parent=rootFolder, user=self.user,
+            #                                           parentType='folder', limit=limit)
 
-            for experiment in experimentFolders:
-                patientFolders = Folder().childFolders(parent=experiment,
-                                                       parentType='folder',
-                                                       user=self.user, limit=limit)
-                for patient in patientFolders:
-                    # samePatient = {}
-                    studyFolders = Folder().childFolders(parent=patient,
-                                                         parentType='folder',
-                                                         user=self.user, limit=limit)
-                    for study in studyFolders:
-                        seriesItems = Folder().childItems(folder=study, limit=limit)
-                        for itemObj in seriesItems:
-                            item = Item().load(id=itemObj['_id'],
-                                               user=self.user, level=AccessType.READ)
-                            q = {
-                                'itemId': item['_id'],
-                                'exts': 'jpg'
-                            }
-                            try:
-                                # if item['name'][-2:] == 'MR':
-                                #     item['modality'] = 'MRI'
-                                # elif item['name'][-2:] == 'PT':
-                                #     item['modality'] = 'PT'
-                                # elif item['name'][-2:] == 'CT':
-                                #     item['modality'] = 'CT'
-                                item['thumbnailId'] = list(File().find(q, limit=limit))[0]['_id']
-                                item['experiment'] = experiment['name']
-                                item['patient_name'] = patient['name']
-                                item['study_name'] = study['name']
-                                # itemWithThumbs.append(item)
-                                if item['name'][-2:] == 'MR':
-                                    item['modality'] = 'MRI'
-                                    result['MRI'].append(item)
-                                elif item['name'][-2:] == 'PT':
-                                    item['modality'] = 'PT'
-                                    result['PTCT'].append(item)
-                                elif item['name'][-2:] == 'CT':
-                                    item['modality'] = 'CT'
-                                    result['PTCT'].append(item)
-                            except Exception:
-                                pass
-                        # studiesUnderSamePatient[patient['name']] =
-                                # raise GirderException('%s does not have thumbnail' % item['name'])
-                    # result[patient['name']] = itemWithThumbs
+            # for experiment in experimentFolders:
+            experiment = Folder().load(id=folderId, user=self.user, level=AccessType.READ, exc=True)
+            patientFolders = Folder().childFolders(parent=experiment,
+                                                   parentType='folder',
+                                                   user=self.user, limit=limit)
+            for patient in patientFolders:
+                # samePatient = {}
+                studyFolders = Folder().childFolders(parent=patient,
+                                                     parentType='folder',
+                                                     user=self.user, limit=limit)
+                for study in studyFolders:
+                    seriesItems = Folder().childItems(folder=study, limit=limit)
+                    for itemObj in seriesItems:
+                        item = Item().load(id=itemObj['_id'],
+                                           user=self.user, level=AccessType.READ)
+                        q = {
+                            'itemId': item['_id'],
+                            'exts': 'jpg'
+                        }
+                        try:
+                            # if item['name'][-2:] == 'MR':
+                            #     item['modality'] = 'MRI'
+                            # elif item['name'][-2:] == 'PT':
+                            #     item['modality'] = 'PT'
+                            # elif item['name'][-2:] == 'CT':
+                            #     item['modality'] = 'CT'
+                            item['thumbnailId'] = list(File().find(q, limit=limit))[0]['_id']
+                            item['experiment'] = experiment['name']
+                            item['patient_name'] = patient['name']
+                            item['study_name'] = study['name']
+                            # itemWithThumbs.append(item)
+                            if item['name'][-2:] == 'MR':
+                                item['modality'] = 'MRI'
+                                result['MRI'].append(item)
+                            elif item['name'][-2:] == 'PT':
+                                item['modality'] = 'PT'
+                                result['PTCT'].append(item)
+                            elif item['name'][-2:] == 'CT':
+                                item['modality'] = 'CT'
+                                result['PTCT'].append(item)
+                        except Exception:
+                            pass
+                    # studiesUnderSamePatient[patient['name']] =
+                            # raise GirderException('%s does not have thumbnail' % item['name'])
+                # result[patient['name']] = itemWithThumbs
         elif resource == 'Archive':
             experimentFolders = ArchiveFolder().find(folderId, parentType='project')
             for experiment in experimentFolders:
@@ -292,7 +294,7 @@ class SSR_task(Resource):
     @access.public
     @autoDescribeRoute(
         Description('Split multiple in one dicom volumn.')
-        .param('id', 'girder folder id or SAIP study id', required=True)
+        .jsonParam('ids', 'girder folder\'s ids or SAIP study id', required=True)
         .jsonParam('subfolders', 'subfolders', required=True)
         .jsonParam('n', 'number of split', required=True)
         .jsonParam('axis', 'axis of split', required=True)
@@ -302,19 +304,20 @@ class SSR_task(Resource):
         .param('inputType', 'Type of input', required=True,
                enum=['girder', 'archive'], strip=True)
     )
-    def dicom_split(self, id, inputType, subfolders, n, axis, order, pushFolderId, pushFolderName):
+    def dicom_split(self, ids, inputType, subfolders, n, axis, order, pushFolderId, pushFolderName):
         self.user = self.getCurrentUser()
         self.token = self.getCurrentToken()
         if inputType == 'archive':
             # get full path by id
-            study_description, fetchFolder = ArchiveFolder().fullPath(id, 'study')
+            study_description, fetchFolder = ArchiveFolder().fullPath(ids, 'study')
             if not os.path.isdir(fetchFolder):
                 raise ValidationException('path %s is not exist' % fetchFolder)
         elif inputType == 'girder':
-            fetchFolder = Folder().load(id, level=AccessType.READ, user=self.user)
+            fetchFolder = []
+            for eachId in ids:
+                fetchFolder.append(Folder().load(eachId, level=AccessType.READ, user=self.user))
 
         pushFolder = Folder().load(pushFolderId, level=AccessType.READ, user=self.user)
-
         return DicomSplit().createJob(fetchFolder, self.user,
                                       self.token, inputType, subfolders,
                                       axis, n, order, pushFolder, pushFolderName)

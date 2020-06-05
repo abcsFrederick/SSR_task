@@ -55,6 +55,8 @@ var DicomSplit = View.extend({
     },
     initialize(settings) {
         this.$el.html(ViewTemplate());
+        this.openedFolders = [];
+        this.ids = [];
     },
     render(model) {
         this.dicomSplit = new DicomSplitModel();
@@ -62,9 +64,6 @@ var DicomSplit = View.extend({
         this.modality = $('input[type=radio][name=modality]:checked').val();
         // if (this.modality === 'MRI') {
         this.dicomSplit.getItemAndThumbnails().done((patients) => {
-            if (this.table) {
-                this.table.destroy();
-            }
             patients['MRI'].sort(function (a, b) {
                 let patientNameA = a.patient_name.toLowerCase(),
                     patientNameB = b.patient_name.toLowerCase();
@@ -84,12 +83,33 @@ var DicomSplit = View.extend({
                 }
                 return 0;
             });
-            this.table = new TableView({
-                el: this.$('#dicomsplit-preview'),
-                patients: patients,
-                from: this.from,
-                parentView: this
-            });
+            if (!(patients['MRI'].length + patients['PTCT'].length)) {
+                events.trigger('g:alert', {
+                    text: 'Hierarchy is not allowed',
+                    type: 'warning',
+                    timeout: 4000
+                });
+            } else {
+                this.ids.push(model.get('_id'));
+                this.dicomSplit.set({ ids: this.ids });
+                if (this.table) {
+                    this.table.appendRender(patients, model.get('name'), 'Girder');
+                } else {
+                    this.table = new TableView({
+                        el: this.$('#dicomsplit-preview'),
+                        experimentName: model.get('name'),
+                        patients: patients,
+                        from: this.from,
+                        parentView: this
+                    });
+                }
+                if (!this.currentOpenedExperimentsName) {
+                    this.currentOpenedExperimentsName = model.get('name');
+                } else {
+                    this.currentOpenedExperimentsName = this.currentOpenedExperimentsName + ' + ' + model.get('name');
+                }
+                this.$('#open-task-folder .icon-folder-open').html(this.currentOpenedExperimentsName);
+            }
         });
         // } else if (this.modality === 'PTCT') {
         //     this.dicomSplit.getItemAndThumbnails_PTCT().done((patients) => {
@@ -105,7 +125,6 @@ var DicomSplit = View.extend({
         //         });
         //     });
         // }
-        this.$('#open-task-folder .icon-folder-open').html(model.get('name'));
         return this;
     },
     renderFromArchive(projectId) {
@@ -213,17 +232,30 @@ var DicomSplit = View.extend({
                 this.inputType = 'girder';
                 this.openedFolder = new FolderModel();
                 this.openedFolder.set({'_id': dropedFolderId});
-                this.openedFolder.on('g:saved', function (res) {
-                    this.render(this.openedFolder);
-                    this.openedFolderId = this.openedFolder.get('_id');
-                    this.selectedFolderName = this.openedFolder.get('name');
-                }, this).on('g:error', function (res) {
+                if (this.openedFolders.indexOf(dropedFolderId) === -1) {
+                    this.openedFolders.push(dropedFolderId);
+                    this.openedFolder.on('g:saved', function (res) {
+                        this.render(this.openedFolder);
+                        this.openedFolderId = this.openedFolder.get('_id');
+                        if (!this.selectedFolderName) {
+                            this.selectedFolderName = this.openedFolder.get('name');
+                        } else {
+                            this.selectedFolderName = this.selectedFolderName + ' + ' + this.openedFolder.get('name');
+                        }
+                    }, this).on('g:error', function (res) {
+                        events.trigger('g:alert', {
+                            text: res.responseJSON.message,
+                            type: 'danger',
+                            timeout: 4000
+                        });
+                    }).save();
+                } else {
                     events.trigger('g:alert', {
-                        text: res.responseJSON.message,
-                        type: 'danger',
+                        text: 'Experiment already selected',
+                        type: 'warning',
                         timeout: 4000
                     });
-                }).save();
+                }
             }
         } else {
             $(e.currentTarget)

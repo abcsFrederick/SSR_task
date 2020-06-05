@@ -8,6 +8,7 @@ import FolderModel from 'girder/models/FolderModel';
 import ItemModel from 'girder/models/ItemModel';
 
 import events from 'girder/events';
+
 import { formatSize } from 'girder/misc';
 import { handleClose, handleOpen } from 'girder/dialog';
 import { restRequest } from 'girder/rest';

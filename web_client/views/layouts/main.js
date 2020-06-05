@@ -4,6 +4,7 @@ import View from 'girder/views/View';
 import Backbone from 'backbone';
 import { restRequest } from 'girder/rest';
 import events from 'girder/events';
+
 import { splitRoute, parseQueryString } from 'girder/misc';
 import { getCurrentUser } from 'girder/auth';
 import CollectionModel from 'girder/models/CollectionModel';

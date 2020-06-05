@@ -60,7 +60,11 @@ class DicomSplit(AccessControlledModel):
     def createJob(self, fetchFolder, user, token, inputType, subfolders,
                   axis, n_of_split, order, pushFolder, pushFolderName):
         if inputType == 'girder':
-            title = 'Dicom split for folder %s in girder' % fetchFolder['_id']
+            experiments = ''
+            for folders in fetchFolder:
+                experiments = experiments + folders['name'] + ' '
+            title = 'Dicom split for experiments %s in girder' % experiments
+            print title
         elif inputType == 'archive':
             title = 'Dicom split for folder %s in SAIP archive' % fetchFolder
 
@@ -83,11 +87,6 @@ class DicomSplit(AccessControlledModel):
             'script': script,
             'name': title,
             'inputs': [{
-                'id': 'topFolder',
-                'target': 'filepath',
-                'type': 'string',
-                'format': 'text'
-            }, {
                 'id': 'subfolders',
                 'type': 'string',
                 'format': 'string'
@@ -150,8 +149,18 @@ class DicomSplit(AccessControlledModel):
         }
 
         if inputType == 'girder':
-            inputs['topFolder'] = utils.girderInputSpec(
-                fetchFolder, resourceType='folder', token=token)
+            print 'in girder'
+            for index, folder in enumerate(fetchFolder):
+                idName = 'topFolder' + str(index)
+                inputsJson = {
+                    'id': idName,
+                    'target': 'filepath',
+                    'type': 'string',
+                    'format': 'text'
+                }
+                task['inputs'].append(inputsJson)
+                inputs[idName] = utils.girderInputSpec(
+                    folder, resourceType='folder', token=token)
         elif inputType == 'archive':
             inputs['topFolder'] = {
                 'mode': 'local',

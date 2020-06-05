@@ -1,6 +1,8 @@
 import View from 'girder/views/View';
 
 import TableTemplate from '../../../templates/tasks/dicomsplit/tableView.pug';
+import AppendTableTemplate from '../../../templates/tasks/dicomsplit/appendTableView.pug';
+
 import HierarchyAlertTemplate from '../../../templates/tasks/dicomsplit/hierarchyAlert.pug';
 import PatternTemplate from '../../../templates/tasks/dicomsplit/PatternView.pug';
 
@@ -69,6 +71,7 @@ var DicomSplit = View.extend({
             this.$el.html(HierarchyAlertTemplate());
         } else {
             this.$el.html(TableTemplate({
+                experimentName: settings.experimentName,
                 from: settings.from,
                 patients: settings.patients,
                 pool: this.defualtPool
@@ -121,11 +124,27 @@ var DicomSplit = View.extend({
         this.n[index] = order.length;
         this.axis[index] = axis;
         this.order[index] = event.dataTransfer.getData('order');
+
         // e.stopPropagation();
         // e.preventDefault();
 
         // let dropedFolderId = event.dataTransfer.getData('folderId');
         // let dropedFolderName = event.dataTransfer.getData('folderName');
+    },
+    appendRender: function (patients, experimentName, from) {
+        let currentIndex = this.subfolders.length;
+        let newPatientsLength = patients['MRI'].length + patients['PTCT'].length;
+        let newPatientsArray = new Array(newPatientsLength);
+        this.subfolders = this.subfolders.concat(newPatientsArray);
+        this.n = this.n.concat(newPatientsArray);
+        this.axis = this.axis.concat(newPatientsArray);
+        this.order = this.order.concat(newPatientsArray);
+        this.$('#paramPool tbody').append(AppendTableTemplate({
+            currentIndex: currentIndex,
+            experimentName: experimentName,
+            from: from,
+            patients: patients
+        }));
     }
     // renderBox(e) {
     //     let nOfSplit = $(e.currentTarget).val(),

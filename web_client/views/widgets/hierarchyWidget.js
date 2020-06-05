@@ -16,13 +16,15 @@ import View from 'girder/views/View';
 import { AccessType } from 'girder/constants';
 import { confirm, handleClose } from 'girder/dialog';
 import events from 'girder/events';
+import eventStream from 'girder/utilities/EventStream';
+
 import { renderMarkdown, capitalize, formatSize, splitRoute, parseQueryString } from 'girder/misc';
 
 import EditFolderWidget from 'girder/views/widgets/EditFolderWidget';
 // import FolderListWidget from 'girder/views/widgets/FolderListWidget';
 import ItemListWidget from 'girder/views/widgets/ItemListWidget';
 import AccessWidget from 'girder/views/widgets/AccessWidget';
-// import UploadWidget from 'girder/views/widgets/UploadWidget';
+import UploadWidget from 'girder/views/widgets/UploadWidget';
 
 import HierarchyBreadcrumbTemplate from 'girder/templates/widgets/hierarchyBreadcrumb.pug';
 // import HierarchyWidgetTemplate from '../../templates/widgets/hierarchyWidget.pug';
@@ -35,9 +37,7 @@ import 'bootstrap/js/dropdown';
 import FolderListWidget from './FolderListWidget';
 // import ItemListWidget from './ItemListWidget';
 // import AccessWidget from './AccessWidget';
-import UploadWidget from './UploadWidget';
-
-var pickedResources = null;
+// import UploadWidget from './UploadWidget';
 
 /**
  * Renders the breadcrumb list in the hierarchy widget.
@@ -171,6 +171,22 @@ var HierarchyWidget = HierarchyWidgetView.extend({
         events.on('g:login', () => {
             this.constructor.resetPickedResources();
         }, this);
+
+        this.listenTo(eventStream, 'g:event.job_unzip_start', _.bind(function (event) {
+            $('.g-item-list-entry').append('<i class="fa icon-spin3 animate-spin"></i>');
+        }, this));
+
+        this.listenTo(eventStream, 'g:event.job_unzip_done', _.bind(function (event) {
+            this.setCurrentModel(this.parentModel, {setRoute: false});
+        }, this));
+        this.listenTo(eventStream, 'g:event.upload_same', _.bind(function (event) {
+            this.setCurrentModel(this.parentModel, {setRoute: false});
+            events.trigger('g:alert', {
+                text: 'Same experiment exist',
+                type: 'danger',
+                timeout: 4000
+            });
+        }, this));
     },
 
     /**

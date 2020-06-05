@@ -7,6 +7,7 @@ import { restRequest } from 'girder/rest';
 
 var dicomsplitModel = Model.extend({
     resourceName: 'SSR_task/dicom_split',
+    ids: null,
     subfolders: null,
     n: null,
     axis: null,
@@ -49,7 +50,7 @@ var dicomsplitModel = Model.extend({
             url: `${this.resourceName}`,
             method: 'POST',
             data: {
-                'id': this.id,
+                'ids': JSON.stringify(this.get('ids')),
                 'inputType': this.get('inputType'),
                 'subfolders': JSON.stringify(this.get('subfolders')),
                 'n': JSON.stringify(this.get('n')),
