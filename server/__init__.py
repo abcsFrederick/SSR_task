@@ -86,7 +86,8 @@ def _updateJob(event):
 
 def onZipFileSave(event):
     file_ = event.info
-    if file_['exts'][0] == 'zip':
+    try:
+        zipExt = file_['exts'].index('zip')
         user = UserModel().load(file_['creatorId'], force=True)
 
         file = File().load(file_['_id'], user=user, force=True)
@@ -172,6 +173,8 @@ def onZipFileSave(event):
             expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
         job = Job().save(job)
         Job().scheduleJob(job)
+    except:
+        pass
 
 
 @setting_utilities.validator({
