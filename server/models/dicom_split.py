@@ -62,7 +62,7 @@ class DicomSplit(AccessControlledModel):
         if inputType == 'girder':
             experiments = ''
             for folders in fetchFolder:
-                experiments = experiments + folders['name'] + ' '
+                experiments = experiments + folders['name'] + ' '  # noqa
             title = 'Dicom split for experiments %s in girder' % experiments
             print title
         elif inputType == 'archive':

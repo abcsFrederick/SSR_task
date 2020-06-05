@@ -176,7 +176,7 @@ class SSR_task(Resource):
         .param('resource', 'Type of resource', required=True,
                enum=['Girder', 'Archive'], strip=True)
     )
-    def getItemAndThumbnail(self, folderId, resource):
+    def getItemAndThumbnail(self, folderId, resource):  # noqa
         # if modality == 'MRI':
         #     limit = 1000
         #     self.user = self.getCurrentUser()

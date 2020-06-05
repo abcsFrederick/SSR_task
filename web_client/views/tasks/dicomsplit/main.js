@@ -58,7 +58,7 @@ var DicomSplit = View.extend({
         this.openedFolders = [];
         this.ids = [];
     },
-    render(model) {
+    render(model, dropedFolderId) {
         this.dicomSplit = new DicomSplitModel();
         this.dicomSplit.set({ _id: model.get('_id') });
         this.modality = $('input[type=radio][name=modality]:checked').val();
@@ -90,6 +90,7 @@ var DicomSplit = View.extend({
                     timeout: 4000
                 });
             } else {
+                this.openedFolders.push(dropedFolderId);
                 this.ids.push(model.get('_id'));
                 this.dicomSplit.set({ ids: this.ids });
                 if (this.table) {
@@ -233,9 +234,8 @@ var DicomSplit = View.extend({
                 this.openedFolder = new FolderModel();
                 this.openedFolder.set({'_id': dropedFolderId});
                 if (this.openedFolders.indexOf(dropedFolderId) === -1) {
-                    this.openedFolders.push(dropedFolderId);
                     this.openedFolder.on('g:saved', function (res) {
-                        this.render(this.openedFolder);
+                        this.render(this.openedFolder, dropedFolderId);
                         this.openedFolderId = this.openedFolder.get('_id');
                         if (!this.selectedFolderName) {
                             this.selectedFolderName = this.openedFolder.get('name');

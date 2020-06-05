@@ -173,10 +173,21 @@ var HierarchyWidget = HierarchyWidgetView.extend({
         }, this);
 
         this.listenTo(eventStream, 'g:event.job_unzip_start', _.bind(function (event) {
-            $('.g-item-list-entry').append('<i class="fa icon-spin3 animate-spin"></i>');
+            $('.g-nav-link.qc-User').append('<i class="fa icon-spin3 animate-spin"></i>');
+            events.trigger('g:alert', {
+                text: 'Processing zip file, please wait.',
+                type: 'warning',
+                timeout: 4000
+            });
         }, this));
 
         this.listenTo(eventStream, 'g:event.job_unzip_done', _.bind(function (event) {
+            events.trigger('g:alert', {
+                text: 'Unzip finished.',
+                type: 'success',
+                timeout: 4000
+            });
+            $('.g-nav-link.qc-User>.icon-spin3').remove();
             this.setCurrentModel(this.parentModel, {setRoute: false});
         }, this));
         this.listenTo(eventStream, 'g:event.upload_same', _.bind(function (event) {
