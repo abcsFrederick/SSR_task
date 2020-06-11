@@ -175,8 +175,10 @@ class SSR_task(Resource):
         .param('folderId', 'folder id for searching')
         .param('resource', 'Type of resource', required=True,
                enum=['Girder', 'Archive'], strip=True)
+        .param('hierarchy', 'Type of hierarchy', required=True,
+               enum=['Root', 'Experiment'], strip=True)
     )
-    def getItemAndThumbnail(self, folderId, resource):  # noqa
+    def getItemAndThumbnail(self, folderId, resource, hierarchy):  # noqa
         # if modality == 'MRI':
         #     limit = 1000
         #     self.user = self.getCurrentUser()
@@ -200,57 +202,80 @@ class SSR_task(Resource):
         result['MRI'] = []
         result['PTCT'] = []
         if resource == 'Girder':
-            self.user = self.getCurrentUser()
-            # rootFolder = Folder().load(id=folderId, user=self.user,
-            #                            level=AccessType.READ, exc=True)
-            # experimentFolders = Folder().childFolders(parent=rootFolder, user=self.user,
-            #                                           parentType='folder', limit=limit)
-
-            # for experiment in experimentFolders:
-            experiment = Folder().load(id=folderId, user=self.user, level=AccessType.READ, exc=True)
-            patientFolders = Folder().childFolders(parent=experiment,
-                                                   parentType='folder',
-                                                   user=self.user, limit=limit)
-            for patient in patientFolders:
-                # samePatient = {}
-                studyFolders = Folder().childFolders(parent=patient,
-                                                     parentType='folder',
-                                                     user=self.user, limit=limit)
-                for study in studyFolders:
-                    seriesItems = Folder().childItems(folder=study, limit=limit)
-                    for itemObj in seriesItems:
-                        item = Item().load(id=itemObj['_id'],
-                                           user=self.user, level=AccessType.READ)
-                        q = {
-                            'itemId': item['_id'],
-                            'exts': 'jpg'
-                        }
-                        try:
-                            # if item['name'][-2:] == 'MR':
-                            #     item['modality'] = 'MRI'
-                            # elif item['name'][-2:] == 'PT':
-                            #     item['modality'] = 'PT'
-                            # elif item['name'][-2:] == 'CT':
-                            #     item['modality'] = 'CT'
-                            item['thumbnailId'] = list(File().find(q, limit=limit))[0]['_id']
-                            item['experiment'] = experiment['name']
-                            item['patient_name'] = patient['name']
-                            item['study_name'] = study['name']
-                            # itemWithThumbs.append(item)
-                            if item['name'][-2:] == 'MR':
-                                item['modality'] = 'MRI'
-                                result['MRI'].append(item)
-                            elif item['name'][-2:] == 'PT':
-                                item['modality'] = 'PT'
-                                result['PTCT'].append(item)
-                            elif item['name'][-2:] == 'CT':
-                                item['modality'] = 'CT'
-                                result['PTCT'].append(item)
-                        except Exception:
-                            pass
-                    # studiesUnderSamePatient[patient['name']] =
-                            # raise GirderException('%s does not have thumbnail' % item['name'])
-                # result[patient['name']] = itemWithThumbs
+            if hierarchy == 'Experiment':
+                self.user = self.getCurrentUser()
+                experiment = Folder().load(id=folderId, user=self.user, level=AccessType.READ, exc=True)
+                patientFolders = Folder().childFolders(parent=experiment,
+                                                       parentType='folder',
+                                                       user=self.user, limit=limit)
+                for patient in patientFolders:
+                    studyFolders = Folder().childFolders(parent=patient,
+                                                         parentType='folder',
+                                                         user=self.user, limit=limit)
+                    for study in studyFolders:
+                        seriesItems = Folder().childItems(folder=study, limit=limit)
+                        for itemObj in seriesItems:
+                            item = Item().load(id=itemObj['_id'],
+                                               user=self.user, level=AccessType.READ)
+                            q = {
+                                'itemId': item['_id'],
+                                'exts': 'jpg'
+                            }
+                            try:
+                                item['thumbnailId'] = list(File().find(q, limit=limit))[0]['_id']
+                                item['experiment'] = experiment['name']
+                                item['patient_name'] = patient['name']
+                                item['study_name'] = study['name']
+                                if item['name'][-2:] == 'MR':
+                                    item['modality'] = 'MRI'
+                                    result['MRI'].append(item)
+                                elif item['name'][-2:] == 'PT':
+                                    item['modality'] = 'PT'
+                                    result['PTCT'].append(item)
+                                elif item['name'][-2:] == 'CT':
+                                    item['modality'] = 'CT'
+                                    result['PTCT'].append(item)
+                            except Exception:
+                                pass
+            elif hierarchy == 'Root':
+                self.user = self.getCurrentUser()
+                rootFolder = Folder().load(id=folderId, user=self.user,
+                                           level=AccessType.READ, exc=True)
+                experimentFolders = Folder().childFolders(parent=rootFolder, user=self.user,
+                                                          parentType='folder', limit=limit)
+                for experiment in experimentFolders:
+                    patientFolders = Folder().childFolders(parent=experiment,
+                                                           parentType='folder',
+                                                           user=self.user, limit=limit)
+                    for patient in patientFolders:
+                        studyFolders = Folder().childFolders(parent=patient,
+                                                             parentType='folder',
+                                                             user=self.user, limit=limit)
+                        for study in studyFolders:
+                            seriesItems = Folder().childItems(folder=study, limit=limit)
+                            for itemObj in seriesItems:
+                                item = Item().load(id=itemObj['_id'],
+                                                   user=self.user, level=AccessType.READ)
+                                q = {
+                                    'itemId': item['_id'],
+                                    'exts': 'jpg'
+                                }
+                                try:
+                                    item['thumbnailId'] = list(File().find(q, limit=limit))[0]['_id']
+                                    item['experiment'] = experiment['name']
+                                    item['patient_name'] = patient['name']
+                                    item['study_name'] = study['name']
+                                    if item['name'][-2:] == 'MR':
+                                        item['modality'] = 'MRI'
+                                        result['MRI'].append(item)
+                                    elif item['name'][-2:] == 'PT':
+                                        item['modality'] = 'PT'
+                                        result['PTCT'].append(item)
+                                    elif item['name'][-2:] == 'CT':
+                                        item['modality'] = 'CT'
+                                        result['PTCT'].append(item)
+                                except Exception:
+                                    pass
         elif resource == 'Archive':
             experimentFolders = ArchiveFolder().find(folderId, parentType='project')
             for experiment in experimentFolders:

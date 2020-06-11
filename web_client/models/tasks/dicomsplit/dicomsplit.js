@@ -15,10 +15,10 @@ var dicomsplitModel = Model.extend({
     pushFolderId: null,
     pushFolderName: null,
 
-    getItemAndThumbnails: function () {
+    getItemAndThumbnails: function (hierarchyType) {
         return restRequest({
             url: `${this.resourceName}?folderId=${this.id}`,
-            data: {'resource': 'Girder'}
+            data: {'resource': 'Girder', 'hierarchy': hierarchyType}
         }).then((resp) => {
             return resp;
         }).fail((err) => {

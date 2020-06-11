@@ -16,7 +16,7 @@ import TableView from './tableView';
 
 var DicomSplit = View.extend({
     events: {
-        'dragover #open-task-folder': function (e) {
+        'dragover .patientsFolder': function (e) {
             var dataTransfer = e.originalEvent.dataTransfer;
             if (!dataTransfer) {
                 return;
@@ -27,7 +27,7 @@ var DicomSplit = View.extend({
 
             e.preventDefault();
         },
-        'drop #open-task-folder': 'dropTaskFolder',
+        'drop .patientsFolder': 'dropTaskFolder',
         'dragover #select-split-folder': function (e) {
             var dataTransfer = e.originalEvent.dataTransfer;
             if (!dataTransfer) {
@@ -58,12 +58,12 @@ var DicomSplit = View.extend({
         this.openedFolders = [];
         this.ids = [];
     },
-    render(model, dropedFolderId) {
+    render(model, dropedFolderId, hierarchyType) {
         this.dicomSplit = new DicomSplitModel();
         this.dicomSplit.set({ _id: model.get('_id') });
         this.modality = $('input[type=radio][name=modality]:checked').val();
         // if (this.modality === 'MRI') {
-        this.dicomSplit.getItemAndThumbnails().done((patients) => {
+        this.dicomSplit.getItemAndThumbnails(hierarchyType).done((patients) => {
             patients['MRI'].sort(function (a, b) {
                 let patientNameA = a.patient_name.toLowerCase(),
                     patientNameB = b.patient_name.toLowerCase();
@@ -109,26 +109,12 @@ var DicomSplit = View.extend({
                 } else {
                     this.currentOpenedExperimentsName = this.currentOpenedExperimentsName + ' + ' + model.get('name');
                 }
-                this.$('#open-task-folder .icon-folder-open').html(this.currentOpenedExperimentsName);
+                this.$('.patientsFolder .icon-folder-open').html(this.currentOpenedExperimentsName);
             }
         });
-        // } else if (this.modality === 'PTCT') {
-        //     this.dicomSplit.getItemAndThumbnails_PTCT().done((patients) => {
-        //         if (this.table) {
-        //             this.table.destroy();
-        //         }
-        //         this.table = new TableView({
-        //             el: this.$('#dicomsplit-preview'),
-        //             patients: patients,
-        //             from: this.from,
-        //             modality: 'PTCT',
-        //             parentView: this
-        //         });
-        //     });
-        // }
         return this;
     },
-    renderFromArchive(projectId) {
+    renderFromArchive(projectId, hierarchyType) {
         this.dicomSplit = new DicomSplitModel();
         this.dicomSplit.getItemAndThumbnailsArchive(projectId).done((patients) => {
             if (this.table) {
@@ -161,45 +147,9 @@ var DicomSplit = View.extend({
             });
         });
 
-        this.$('#open-task-folder .icon-folder-open').html(this.archiveFolderName);
+        this.$('.patientsFolder .icon-folder-open').html(this.archiveFolderName);
         return this;
     },
-    // renderFromArchive(series, studyName, studyId) {
-    //     this.dicomSplit = new DicomSplitModel();
-    //     console.log(series);
-    //     this.dicomSplit.set({ _id: studyId });
-    //     let patients = [];
-    //     for (let a = 0; a < series.length; a++) {
-    //         restRequest({
-    //             url: 'Archive/SAIP/slice/download',
-    //             method: 'GET',
-    //             data: {
-    //                 'Type': 'thumbnail',
-    //                 'id': series.at(a).get('series_uid')
-    //             }
-    //         }).done((resp) => {
-    //             let patient = {
-    //                 name: series.at(a).get('series_description'),
-    //                 thumbnailId: series.at(a).get('series_uid'),
-    //                 series_path: series.at(a).get('series_path')
-    //             };
-    //             patients.push(patient);
-    //             if (this.table) {
-    //                 this.table.destroy();
-    //             }
-    //             this.table = new TableView({
-    //                 el: this.$('#dicomsplit-preview'),
-    //                 from: this.from,
-    //                 patients: patients,
-    //                 parentView: this
-    //             });
-    //         }).fail((err) => {
-    //             this.trigger('g:error', err);
-    //         });
-    //     }
-    //     this.$('#open-task-folder .icon-folder-open').html(studyName);
-    //     return this;
-    // },
     renderSelectFolder(model) {
         this.$('#select-split-folder .icon-folder-open').html(model.get('name'));
     },
@@ -208,6 +158,14 @@ var DicomSplit = View.extend({
     //     dialog.setElement($('#g-dialog-container')).render();
     // },
     dropTaskFolder(e) {
+        let hierarchyType;
+        if ( e.currentTarget.id === 'open-experiment-folders') {
+            $('#open-root-folder').hide();
+            hierarchyType = 'Experiment';
+        } else if (e.currentTarget.id === 'open-root-folder') {
+            $('#open-experiment-folders').hide();
+            hierarchyType = 'Root';
+        }
         e.stopPropagation();
         e.preventDefault();
         let dropedFolderId = event.dataTransfer.getData('folderId');
@@ -217,7 +175,7 @@ var DicomSplit = View.extend({
             if (this.from === 'Archive') {
                 this.inputType = 'archive';
                 this.archiveFolderName = event.dataTransfer.getData('folderName');
-                this.renderFromArchive(dropedFolderId);
+                this.renderFromArchive(dropedFolderId, hierarchyType);
                 this.openedFolderId = dropedFolderId;
                 this.openedFolder = this.archiveFolderName;
                 this.selectedFolderName = this.archiveFolderName;
@@ -235,7 +193,7 @@ var DicomSplit = View.extend({
                 this.openedFolder.set({'_id': dropedFolderId});
                 if (this.openedFolders.indexOf(dropedFolderId) === -1) {
                     this.openedFolder.on('g:saved', function (res) {
-                        this.render(this.openedFolder, dropedFolderId);
+                        this.render(this.openedFolder, dropedFolderId, hierarchyType);
                         this.openedFolderId = this.openedFolder.get('_id');
                         if (!this.selectedFolderName) {
                             this.selectedFolderName = this.openedFolder.get('name');
