@@ -196,7 +196,7 @@ SettingDefault.defaults.update({
     }
 })
 SettingDefault.defaults.update({
-    SettingKey.EMAIL_FROM_ADDRESS: 'https://fr-s-ivg-ssr-d1.ncifcrf.gov/'
+    SettingKey.EMAIL_FROM_ADDRESS: 'https://fr-s-ivg-ssr-p1.ncifcrf.gov/'
 })
 _templateDir = os.path.join(os.path.dirname(__file__), 'mail_templates')
 _templateLookup = TemplateLookup(directories=[_templateDir], collection_size=50)
