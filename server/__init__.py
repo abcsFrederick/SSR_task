@@ -27,7 +27,7 @@ def _notifyUser(event, meta):
     userId = event.info['job']['userId']
     user = UserModel().load(userId, force=True, fields=['email'])
     outputName = event.info['job'].get('kwargs')['inputs']['outPath']['data'].split('/')[-1]
-    inputName = event.info['job'].get('kwargs')['inputs']['topFolder']['name']
+    inputName = event.info['job'].get('kwargs')['inputs']['topFolder0']['name']
     email = user['email']
     template = _templateLookup.get_template('job_done.mako')
     params = {}

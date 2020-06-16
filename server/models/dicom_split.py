@@ -149,7 +149,6 @@ class DicomSplit(AccessControlledModel):
         }
 
         if inputType == 'girder':
-            print 'in girder'
             for index, folder in enumerate(fetchFolder):
                 idName = 'topFolder' + str(index)
                 inputsJson = {
