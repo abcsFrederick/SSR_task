@@ -90,6 +90,11 @@ var DicomSplit = View.extend({
                     timeout: 4000
                 });
             } else {
+                if (hierarchyType === 'Experiment') {
+                    $('#open-root-folder').hide();
+                } else if (hierarchyType === 'Root') {
+                    $('#open-experiment-folders').hide();
+                }
                 this.openedFolders.push(dropedFolderId);
                 this.ids.push(model.get('_id'));
                 this.dicomSplit.set({ ids: this.ids });
@@ -160,10 +165,8 @@ var DicomSplit = View.extend({
     dropTaskFolder(e) {
         let hierarchyType;
         if ( e.currentTarget.id === 'open-experiment-folders') {
-            $('#open-root-folder').hide();
             hierarchyType = 'Experiment';
         } else if (e.currentTarget.id === 'open-root-folder') {
-            $('#open-experiment-folders').hide();
             hierarchyType = 'Root';
         }
         e.stopPropagation();

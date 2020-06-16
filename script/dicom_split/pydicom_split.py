@@ -227,10 +227,11 @@ def checkDirectory(directory, output_dir=None):
     for root, subdirs, files in os.walk(directory):
         if len(files):
             if files.pop(0) != '.DS_Store':
-                newRoot = os.path.join(output_dir, root.split('/')[-4])
-                newRoot = os.path.join(newRoot, root.split('/')[-3])
-                newRoot = os.path.join(newRoot, root.split('/')[-2])
-                newRoot = os.path.join(newRoot, root.split('/')[-1])
+                # newRoot = os.path.join(output_dir, root.split('/')[-4])
+                # newRoot = os.path.join(newRoot, root.split('/')[-3])
+                # newRoot = os.path.join(newRoot, root.split('/')[-2])
+                # newRoot = os.path.join(newRoot, root.split('/')[-1])
+                newRoot = output_dir
                 if not os.path.exists(newRoot):
                     os.makedirs(newRoot)
                 yield root, newRoot
@@ -326,7 +327,6 @@ def split_dicom_directory(directory, axis=0, n=3, keep_origin=False,
         raise ValueError
     for directoryChecked, newRoot in checkDirectory(directory, output_dir):
         for path, dataset in DICOMDirectory(directoryChecked):
-            # print(newRoot)
             try:
                 pixel_array = dataset.pixel_array
             except (TypeError, AttributeError):
