@@ -2,9 +2,9 @@ tr
   td.experimentLabel(colspan='3')
     label #{experimentName}
 if patients['MRI'].length
-  tr
-    td.modalityLabel(colspan='3')
-      label MRI
+  //- tr
+  //-   td.modalityLabel(colspan='3')
+  //-     label MRI
   each patient, index in patients['MRI']
     tr
       if from === 'Archive'
@@ -20,9 +20,9 @@ if patients['MRI'].length
         td.pattern-drop-zone(pname=patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=currentIndex + index)
           i.icon-docs Drop a pattern from pool
 if patients['PTCT'].length
-  tr
-    td.modalityLabel(colspan='3')
-      label PTCT
+  //- tr
+  //-   td.modalityLabel(colspan='3')
+  //-     label PTCT
   each patient, index in patients['PTCT']
     tr
       if from === 'Archive'
