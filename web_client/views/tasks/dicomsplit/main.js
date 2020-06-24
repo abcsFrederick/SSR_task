@@ -16,6 +16,15 @@ import TableView from './tableView';
 
 var DicomSplit = View.extend({
     events: {
+        'change .hierarchy': function (e) {
+            let settings = {};    
+            if (this.table) {
+                this.table.destroy();
+                this.table = null;
+            }
+            settings.hierarchy = $(e.currentTarget).children("option:selected").val();
+            this.initialize(settings);
+        },
         'dragover .patientsFolder': function (e) {
             var dataTransfer = e.originalEvent.dataTransfer;
             if (!dataTransfer) {
@@ -41,7 +50,7 @@ var DicomSplit = View.extend({
         },
         'drop #select-split-folder': 'dropSplitFolder',
 
-        'click #select-split-folder': 'selectSplitFolder',
+        // 'click #select-split-folder': 'selectSplitFolder',
         'click #submitTask': 'validation',
         'click #cancelTask': '_cancelJob',
         'mouseenter #cancelTask': function (e) {
@@ -54,7 +63,7 @@ var DicomSplit = View.extend({
         }
     },
     initialize(settings) {
-        this.$el.html(ViewTemplate());
+        this.$el.html(ViewTemplate({hierarchy: settings.hierarchy ? settings.hierarchy : 'root'}));
         this.openedFolders = [];
         this.ids = [];
     },
@@ -90,31 +99,50 @@ var DicomSplit = View.extend({
                     timeout: 4000
                 });
             } else {
+                // if (hierarchyType === 'Experiment') {
+                //     $('#open-root-folder').hide();
+                // } else if (hierarchyType === 'Root') {
+                //     $('#open-experiment-folders').hide();
+                // }
                 if (hierarchyType === 'Experiment') {
-                    $('#open-root-folder').hide();
+                    this.openedFolders.push(dropedFolderId);
+                    this.ids.push(model.get('_id'));
+                    this.dicomSplit.set({ ids: this.ids });
+                    if (this.table) {
+                        this.table.appendRender(patients, model.get('name'), 'Girder');
+                    } else {
+                        this.table = new TableView({
+                            el: this.$('#dicomsplit-preview'),
+                            experimentName: model.get('name'),
+                            patients: patients,
+                            from: this.from,
+                            parentView: this,
+                            hierarchyType: hierarchyType
+                        });
+                    }
                 } else if (hierarchyType === 'Root') {
-                    $('#open-experiment-folders').hide();
+                    this.openedFolders.push(dropedFolderId);
+                    this.ids.push(model.get('_id'));
+                    this.dicomSplit.set({ ids: this.ids });
+                    if (this.table) {
+                        this.table.destroy();
+                    } else {
+                        this.table = new TableView({
+                            el: this.$('#dicomsplit-preview'),
+                            experimentName: model.get('name'),
+                            patients: patients,
+                            from: this.from,
+                            parentView: this,
+                            hierarchyType: hierarchyType
+                        });
+                    }
                 }
-                this.openedFolders.push(dropedFolderId);
-                this.ids.push(model.get('_id'));
-                this.dicomSplit.set({ ids: this.ids });
-                if (this.table) {
-                    this.table.appendRender(patients, model.get('name'), 'Girder');
-                } else {
-                    this.table = new TableView({
-                        el: this.$('#dicomsplit-preview'),
-                        experimentName: model.get('name'),
-                        patients: patients,
-                        from: this.from,
-                        parentView: this
-                    });
-                }
-                if (!this.currentOpenedExperimentsName) {
-                    this.currentOpenedExperimentsName = model.get('name');
-                } else {
-                    this.currentOpenedExperimentsName = this.currentOpenedExperimentsName + ' + ' + model.get('name');
-                }
-                this.$('.patientsFolder .icon-folder-open').html(this.currentOpenedExperimentsName);
+                // if (!this.currentOpenedExperimentsName) {
+                //     this.currentOpenedExperimentsName = model.get('name');
+                // } else {
+                //     this.currentOpenedExperimentsName = this.currentOpenedExperimentsName + ' + ' + model.get('name');
+                // }
+                // this.$('.patientsFolder .icon-folder-open').html(this.currentOpenedExperimentsName);
             }
         });
         return this;
@@ -198,11 +226,11 @@ var DicomSplit = View.extend({
                     this.openedFolder.on('g:saved', function (res) {
                         this.render(this.openedFolder, dropedFolderId, hierarchyType);
                         this.openedFolderId = this.openedFolder.get('_id');
-                        if (!this.selectedFolderName) {
-                            this.selectedFolderName = this.openedFolder.get('name');
-                        } else {
-                            this.selectedFolderName = this.selectedFolderName + ' + ' + this.openedFolder.get('name');
-                        }
+                        // if (!this.selectedFolderName) {
+                        //     this.selectedFolderName = this.openedFolder.get('name');
+                        // } else {
+                        //     this.selectedFolderName = this.selectedFolderName + ' + ' + this.openedFolder.get('name');
+                        // }
                     }, this).on('g:error', function (res) {
                         events.trigger('g:alert', {
                             text: res.responseJSON.message,
@@ -316,11 +344,11 @@ var DicomSplit = View.extend({
         return widget;
     },
     validation: function () {
-        // console.log(this.selectedFolderName);
+        this.selectedFolderName = $('#splitJobName').val();
         // console.log(this.selectedFolderId);
-        if (this.table === undefined || this.selectedFolderId === undefined) {
+        if (this.table === undefined || this.selectedFolderId === undefined || this.selectedFolderName === '') {
             events.trigger('g:alert', {
-                text: 'No folder opened or selected.',
+                text: 'No folder selected or name is not provided.',
                 type: 'danger',
                 timeout: 4000
             });
@@ -373,7 +401,7 @@ var DicomSplit = View.extend({
                 } else {
                     events.trigger('g:alert', {
                         icon: 'cancel',
-                        text: 'Params missing',
+                        text: 'Patterns are missing',
                         type: 'danger',
                         timeout: 4000
                     });

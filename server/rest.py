@@ -261,6 +261,7 @@ class SSR_task(Resource):
                                     'exts': 'jpg'
                                 }
                                 try:
+                                    item['rootFolder'] = rootFolder['name']
                                     item['thumbnailId'] = list(File().find(q, limit=limit))[0]['_id']
                                     item['experiment'] = experiment['name']
                                     item['patient_name'] = patient['name']

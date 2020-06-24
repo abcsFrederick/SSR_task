@@ -3,7 +3,7 @@
   table.table
     thead
       tr
-        th.overviewHead View
+        th.overviewHead Preview
         th.nameHead Name
         th.patternHead Pattern
     tbody
@@ -11,9 +11,9 @@
         td.experimentLabel(colspan='3')
           label #{experimentName}
       if patients['MRI'].length
-        tr
-          td.modalityLabel(colspan='3')
-            label MRI
+        //- tr
+        //-   td.modalityLabel(colspan='3')
+        //-     label MRI
         each patient, index in patients['MRI']
           tr
             if from === 'Archive'
@@ -26,12 +26,16 @@
               td.thumb
                 img(src="api/v1/file/" + patient.thumbnailId + "/download")
               td.name #{patient.name}
-              td.pattern-drop-zone(pname=patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=index)
-                i.icon-docs Drop a pattern from pool
+              if hierarchyType == 'Experiment'
+                td.pattern-drop-zone(pname=patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=index)
+                  i.icon-docs Drop a pattern from pool
+              else if hierarchyType == 'Root'
+                td.pattern-drop-zone(pname=patient.rootFolder + '/' + patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=index)
+                  i.icon-docs Drop a pattern from pool
       if patients['PTCT'].length
-        tr
-          td.modalityLabel(colspan='3')
-            label PTCT
+        //- tr
+        //-   td.modalityLabel(colspan='3')
+        //-     label PTCT
         each patient, index in patients['PTCT']
           tr
             if from === 'Archive'
@@ -52,8 +56,12 @@
               td.thumb
                 img(src="api/v1/file/" + patient.thumbnailId + "/download")
               td.name #{patient.name}
-              td.pattern-drop-zone(pname=patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=patients['MRI'].length + index)
-                i.icon-docs Drop a pattern from pool
+              if hierarchyType == 'Experiment'
+                td.pattern-drop-zone(pname=patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=patients['MRI'].length + index)
+                  i.icon-docs Drop a pattern from pool
+              else if hierarchyType == 'Root'
+                td.pattern-drop-zone(pname=patient.rootFolder + '/' + patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=index)
+                  i.icon-docs Drop a pattern from pool
       //- else if modality === 'PTCT'
       //-   each patient, index in patients
       //-       if index % 2 === 0

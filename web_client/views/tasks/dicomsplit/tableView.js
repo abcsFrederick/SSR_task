@@ -74,7 +74,8 @@ var DicomSplit = View.extend({
                 experimentName: settings.experimentName,
                 from: settings.from,
                 patients: settings.patients,
-                pool: this.defualtPool
+                pool: this.defualtPool,
+                hierarchyType: settings.hierarchyType
             }));
         }
 
@@ -143,7 +144,8 @@ var DicomSplit = View.extend({
             currentIndex: currentIndex,
             experimentName: experimentName,
             from: from,
-            patients: patients
+            patients: patients,
+            hierarchyType: this.settings.hierarchyType
         }));
     }
     // renderBox(e) {

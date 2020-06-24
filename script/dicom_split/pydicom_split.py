@@ -391,7 +391,7 @@ def split_dicom_directory(directory, axis=0, n=3, keep_origin=False,
                         output_path = parsed_patient_ids[i] + id_trailing
                     else:
                         output_path = None
-                    created_output_path = make_output_path(newRoot, parsed_patient_names[i], output_path)
+                    created_output_path = make_output_path(newRoot, parsed_patient_names[i] + id_trailing, output_path)
                     filename = os.path.join(created_output_path, os.path.basename(path))
                     split_dataset.save_as(filename)
 
