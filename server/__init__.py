@@ -2,6 +2,8 @@ from . import rest
 import os
 import shutil
 import datetime
+import bson
+
 from girder import events
 from mako.lookup import TemplateLookup
 
@@ -38,6 +40,16 @@ def _notifyUser(event, meta):
     text = template.render(**params)
     if meta.get('task') == 'splitDicom':
         taskName = 'DICOM Split'
+        parentFolderId = event.info['job'].get('kwargs')['outputs']['splitedVolumn']['parent_id']
+        resultFolder = Folder().findOne({
+            'parentId': bson.ObjectId(parentFolderId),
+            'name': outputName,
+            'parentCollection': 'folder'
+        })
+        downloadLink = os.path.join(params['host'],
+                                    'folder',
+                                    str(resultFolder.get('_id')), 'download')
+        params['link'] = downloadLink
     else:
         taskName = meta.get('task')
     mail_utils.sendEmail(
@@ -88,92 +100,93 @@ def onZipFileSave(event):
     file_ = event.info
     try:
         zipExt = file_['exts'].index('zip')
-        user = UserModel().load(file_['creatorId'], force=True)
+        if zipExt:
+            user = UserModel().load(file_['creatorId'], force=True)
 
-        file = File().load(file_['_id'], user=user, force=True)
-        item = Item().load(file_['itemId'], user=user, force=True)
-        folder = Folder().load(item['folderId'], user=user, force=True)
-        # zipfolder = Folder().createFolder(parent=folder, name=item['name'] + ' zip',
-        #                       parentType='folder', creator=user)
+            file = File().load(file_['_id'], user=user, force=True)
+            item = Item().load(file_['itemId'], user=user, force=True)
+            folder = Folder().load(item['folderId'], user=user, force=True)
+            # zipfolder = Folder().createFolder(parent=folder, name=item['name'] + ' zip',
+            #                       parentType='folder', creator=user)
 
-        token = Token().currentSession()
+            token = Token().currentSession()
 
-        path = os.path.join(os.path.dirname(__file__), 'unzip.py')
-        with open(path, 'r') as f:
-            script = f.read()
-        title = 'Unzip zip experiment: %s' % file_['name']
-        job = Job().createJob(
-            title=title, type='unzip', handler='worker_handler',
-            user=user)
+            path = os.path.join(os.path.dirname(__file__), 'unzip.py')
+            with open(path, 'r') as f:
+                script = f.read()
+            title = 'Unzip zip experiment: %s' % file_['name']
+            job = Job().createJob(
+                title=title, type='unzip', handler='worker_handler',
+                user=user)
 
-        jobToken = Job().createJobToken(job)
-        folderName = os.path.splitext(file_['name'])[0]
-        existing = Folder().findOne({
-            'parentId': folder['_id'],
-            'name': folderName,
-            'parentCollection': 'folder'
-        })
-        if existing:
-            Item().remove(item)
-            Notification().createNotification(
-                type='upload_same', data=job, user=user,
-                expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
-            return
-        outputName = folderName
+            jobToken = Job().createJobToken(job)
+            folderName = os.path.splitext(file_['name'])[0]
+            existing = Folder().findOne({
+                'parentId': folder['_id'],
+                'name': folderName,
+                'parentCollection': 'folder'
+            })
+            if existing:
+                Item().remove(item)
+                Notification().createNotification(
+                    type='upload_same', data=job, user=user,
+                    expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
+                return
+            outputName = folderName
 
-        task = {
-            'mode': 'python',
-            'script': script,
-            'name': title,
-            'inputs': [{
-                'id': 'in_path',
-                'target': 'filepath',
-                'type': 'string',
-                'format': 'text'
-            }, {
-                'id': 'out_filename',
-                'type': 'string',
-                'format': 'text'
-            }],
-            'outputs': [{
-                'id': 'out_path',
-                'target': 'filepath',
-                'type': 'string',
-                'format': 'text'
-            }]
-        }
-        inputs = {
-            'in_path': workerUtils.girderInputSpec(
-                file, resourceType='file', token=token),
-            # 'in_path': {
-            #     'mode': 'local',
-            #     'path': os.path.join(assetstore['root'], file_['path'])
-            # },
-            'out_filename': {
-                'mode': 'inline',
-                'type': 'string',
-                'format': 'text',
-                'data': outputName
+            task = {
+                'mode': 'python',
+                'script': script,
+                'name': title,
+                'inputs': [{
+                    'id': 'in_path',
+                    'target': 'filepath',
+                    'type': 'string',
+                    'format': 'text'
+                }, {
+                    'id': 'out_filename',
+                    'type': 'string',
+                    'format': 'text'
+                }],
+                'outputs': [{
+                    'id': 'out_path',
+                    'target': 'filepath',
+                    'type': 'string',
+                    'format': 'text'
+                }]
             }
-        }
-        outputs = {
-            'out_path': workerUtils.girderOutputSpec(
-                parent=folder, token=token, parentType='folder')
-        }
-        job['kwargs'] = {
-            'task': task,
-            'inputs': inputs,
-            'outputs': outputs,
-            'jobInfo': workerUtils.jobInfoSpec(job, jobToken),
-            'auto_convert': False,
-            'validate': False
-        }
-        Notification().createNotification(
-            type='job_unzip_start', data=job, user=user,
-            expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
-        job = Job().save(job)
-        Job().scheduleJob(job)
-    except:
+            inputs = {
+                'in_path': workerUtils.girderInputSpec(
+                    file, resourceType='file', token=token),
+                # 'in_path': {
+                #     'mode': 'local',
+                #     'path': os.path.join(assetstore['root'], file_['path'])
+                # },
+                'out_filename': {
+                    'mode': 'inline',
+                    'type': 'string',
+                    'format': 'text',
+                    'data': outputName
+                }
+            }
+            outputs = {
+                'out_path': workerUtils.girderOutputSpec(
+                    parent=folder, token=token, parentType='folder')
+            }
+            job['kwargs'] = {
+                'task': task,
+                'inputs': inputs,
+                'outputs': outputs,
+                'jobInfo': workerUtils.jobInfoSpec(job, jobToken),
+                'auto_convert': False,
+                'validate': False
+            }
+            Notification().createNotification(
+                type='job_unzip_start', data=job, user=user,
+                expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
+            job = Job().save(job)
+            Job().scheduleJob(job)
+    except Exception:
         pass
 
 

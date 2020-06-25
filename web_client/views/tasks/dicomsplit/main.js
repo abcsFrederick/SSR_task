@@ -1,11 +1,11 @@
 import View from 'girder/views/View';
-import _ from 'underscore';
+// import _ from 'underscore';
 
 import { restRequest } from 'girder/rest';
 import events from 'girder/events';
 import FolderModel from 'girder/models/FolderModel';
 import BrowserWidget from 'girder/views/widgets/BrowserWidget';
-import eventStream from 'girder/utilities/EventStream';
+// import eventStream from 'girder/utilities/EventStream';
 
 import DicomSplitModel from '../../../models/tasks/dicomsplit/dicomsplit';
 import ViewTemplate from '../../../templates/tasks/dicomsplit/main.pug';
@@ -385,19 +385,25 @@ var DicomSplit = View.extend({
                         modality: this.modality
                     });
                     this.dicomSplit.createJob().done((job) => {
-                        this.$('#cancelTask').show();
-                        this.$('#submitTask').hide();
+                        events.trigger('g:alert', {
+                            icon: 'ok',
+                            text: 'Your Job task is successfully submit, you will receive an email when it is finished.',
+                            type: 'success',
+                            timeout: 4000
+                        });
+                        // this.$('#cancelTask').show();
+                        // this.$('#submitTask').hide();
                         this.job = job;
-                        this.listenTo(eventStream, 'g:event.job_email_sent', _.bind(function (event) {
-                            // var info = event.data;
-                            // if (info._id === job.id) {
-                            //     job.set(info);
-                            //     this.renderJobStatus(job);
-                            // }
-                            this.$('#cancelTask').hide();
-                            // this.$('#savingTaskResult').hide();
-                            this.$('#submitTask').show();
-                        }, this));
+                        // this.listenTo(eventStream, 'g:event.job_email_sent', _.bind(function (event) {
+                        //     // var info = event.data;
+                        //     // if (info._id === job.id) {
+                        //     //     job.set(info);
+                        //     //     this.renderJobStatus(job);
+                        //     // }
+                        //     this.$('#cancelTask').hide();
+                        //     // this.$('#savingTaskResult').hide();
+                        //     this.$('#submitTask').show();
+                        // }, this));
                     });
                 } else {
                     events.trigger('g:alert', {
