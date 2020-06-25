@@ -121,6 +121,8 @@ var DicomSplit = View.extend({
                         });
                     }
                 } else if (hierarchyType === 'Root') {
+                    this.openedFolders = [];
+                    this.ids = [];
                     this.openedFolders.push(dropedFolderId);
                     this.ids.push(model.get('_id'));
                     this.dicomSplit.set({ ids: this.ids });
