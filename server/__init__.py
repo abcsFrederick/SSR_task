@@ -37,7 +37,6 @@ def _notifyUser(event, meta):
     params['brandName'] = 'SSR'  # Setting().get(SettingKey.BRAND_NAME)
     params['inputName'] = inputName
     params['outputName'] = outputName
-    text = template.render(**params)
     if meta.get('task') == 'splitDicom':
         taskName = 'DICOM Split'
         parentFolderId = event.info['job'].get('kwargs')['outputs']['splitedVolumn']['parent_id']
@@ -47,11 +46,12 @@ def _notifyUser(event, meta):
             'parentCollection': 'folder'
         })
         downloadLink = os.path.join(params['host'],
-                                    'folder',
+                                    'api', 'v1', 'folder',
                                     str(resultFolder.get('_id')), 'download')
         params['link'] = downloadLink
     else:
         taskName = meta.get('task')
+    text = template.render(**params)
     mail_utils.sendEmail(
         to=email,
         toAdmins=False,
