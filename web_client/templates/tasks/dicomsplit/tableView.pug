@@ -7,7 +7,7 @@
         th.nameHead Name
         th.patternHead Pattern
     tbody
-      if hierarchyType == 'Experiment'
+      if hierarchyType === 'Experiment'
         tr
           td.experimentLabel(colspan='3')
             label #{experimentName}
@@ -17,13 +17,14 @@
         //-   td.modalityLabel(colspan='3')
         //-     label MRI
         each patient, index in patients['MRI']
-          if hierarchyType == 'Root'
-            if lastPatient == undefined
+          if hierarchyType === 'Root' 
+            if lastPatient === undefined
               - var lastPatient = patient.experiment
               tr
                 td.experimentLabel(colspan='3')
                   label #{patient.experiment}
-            else if lastPatient != patient.experiment
+            else if lastPatient !== patient.experiment
+              - var lastPatient = patient.experiment
               tr
                 td.experimentLabel(colspan='3')
                   label #{patient.experiment}
@@ -38,21 +39,21 @@
               td.thumb
                 img(src="api/v1/file/" + patient.thumbnailId + "/download")
               td.name #{patient.name}
-              if hierarchyType == 'Experiment'
+              if hierarchyType === 'Experiment'
                 td.pattern-drop-zone(pname=patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=index)
                   i.icon-docs Drop a pattern from pool
-              else if hierarchyType == 'Root'
+              else if hierarchyType === 'Root'
                 td.pattern-drop-zone(pname=patient.rootFolder + '/' + patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=index)
                   i.icon-docs Drop a pattern from pool
       if patients['PTCT'].length
         each patient, index in patients['PTCT']
-          if hierarchyType == 'Root'
-            if lastPatient == undefined
+          if hierarchyType === 'Root'
+            if lastPatient === undefined
               - var lastPatient = patient.experiment
               tr
                 td.experimentLabel(colspan='3')
                   label #{patient.experiment}
-            else if lastPatient != patient.experiment
+            else if lastPatient !== patient.experiment
               tr
                 td.experimentLabel(colspan='3')
                   label #{patient.experiment}
@@ -75,10 +76,10 @@
               td.thumb
                 img(src="api/v1/file/" + patient.thumbnailId + "/download")
               td.name #{patient.name}
-              if hierarchyType == 'Experiment'
+              if hierarchyType === 'Experiment'
                 td.pattern-drop-zone(pname=patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=patients['MRI'].length + index)
                   i.icon-docs Drop a pattern from pool
-              else if hierarchyType == 'Root'
+              else if hierarchyType === 'Root'
                 td.pattern-drop-zone(pname=patient.rootFolder + '/' + patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=patients['MRI'].length + index)
                   i.icon-docs Drop a pattern from pool
       //- else if modality === 'PTCT'

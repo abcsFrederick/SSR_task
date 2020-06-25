@@ -204,7 +204,9 @@ class SSR_task(Resource):
         if resource == 'Girder':
             if hierarchy == 'Experiment':
                 self.user = self.getCurrentUser()
-                experiment = Folder().load(id=folderId, user=self.user, level=AccessType.READ, exc=True)
+                experiment = Folder().load(id=folderId,
+                                           user=self.user,
+                                           level=AccessType.READ, exc=True)
                 patientFolders = Folder().childFolders(parent=experiment,
                                                        parentType='folder',
                                                        user=self.user, limit=limit)
@@ -262,7 +264,8 @@ class SSR_task(Resource):
                                 }
                                 try:
                                     item['rootFolder'] = rootFolder['name']
-                                    item['thumbnailId'] = list(File().find(q, limit=limit))[0]['_id']
+                                    item['thumbnailId'] = list(File().find(q,
+                                                                           limit=limit))[0]['_id']
                                     item['experiment'] = experiment['name']
                                     item['patient_name'] = patient['name']
                                     item['study_name'] = study['name']

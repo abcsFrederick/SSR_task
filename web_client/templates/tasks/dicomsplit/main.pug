@@ -5,19 +5,19 @@
         .hierarchyLabel
           label Option
         select.hierarchy.options-zone
-          if hierarchy == 'root'
+          if hierarchy === 'root'
             option(value='root', selected=true) A group of experiments
             option(value='experiments') Experiments
-          else if hierarchy == 'experiments'
+          else if hierarchy === 'experiments'
             option(value='root') A group of experiments
             option(value='experiments', selected=true) Experiments
       .col-md-7
         .inputLabel
           label Input
-        if hierarchy == 'root'
+        if hierarchy === 'root'
           #open-root-folder.g-drop-zone.patientsFolder
             i.icon-folder-open Drop & drop
-        else if hierarchy == 'experiments'
+        else if hierarchy === 'experiments'
           #open-experiment-folders.g-drop-zone.patientsFolder
             i.icon-folder-open Drop & drop
     .col-md-5

@@ -17,12 +17,12 @@ import TableView from './tableView';
 var DicomSplit = View.extend({
     events: {
         'change .hierarchy': function (e) {
-            let settings = {};    
+            let settings = {};
             if (this.table) {
                 this.table.destroy();
                 this.table = null;
             }
-            settings.hierarchy = $(e.currentTarget).children("option:selected").val();
+            settings.hierarchy = $(e.currentTarget).children('option:selected').val();
             this.initialize(settings);
         },
         'dragover .patientsFolder': function (e) {
@@ -128,7 +128,7 @@ var DicomSplit = View.extend({
                     this.dicomSplit.set({ ids: this.ids });
                     if (this.table) {
                         this.table.destroy();
-                    } 
+                    }
                     this.table = new TableView({
                         el: this.$('#dicomsplit-preview'),
                         experimentName: model.get('name'),
@@ -193,7 +193,7 @@ var DicomSplit = View.extend({
     // },
     dropTaskFolder(e) {
         let hierarchyType;
-        if ( e.currentTarget.id === 'open-experiment-folders') {
+        if (e.currentTarget.id === 'open-experiment-folders') {
             hierarchyType = 'Experiment';
         } else if (e.currentTarget.id === 'open-root-folder') {
             hierarchyType = 'Root';
