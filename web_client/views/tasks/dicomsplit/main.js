@@ -126,16 +126,15 @@ var DicomSplit = View.extend({
                     this.dicomSplit.set({ ids: this.ids });
                     if (this.table) {
                         this.table.destroy();
-                    } else {
-                        this.table = new TableView({
-                            el: this.$('#dicomsplit-preview'),
-                            experimentName: model.get('name'),
-                            patients: patients,
-                            from: this.from,
-                            parentView: this,
-                            hierarchyType: hierarchyType
-                        });
-                    }
+                    } 
+                    this.table = new TableView({
+                        el: this.$('#dicomsplit-preview'),
+                        experimentName: model.get('name'),
+                        patients: patients,
+                        from: this.from,
+                        parentView: this,
+                        hierarchyType: hierarchyType
+                    });
                 }
                 // if (!this.currentOpenedExperimentsName) {
                 //     this.currentOpenedExperimentsName = model.get('name');
