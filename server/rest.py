@@ -281,43 +281,80 @@ class SSR_task(Resource):
                                 except Exception:
                                     pass
         elif resource == 'Archive':
-            experimentFolders = ArchiveFolder().find(folderId, parentType='project')
-            for experiment in experimentFolders:
-                patientFolders = ArchiveFolder().find(experiment['id'], parentType='experiment')
-                for patient in patientFolders:
-                    studyFolders = ArchiveFolder().find(patient['id'], parentType='patient')
-                    for study in studyFolders:
-                        seriesItems = ArchiveItem().find(study['id'])
-                        for itemObj in seriesItems:
-                            item = {}
-                            try:
-                                item['name'] = patient['pat_name']
-                                item['thumbnailId'] = 'thmb_' + itemObj['series_uid'] + '.jpg'
-                                item['experiment'] = experiment['title']
-                                item['patient_name'] = patient['pat_name']
-                                item['study_name'] = study['study_description']
-                                item['patient_path'] = patient['pat_path']
-                                item['study_path'] = study['study_path']
-                                item['series_path'] = itemObj['series_path']
-                                mount = Setting().get('Archive.SCIPPYMOUNT')
-                                jpgFilePath = os.path.join(mount,
-                                                           item['patient_path'],
-                                                           item['study_path'],
-                                                           item['series_path'], item['thumbnailId'])
-                                if not os.path.exists(jpgFilePath):
-                                    break
-                                # itemWithThumbs.append(item)
-                                if itemObj['modality'] == 'MR':
-                                    item['modality'] = 'MRI'
-                                    result['MRI'].append(item)
-                                elif itemObj['modality'] == 'PT':
-                                    item['modality'] = 'PT'
-                                    result['PTCT'].append(item)
-                                elif itemObj['modality'] == 'CT':
-                                    item['modality'] = 'CT'
-                                    result['PTCT'].append(item)
-                            except Exception:
-                                pass
+            if hierarchy == 'Experiment':
+                patientFolders = ArchiveFolder().find(folderId, parentType='experiment')
+                    for patient in patientFolders:
+                        studyFolders = ArchiveFolder().find(patient['id'], parentType='patient')
+                        for study in studyFolders:
+                            seriesItems = ArchiveItem().find(study['id'])
+                            for itemObj in seriesItems:
+                                item = {}
+                                try:
+                                    item['name'] = patient['pat_name']
+                                    item['thumbnailId'] = 'thmb_' + itemObj['series_uid'] + '.jpg'
+                                    item['experiment'] = experiment['title']
+                                    item['patient_name'] = patient['pat_name']
+                                    item['study_name'] = study['study_description']
+                                    item['patient_path'] = patient['pat_path']
+                                    item['study_path'] = study['study_path']
+                                    item['series_path'] = itemObj['series_path']
+                                    mount = Setting().get('Archive.SCIPPYMOUNT')
+                                    jpgFilePath = os.path.join(mount,
+                                                               item['patient_path'],
+                                                               item['study_path'],
+                                                               item['series_path'], item['thumbnailId'])
+                                    if not os.path.exists(jpgFilePath):
+                                        break
+                                    # itemWithThumbs.append(item)
+                                    if itemObj['modality'] == 'MR':
+                                        item['modality'] = 'MRI'
+                                        result['MRI'].append(item)
+                                    elif itemObj['modality'] == 'PT':
+                                        item['modality'] = 'PT'
+                                        result['PTCT'].append(item)
+                                    elif itemObj['modality'] == 'CT':
+                                        item['modality'] = 'CT'
+                                        result['PTCT'].append(item)
+                                except Exception:
+                                    pass
+            elif hierarchy == 'Root':
+                experimentFolders = ArchiveFolder().find(folderId, parentType='project')
+                for experiment in experimentFolders:
+                    patientFolders = ArchiveFolder().find(experiment['id'], parentType='experiment')
+                    for patient in patientFolders:
+                        studyFolders = ArchiveFolder().find(patient['id'], parentType='patient')
+                        for study in studyFolders:
+                            seriesItems = ArchiveItem().find(study['id'])
+                            for itemObj in seriesItems:
+                                item = {}
+                                try:
+                                    item['name'] = patient['pat_name']
+                                    item['thumbnailId'] = 'thmb_' + itemObj['series_uid'] + '.jpg'
+                                    item['experiment'] = experiment['title']
+                                    item['patient_name'] = patient['pat_name']
+                                    item['study_name'] = study['study_description']
+                                    item['patient_path'] = patient['pat_path']
+                                    item['study_path'] = study['study_path']
+                                    item['series_path'] = itemObj['series_path']
+                                    mount = Setting().get('Archive.SCIPPYMOUNT')
+                                    jpgFilePath = os.path.join(mount,
+                                                               item['patient_path'],
+                                                               item['study_path'],
+                                                               item['series_path'], item['thumbnailId'])
+                                    if not os.path.exists(jpgFilePath):
+                                        break
+                                    # itemWithThumbs.append(item)
+                                    if itemObj['modality'] == 'MR':
+                                        item['modality'] = 'MRI'
+                                        result['MRI'].append(item)
+                                    elif itemObj['modality'] == 'PT':
+                                        item['modality'] = 'PT'
+                                        result['PTCT'].append(item)
+                                    elif itemObj['modality'] == 'CT':
+                                        item['modality'] = 'CT'
+                                        result['PTCT'].append(item)
+                                except Exception:
+                                    pass
         return result
 
     @access.public

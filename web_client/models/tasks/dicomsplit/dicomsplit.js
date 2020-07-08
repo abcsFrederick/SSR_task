@@ -25,10 +25,10 @@ var dicomsplitModel = Model.extend({
             this.trigger('g:error', err);
         });
     },
-    getItemAndThumbnailsArchive: function (projectId) {
+    getItemAndThumbnailsArchive: function (Id, hierarchyType) {
         return restRequest({
-            url: `${this.resourceName}?folderId=${projectId}`,
-            data: {'resource': 'Archive'}
+            url: `${this.resourceName}?folderId=${Id}`,
+            data: {'resource': 'Archive', 'hierarchy': hierarchyType}
         }).then((resp) => {
             return resp;
         }).fail((err) => {

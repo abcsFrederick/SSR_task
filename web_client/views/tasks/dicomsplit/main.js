@@ -148,9 +148,9 @@ var DicomSplit = View.extend({
         });
         return this;
     },
-    renderFromArchive(projectId, hierarchyType) {
+    renderFromArchive(Id, hierarchyType) {
         this.dicomSplit = new DicomSplitModel();
-        this.dicomSplit.getItemAndThumbnailsArchive(projectId).done((patients) => {
+        this.dicomSplit.getItemAndThumbnailsArchive(Id, hierarchyType).done((patients) => {
             if (this.table) {
                 this.table.destroy();
             }
@@ -173,12 +173,20 @@ var DicomSplit = View.extend({
                 }
                 return 0;
             });
-            this.table = new TableView({
-                el: this.$('#dicomsplit-preview'),
-                patients: patients,
-                from: this.from,
-                parentView: this
-            });
+            if (!(patients['MRI'].length + patients['PTCT'].length)) {
+                events.trigger('g:alert', {
+                    text: 'Hierarchy is not allowed',
+                    type: 'warning',
+                    timeout: 4000
+                });
+            } else {
+                this.table = new TableView({
+                    el: this.$('#dicomsplit-preview'),
+                    patients: patients,
+                    from: this.from,
+                    parentView: this
+                });
+            }
         });
 
         this.$('.patientsFolder .icon-folder-open').html(this.archiveFolderName);
