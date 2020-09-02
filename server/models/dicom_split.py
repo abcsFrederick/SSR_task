@@ -30,7 +30,8 @@ from girder.models.setting import Setting
 
 from girder.plugins.jobs.models.job import Job
 from girder.plugins.worker import utils
-
+import girder.plugins.slurm.girder_io.input as slurmGirderInput
+from girder.plugins.slurm.models.slurm import Slurm as slurmModel
 from ..constants import PluginSettings
 
 
@@ -58,7 +59,7 @@ class DicomSplit(AccessControlledModel):
     #     return super(Histogram, self).remove(histogram, **kwargs)
 
     def createJob(self, fetchFolder, user, token, inputType, subfolders,
-                  axis, n_of_split, order, pushFolder, pushFolderName):
+                  axis, n_of_split, order, pushFolder, pushFolderName, slurm=False):
         if inputType == 'girder':
             experiments = ''
             for folders in fetchFolder:
@@ -68,8 +69,26 @@ class DicomSplit(AccessControlledModel):
         elif inputType == 'archive':
             title = 'Dicom split for folder %s in SAIP archive' % fetchFolder
 
-        job = Job().createJob(title=title, type='split',
-                              handler='worker_handler', user=user)
+        if slurm is True:
+            job = Job().createJob(title=title, type='split',
+                              handler='slurm_handler', user=user)
+            job['otherFields'] = {}
+            job['otherFields']['slurm_info'] = {}
+            job['otherFields']['slurm_info']['name'] = 'dicom_split'
+            job['otherFields']['slurm_info']['entry'] = 'pydicom_split.py'
+
+            slurmOptions = slurmModel().findOne({'user': user['_id']})
+            job['otherFields']['slurm_info']['partition'] = slurmOptions['partition']
+            job['otherFields']['slurm_info']['nodes'] = slurmOptions['nodes']
+            job['otherFields']['slurm_info']['ntasks'] = slurmOptions['ntasks']
+            job['otherFields']['slurm_info']['gres'] = slurmOptions['gres']
+            job['otherFields']['slurm_info']['cpu_per_task'] = slurmOptions['cpu_per_task']
+            job['otherFields']['slurm_info']['mem_per_cpu'] = slurmOptions['mem_per_cpu']
+            job['otherFields']['slurm_info']['time'] = slurmOptions['time']
+
+        else:
+            job = Job().createJob(title=title, type='split',
+                                  handler='worker_handler', user=user)
 
         # outPath = tempfile.mkdtemp(suffix="-" + str(job.get('_id')),
         #                            dir=Setting().get(PluginSettings.GIRDER_WORKER_TMP))
@@ -148,23 +167,31 @@ class DicomSplit(AccessControlledModel):
             }
         }
 
-        if inputType == 'girder':
-            for index, folder in enumerate(fetchFolder):
-                idName = 'topFolder' + str(index)
-                inputsJson = {
-                    'id': idName,
-                    'target': 'filepath',
-                    'type': 'string',
-                    'format': 'text'
+        if slurm is True:
+            if inputType == 'girder':
+                for index, folder in enumerate(fetchFolder):
+                    idName = 'topFolder' + str(index)
+                    inputs[idName] = slurmGirderInput.girderInputSpec(
+                            folder, resourceType='folder', token=self.token)
+        else:
+            if inputType == 'girder':
+                for index, folder in enumerate(fetchFolder):
+                    idName = 'topFolder' + str(index)
+                    inputsJson = {
+                        'id': idName,
+                        'target': 'filepath',
+                        'type': 'string',
+                        'format': 'text'
+                    }
+                    task['inputs'].append(inputsJson)
+                    inputs[idName] = utils.girderInputSpec(
+                        folder, resourceType='folder', token=token)
+            elif inputType == 'archive':
+                inputs['topFolder'] = {
+                    'mode': 'local',
+                    'path': fetchFolder,
                 }
-                task['inputs'].append(inputsJson)
-                inputs[idName] = utils.girderInputSpec(
-                    folder, resourceType='folder', token=token)
-        elif inputType == 'archive':
-            inputs['topFolder'] = {
-                'mode': 'local',
-                'path': fetchFolder,
-            }
+
         reference = json.dumps({'jobId': str(job['_id']), 'isDicomSplit': True})
         outputs = {
             'splitedVolumn': utils.girderOutputSpec(pushFolder, token,

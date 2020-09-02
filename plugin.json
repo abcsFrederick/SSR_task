@@ -2,7 +2,7 @@
     "name": "SSR_task",
     "description": "Well developed Toolkits for image analysis running on SSR platform",
     "version": "0.1.0",
-    "dependencies": ["Archive","worker","jobs"],
+    "dependencies": ["Archive","worker","jobs","slurm"],
     "grunt": {
         "file": "Gruntfile.js"
     },

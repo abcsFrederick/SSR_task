@@ -184,7 +184,8 @@ var DicomSplit = View.extend({
                     el: this.$('#dicomsplit-preview'),
                     patients: patients,
                     from: this.from,
-                    parentView: this
+                    parentView: this,
+                    hierarchyType: hierarchyType
                 });
             }
         });

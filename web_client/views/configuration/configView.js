@@ -15,7 +15,7 @@ var ConfigView = View.extend({
     events: {
         'submit #g-SSR-task-settings-form': function (event) {
             event.preventDefault();
-            this.$('#g-histogram-settings-error-message').empty();
+            this.$('#g-SSR-task-settings-error-message').empty();
             this._saveSettings([{
                 key: 'SSR_task.GIRDER_WORKER_TMP',
                 value: this.$('#g-SSR-task-settings-TMP').val()
@@ -26,7 +26,7 @@ var ConfigView = View.extend({
                 $(event.currentTarget).is(':checked');
 
             event.preventDefault();
-            this.$('#g-histogram-settings-error-message').empty();
+            this.$('#g-SSR-task-settings-error-message').empty();
             this._saveSettings([{
                 key: 'SSR_task.TASKS',
                 value: this.settings['SSR_task.TASKS']
@@ -82,7 +82,7 @@ var ConfigView = View.extend({
                 timeout: 4000
             });
         }).fail((resp) => {
-            this.$('#g-histogram-settinsge-error-message').text(
+            this.$('#g-SSR-task-settinsge-error-message').text(
                 resp.responseJSON.message
             );
         });

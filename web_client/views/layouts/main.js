@@ -24,8 +24,17 @@ import router from '../../router';
 import UserView from '../widgets/UserViewWidget';
 import CollectionView from '../widgets/CollectionViewWidget';
 
+import SlurmSelection from 'girder_plugins/slurm/views/widgets/slurmSelection';
+
 var Layout = View.extend({
     events: {
+        // 'click .icon-cog': function (e) {
+        //     if ($('.slurmOptionsContent').hasClass("collapsed")) {
+        //         $('.slurmOptionsContent').removeClass("collapsed");
+        //     } else {
+        //        $('.slurmOptionsContent').addClass("collapsed");
+        //     }
+        // },
         // 'change input[type=radio][name=modality]': function (e) {
         //     events.trigger('SSR_taskView', 'DicomSplit');
         // },
@@ -102,6 +111,13 @@ var Layout = View.extend({
 
         this.$el.html(MainPageViewTemplate());
 
+        if (this.slurmSelection) {
+            this.slurmSelection.destroy()
+        }
+        this.slurmSelection = new SlurmSelection({
+            parentView: this,
+            el: '.slurmOptionsContent'
+        });
         let curRoute = Backbone.history.fragment,
             routeParts = splitRoute(curRoute),
             queryString = parseQueryString(routeParts.name);

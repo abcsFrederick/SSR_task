@@ -386,7 +386,7 @@ class SSR_task(Resource):
         pushFolder = Folder().load(pushFolderId, level=AccessType.READ, user=self.user)
         return DicomSplit().createJob(fetchFolder, self.user,
                                       self.token, inputType, subfolders,
-                                      axis, n, order, pushFolder, pushFolderName)
+                                      axis, n, order, pushFolder, pushFolderName, slurm=True)
 
     @access.public
     @autoDescribeRoute(
