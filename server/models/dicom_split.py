@@ -173,7 +173,7 @@ class DicomSplit(AccessControlledModel):
                 for index, folder in enumerate(fetchFolder):
                     idName = 'topFolder' + str(index)
                     inputs[idName] = slurmGirderInput.girderInputSpec(
-                            folder, resourceType='folder', token=self.token)
+                            folder, resourceType='folder', token=token)
         else:
             if inputType == 'girder':
                 for index, folder in enumerate(fetchFolder):
