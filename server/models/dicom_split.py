@@ -83,8 +83,8 @@ class DicomSplit(AccessControlledModel):
             job['otherFields']['slurm_info']['ntasks'] = slurmOptions['ntasks']
             job['otherFields']['slurm_info']['gres'] = slurmOptions['gres']
             job['otherFields']['slurm_info']['cpu_per_task'] = slurmOptions['cpu_per_task']
-            job['otherFields']['slurm_info']['mem_per_cpu'] = slurmOptions['mem_per_cpu']
-            job['otherFields']['slurm_info']['time'] = slurmOptions['time']
+            job['otherFields']['slurm_info']['mem_per_cpu'] = slurmOptions['mem_per_cpu'] + 'gb'
+            job['otherFields']['slurm_info']['time'] = str(slurmOptions['time']) + ':00:00'
 
         else:
             job = Job().createJob(title=title, type='split',
