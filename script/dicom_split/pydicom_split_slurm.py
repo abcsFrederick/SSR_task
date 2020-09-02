@@ -402,7 +402,7 @@ parser.add_argument('-sub', '--subfolders', help='sub folders names.', required=
 parser.add_argument('-a', '--axis', help='axis (0 for rows, 1 for columns), default columns.', required=True)
 parser.add_argument('-n', '--n_of_split', help='split into N volumes.', required=True)
 parser.add_argument('-order', '--order', help='order of patient placed in scanner.', required=True)
-parser.add_argument('-O', '--outPath', help='output path names.', required=True)
+parser.add_argument('-d', '--directory', help='output directory names format like ..hpc/tmp/slurm-jobname.jobid.', required=True)
 
 kwargs = vars(parser.parse_args())
 
@@ -411,12 +411,12 @@ subfolders = [kwargs.pop('subfolders')]
 axis = [kwargs.pop('axis')]
 n_of_split = [kwargs.pop('n_of_split')]
 order = [kwargs.pop('order')]
-outPath = [kwargs.pop('outPath')]
+outPath = os.path.dirname(kwargs.pop('directory'))
 
 for index in range(len(subfolders)):
-    directory = os.path.join(tmpDir, subfolders[index])
-    print directory
+    subfolderPath = os.path.join(tmpDir, subfolders[index])
+    print subfolderPath
     kwargs = {"axis": int(axis[index]), "n": int(n_of_split[index]), "order": order[index], "output_dir": Outdir}
 
-    split_dicom_directory(directory, **kwargs)
+    split_dicom_directory(subfolderPath, **kwargs)
 

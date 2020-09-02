@@ -75,7 +75,7 @@ class DicomSplit(AccessControlledModel):
             job['otherFields'] = {}
             job['otherFields']['slurm_info'] = {}
             job['otherFields']['slurm_info']['name'] = 'dicom_split'
-            job['otherFields']['slurm_info']['entry'] = 'pydicom_split.py'
+            job['otherFields']['slurm_info']['entry'] = 'pydicom_split_slurm.py'
 
             slurmOptions = slurmModel().findOne({'user': user['_id']})
             job['otherFields']['slurm_info']['partition'] = slurmOptions['partition']
@@ -83,7 +83,7 @@ class DicomSplit(AccessControlledModel):
             job['otherFields']['slurm_info']['ntasks'] = slurmOptions['ntasks']
             job['otherFields']['slurm_info']['gres'] = slurmOptions['gres']
             job['otherFields']['slurm_info']['cpu_per_task'] = slurmOptions['cpu_per_task']
-            job['otherFields']['slurm_info']['mem_per_cpu'] = slurmOptions['mem_per_cpu'] + 'gb'
+            job['otherFields']['slurm_info']['mem_per_cpu'] = str(slurmOptions['mem_per_cpu']) + 'gb'
             job['otherFields']['slurm_info']['time'] = str(slurmOptions['time']) + ':00:00'
 
         else:
@@ -96,43 +96,44 @@ class DicomSplit(AccessControlledModel):
         # print outPath
         jobToken = Job().createJobToken(job)
 
-        path = os.path.join(os.path.dirname(__file__), '../../script/dicom_split/',
-                            'pydicom_split.py')
-        with open(path, 'r') as f:
-            script = f.read()
+        # Not necessary needed for slurm
+        # path = os.path.join(os.path.dirname(__file__), '../../script/dicom_split/',
+        #                     'pydicom_split.py')
+        # with open(path, 'r') as f:
+        #     script = f.read()
 
-        task = {
-            'mode': 'python',
-            'script': script,
-            'name': title,
-            'inputs': [{
-                'id': 'subfolders',
-                'type': 'string',
-                'format': 'string'
-            }, {
-                'id': 'axis',
-                'type': 'string',
-                'format': 'string'
-            }, {
-                'id': 'n_of_split',
-                'type': 'string',
-                'format': 'string'
-            }, {
-                'id': 'order',
-                'type': 'string',
-                'format': 'string'
-            }, {
-                'id': 'outPath',
-                'type': 'string',
-                'format': 'string'
-            }],
-            'outputs': [{
-                'id': 'splitedVolumn',
-                'target': 'filepath',
-                'type': 'string',
-                'format': 'string',
-            }],
-        }
+        # task = {
+        #     'mode': 'python',
+        #     'script': script,
+        #     'name': title,
+        #     'inputs': [{
+        #         'id': 'subfolders',
+        #         'type': 'string',
+        #         'format': 'string'
+        #     }, {
+        #         'id': 'axis',
+        #         'type': 'string',
+        #         'format': 'string'
+        #     }, {
+        #         'id': 'n_of_split',
+        #         'type': 'string',
+        #         'format': 'string'
+        #     }, {
+        #         'id': 'order',
+        #         'type': 'string',
+        #         'format': 'string'
+        #     }, {
+        #         'id': 'outPath',
+        #         'type': 'string',
+        #         'format': 'string'
+        #     }],
+        #     'outputs': [{
+        #         'id': 'splitedVolumn',
+        #         'target': 'filepath',
+        #         'type': 'string',
+        #         'format': 'string',
+        #     }],
+        # }
 
         inputs = {
             'subfolders': {
@@ -159,12 +160,12 @@ class DicomSplit(AccessControlledModel):
                 'format': 'string',
                 'data': order,
             },
-            'outPath': {
-                'mode': 'inline',
-                'type': 'string',
-                'format': 'string',
-                'data': outPath,
-            }
+            # 'outPath': {
+            #     'mode': 'inline',
+            #     'type': 'string',
+            #     'format': 'string',
+            #     'data': outPath,
+            # }
         }
 
         if slurm is True:
@@ -193,6 +194,7 @@ class DicomSplit(AccessControlledModel):
                 }
 
         reference = json.dumps({'jobId': str(job['_id']), 'isDicomSplit': True})
+        # Not necessary needed for slurm
         outputs = {
             'splitedVolumn': utils.girderOutputSpec(pushFolder, token,
                                                     parentType='folder',
