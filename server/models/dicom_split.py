@@ -206,7 +206,7 @@ class DicomSplit(AccessControlledModel):
             'task': 'splitDicom',
         }
         job['kwargs'] = {
-            'task': task,
+            # 'task': task,
             'inputs': inputs,
             'outputs': outputs,
             'jobInfo': utils.jobInfoSpec(job, jobToken),
