@@ -416,7 +416,7 @@ outPath = os.path.dirname(kwargs.pop('directory'))
 for index in range(len(subfolders)):
     subfolderPath = os.path.join(tmpDir, subfolders[index])
 
-    kwargs = {"axis": int(axis[index]), "n": int(n_of_split[index]), "order": order[index], "output_dir": Outdir}
+    kwargs = {"axis": int(axis[index]), "n": int(n_of_split[index]), "order": order[index], "output_dir": outPath}
 
     split_dicom_directory(subfolderPath, **kwargs)
 
