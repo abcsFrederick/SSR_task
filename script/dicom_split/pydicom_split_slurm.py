@@ -398,19 +398,19 @@ def split_dicom_directory(directory, axis=0, n=3, keep_origin=False,
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('-top', '--topFolder0', help='tmp directory for current slurm job data input/ouput.', required=True)
-parser.add_argument('-sub', '--subfolders', help='sub folders names.', required=True)
-parser.add_argument('-a', '--axis', help='axis (0 for rows, 1 for columns), default columns.', required=True)
-parser.add_argument('-n', '--n_of_split', help='split into N volumes.', required=True)
-parser.add_argument('-order', '--order', help='order of patient placed in scanner.', required=True)
+parser.add_argument('-sub', '--subfolders', nargs='+', help='sub folders names.', required=True)
+parser.add_argument('-a', '--axis', nargs='+', help='axis (0 for rows, 1 for columns), default columns.', required=True)
+parser.add_argument('-n', '--n_of_split', nargs='+', help='split into N volumes.', required=True)
+parser.add_argument('-order', '--order', nargs='+', help='order of patient placed in scanner.', required=True)
 parser.add_argument('-d', '--directory', help='output directory names format like ..hpc/tmp/slurm-jobname.jobid.', required=True)
 
 kwargs = vars(parser.parse_args())
 
 tmpDir = os.path.dirname(kwargs.pop('topFolder0'))
-subfolders = [kwargs.pop('subfolders')]
-axis = [kwargs.pop('axis')]
-n_of_split = [kwargs.pop('n_of_split')]
-order = [kwargs.pop('order')]
+subfolders = kwargs.pop('subfolders')
+axis = kwargs.pop('axis')
+n_of_split = kwargs.pop('n_of_split')
+order = kwargs.pop('order')
 outPath = os.path.dirname(kwargs.pop('directory'))
 
 for index in range(len(subfolders)):
