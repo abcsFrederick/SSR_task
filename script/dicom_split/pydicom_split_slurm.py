@@ -32,7 +32,7 @@ class DICOMDirectory:
             self.filenames = os.listdir(self._directory)
         return self
 
-    def next(self):
+    def __next__(self):
         while self.filenames:
             filename = self.filenames.pop(0)
             path = os.path.join(self._directory, filename)
@@ -85,7 +85,7 @@ class DICOMSplitter:
             self.size = int(math.floor(size/self._n))
         return self
 
-    def next(self):
+    def __next__(self):
         if self.index == self._n:
             raise StopIteration
 
@@ -406,7 +406,7 @@ parser.add_argument('-d', '--directory', help='output directory names format lik
 
 kwargs = vars(parser.parse_args())
 
-tmpDir = kwargs.pop('topFolder0')
+tmpDir = os.path.dirname(kwargs.pop('topFolder0'))
 subfolders = kwargs.pop('subfolders')
 axis = kwargs.pop('axis')
 n_of_split = kwargs.pop('n_of_split')
