@@ -406,12 +406,12 @@ parser.add_argument('-d', '--directory', help='output directory names format lik
 
 kwargs = vars(parser.parse_args())
 
-tmpDir = os.path.dirname(kwargs.pop('topFolder0'))
+tmpDir = kwargs.pop('topFolder0')
 subfolders = kwargs.pop('subfolders')
 axis = kwargs.pop('axis')
 n_of_split = kwargs.pop('n_of_split')
 order = kwargs.pop('order')
-outPath = os.path.dirname(kwargs.pop('directory'))
+outPath = kwargs.pop('directory')
 
 for index in range(len(subfolders)):
     subfolderPath = os.path.join(tmpDir, subfolders[index])
