@@ -95,7 +95,7 @@ def _updateJob(event):
                     expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
         else:
             return
-    else if (meta.get('handler') == 'slurm_handler'):
+    elif (meta.get('handler') == 'slurm_handler'):
         pass
 
 def onZipFileSave(event):
