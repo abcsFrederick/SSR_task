@@ -71,30 +71,32 @@ def _updateJob(event):
     userId = event.info['job']['userId']
     user = UserModel().load(userId, force=True, fields=['email'])
     meta = job.get('meta', {})
-    if (meta.get('creator') == 'dicom_split' and
-            meta.get('task') == 'splitDicom'):
-        status = job['status']
-        if status == JobStatus.SUCCESS or status == JobStatus.CANCELED or status == JobStatus.ERROR:
-            tmpPath = job.get('kwargs')['inputs']['outPath']['data']
-            shutil.rmtree(tmpPath)
-        if status == JobStatus.SUCCESS:
-            Notification().createNotification(
-                type='job_email_sent', data=job, user=user,
-                expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
-            _notifyUser(event, meta)
-    elif job['type'] == 'unzip':
-        status = job['status']
-        if status == JobStatus.SUCCESS or status == JobStatus.CANCELED or status == JobStatus.ERROR:
-            zipItemId = job.get('kwargs')['inputs']['in_path']['id']
-            file = File().load(zipItemId, user=user, force=True)
-            item = Item().load(file['itemId'], user=user, force=True)
-            Item().remove(item)
-            Notification().createNotification(
-                type='job_unzip_done', data=job, user=user,
-                expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
-    else:
-        return
-
+    if (meta.get('handler') == 'worker_handler'):
+        if (meta.get('creator') == 'dicom_split' and
+                meta.get('task') == 'splitDicom'):
+            status = job['status']
+            if status == JobStatus.SUCCESS or status == JobStatus.CANCELED or status == JobStatus.ERROR:
+                tmpPath = job.get('kwargs')['inputs']['outPath']['data']
+                shutil.rmtree(tmpPath)
+            if status == JobStatus.SUCCESS:
+                Notification().createNotification(
+                    type='job_email_sent', data=job, user=user,
+                    expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
+                _notifyUser(event, meta)
+        elif job['type'] == 'unzip':
+            status = job['status']
+            if status == JobStatus.SUCCESS or status == JobStatus.CANCELED or status == JobStatus.ERROR:
+                zipItemId = job.get('kwargs')['inputs']['in_path']['id']
+                file = File().load(zipItemId, user=user, force=True)
+                item = Item().load(file['itemId'], user=user, force=True)
+                Item().remove(item)
+                Notification().createNotification(
+                    type='job_unzip_done', data=job, user=user,
+                    expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
+        else:
+            return
+    else if (meta.get('handler') == 'slurm_handler'):
+        pass
 
 def onZipFileSave(event):
     file_ = event.info
