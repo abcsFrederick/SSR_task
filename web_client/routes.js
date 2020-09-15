@@ -1,5 +1,5 @@
 import events from 'girder/events';
-import router from 'girder/router';
+import router from './router';
 import { exposePluginConfig } from 'girder/utilities/PluginUtils';
 
 import ConfigView from './views/configuration/configView';

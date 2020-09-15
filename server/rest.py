@@ -17,6 +17,8 @@ from .constants import PluginSettings
 from .models.dicom_split import DicomSplit
 from .models.link import Link
 
+from .models.job import Job as JobModel
+from girder.constants import AccessType, SortDir
 
 class SSR_task(Resource):
     def __init__(self):
@@ -31,6 +33,7 @@ class SSR_task(Resource):
         self.route('POST', ('dicom_split',), self.dicom_split)
         self.route('GET', ('settings',), self.getSettings)
 
+        self.route('GET', ('job',), self.listJobs)
     # Find link record based on original item ID or parentId(to check chirdren links)
     # Return only record that have READ access(>=0) to user.
     @access.user(scope=TokenScope.DATA_READ)
@@ -386,7 +389,7 @@ class SSR_task(Resource):
         pushFolder = Folder().load(pushFolderId, level=AccessType.READ, user=self.user)
         return DicomSplit().createJob(fetchFolder, self.user,
                                       self.token, inputType, subfolders,
-                                      axis, n, order, pushFolder, pushFolderName, slurm=True)
+                                      axis, n, order, pushFolder, pushFolderName, ids, pushFolderId, slurm=False)
 
     @access.public
     @autoDescribeRoute(
@@ -400,3 +403,34 @@ class SSR_task(Resource):
             PluginSettings.TASKS:
                 settings.get(PluginSettings.TASKS),
         }
+
+    @access.public
+    @filtermodel(model=JobModel)
+    @autoDescribeRoute(
+        Description('List jobs for a given user.')
+        .param('userId', 'The ID of the user whose jobs will be listed. If '
+               'not passed or empty, will use the currently logged in user. If '
+               'set to "None", will list all jobs that do not have an owning '
+               'user.', required=False)
+        .modelParam('parentId', 'Id of the parent job.', model=JobModel, level=AccessType.ADMIN,
+                    destName='parentJob', paramType='query', required=False)
+        .jsonParam('types', 'Filter for type', requireArray=True, required=False)
+        .jsonParam('statuses', 'Filter for status', requireArray=True, required=False)
+        .pagingParams(defaultSort='created', defaultSortDir=SortDir.DESCENDING)
+    )
+    def listJobs(self, userId, parentJob, types, statuses, limit, offset, sort):
+        currentUser = self.getCurrentUser()
+        if not userId:
+            user = currentUser
+        elif userId.lower() == 'none':
+            user = 'none'
+        else:
+            user = User().load(userId, user=currentUser, level=AccessType.READ)
+
+        parent = None
+        if parentJob:
+            parent = parentJob
+
+        return list(JobModel().list(
+            user=user, offset=offset, limit=limit, types=types,
+            statuses=statuses, sort=sort, currentUser=currentUser, parentJob=parent))

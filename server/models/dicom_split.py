@@ -28,10 +28,12 @@ import os
 from girder.models.model_base import AccessControlledModel
 from girder.models.setting import Setting
 
-from girder.plugins.jobs.models.job import Job
+# from girder.plugins.jobs.models.job import Job
+from .job import Job
+
 from girder.plugins.worker import utils
-import girder.plugins.slurm.girder_io.input as slurmGirderInput
-from girder.plugins.slurm.models.slurm import Slurm as slurmModel
+# import girder.plugins.slurm.girder_io.input as slurmGirderInput
+# from girder.plugins.slurm.models.slurm import Slurm as slurmModel
 from ..constants import PluginSettings
 
 
@@ -59,7 +61,7 @@ class DicomSplit(AccessControlledModel):
     #     return super(Histogram, self).remove(histogram, **kwargs)
 
     def createJob(self, fetchFolder, user, token, inputType, subfolders,
-                  axis, n_of_split, order, pushFolder, pushFolderName, slurm=False):
+                  axis, n_of_split, order, pushFolder, pushFolderName, ids, pushFolderId, slurm=False):
         if inputType == 'girder':
             experiments = ''
             for folders in fetchFolder:
@@ -90,50 +92,50 @@ class DicomSplit(AccessControlledModel):
             job = Job().createJob(title=title, type='split',
                                   handler='worker_handler', user=user)
 
-        # outPath = tempfile.mkdtemp(suffix="-" + str(job.get('_id')),
-        #                            dir=Setting().get(PluginSettings.GIRDER_WORKER_TMP))
+        outPath = tempfile.mkdtemp(suffix="-" + str(job.get('_id')),
+                                   dir=Setting().get(PluginSettings.GIRDER_WORKER_TMP))
         outPath = os.path.join(Setting().get(PluginSettings.GIRDER_WORKER_TMP), pushFolderName)
         # print outPath
         jobToken = Job().createJobToken(job)
 
         # Not necessary needed for slurm
-        # path = os.path.join(os.path.dirname(__file__), '../../script/dicom_split/',
-        #                     'pydicom_split.py')
-        # with open(path, 'r') as f:
-        #     script = f.read()
+        path = os.path.join(os.path.dirname(__file__), '../../script/dicom_split/',
+                            'pydicom_split.py')
+        with open(path, 'r') as f:
+            script = f.read()
 
-        # task = {
-        #     'mode': 'python',
-        #     'script': script,
-        #     'name': title,
-        #     'inputs': [{
-        #         'id': 'subfolders',
-        #         'type': 'string',
-        #         'format': 'string'
-        #     }, {
-        #         'id': 'axis',
-        #         'type': 'string',
-        #         'format': 'string'
-        #     }, {
-        #         'id': 'n_of_split',
-        #         'type': 'string',
-        #         'format': 'string'
-        #     }, {
-        #         'id': 'order',
-        #         'type': 'string',
-        #         'format': 'string'
-        #     }, {
-        #         'id': 'outPath',
-        #         'type': 'string',
-        #         'format': 'string'
-        #     }],
-        #     'outputs': [{
-        #         'id': 'splitedVolumn',
-        #         'target': 'filepath',
-        #         'type': 'string',
-        #         'format': 'string',
-        #     }],
-        # }
+        task = {
+            'mode': 'python',
+            'script': script,
+            'name': title,
+            'inputs': [{
+                'id': 'subfolders',
+                'type': 'string',
+                'format': 'string'
+            }, {
+                'id': 'axis',
+                'type': 'string',
+                'format': 'string'
+            }, {
+                'id': 'n_of_split',
+                'type': 'string',
+                'format': 'string'
+            }, {
+                'id': 'order',
+                'type': 'string',
+                'format': 'string'
+            }, {
+                'id': 'outPath',
+                'type': 'string',
+                'format': 'string'
+            }],
+            'outputs': [{
+                'id': 'splitedVolumn',
+                'target': 'filepath',
+                'type': 'string',
+                'format': 'string',
+            }],
+        }
 
         inputs = {
             'subfolders': {
@@ -160,14 +162,19 @@ class DicomSplit(AccessControlledModel):
                 'format': 'string',
                 'data': order,
             },
-            # 'outPath': {
-            #     'mode': 'inline',
-            #     'type': 'string',
-            #     'format': 'string',
-            #     'data': outPath,
-            # }
+            'outPath': {
+                'mode': 'inline',
+                'type': 'string',
+                'format': 'string',
+                'data': outPath,
+            }
         }
-
+        reproduce = {
+            'inputs': ids,
+            'output':  pushFolderId,
+            'outputName': pushFolderName,
+            'order': order
+        }
         if slurm is True:
             if inputType == 'girder':
                 for index, folder in enumerate(fetchFolder):
@@ -206,14 +213,14 @@ class DicomSplit(AccessControlledModel):
             'task': 'splitDicom',
         }
         job['kwargs'] = {
-            # 'task': task,
+            'task': task,
             'inputs': inputs,
             'outputs': outputs,
             'jobInfo': utils.jobInfoSpec(job, jobToken),
             'auto_convert': True,
             'validate': True,
         }
-
+        job['reproduce'] = reproduce
         job = Job().save(job)
         Job().scheduleJob(job)
         # print job.get('_id')

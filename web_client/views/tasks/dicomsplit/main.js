@@ -1,12 +1,14 @@
 import View from 'girder/views/View';
 // import _ from 'underscore';
-
+import router from '../../../router';
 import { restRequest } from 'girder/rest';
-import events from 'girder/events';
+import events from '../../../events';
 import FolderModel from 'girder/models/FolderModel';
 import BrowserWidget from 'girder/views/widgets/BrowserWidget';
 // import eventStream from 'girder/utilities/EventStream';
+import JobModel from 'girder_plugins/jobs/models/JobModel';
 
+import { splitRoute, parseQueryString } from 'girder/misc';
 import DicomSplitModel from '../../../models/tasks/dicomsplit/dicomsplit';
 import ViewTemplate from '../../../templates/tasks/dicomsplit/main.pug';
 
@@ -66,6 +68,14 @@ var DicomSplit = View.extend({
         this.$el.html(ViewTemplate({hierarchy: settings.hierarchy ? settings.hierarchy : 'root'}));
         this.openedFolders = [];
         this.ids = [];
+        let curRoute = Backbone.history.fragment,
+            routeParts = splitRoute(curRoute),
+            queryString = parseQueryString(routeParts.name);
+        // if (queryString['hierarchy'] !== undefined) this._setHierarchy(queryString['hierarchy']);
+        // if (queryString['output'] !== undefined) this._setOutput(queryString['output']);
+        // if (queryString['splitName'] !== undefined) this._setOutputName(queryString['splitName']);
+        // if (queryString['inputs'] !== undefined) this._setInputs(queryString['inputs']);
+        if (queryString['reproduce'] !== undefined) this._reproduce(queryString['reproduce']);
     },
     render(model, dropedFolderId, hierarchyType) {
         this.dicomSplit = new DicomSplitModel();
@@ -472,6 +482,57 @@ var DicomSplit = View.extend({
                 timeout: 4000
             });
         });
+    },
+    _reproduce: function (jobId) {
+        let job = new JobModel({ _id: jobId }).once('g:fetched', function () {
+            console.log(job.responseJSON.kwargs)
+        }, this).once('g:error', function () {
+            events.trigger('g:alert', {
+                icon: 'cancel',
+                text: 'Cannot find job for reproduce',
+                type: 'danger',
+                timeout: 4000
+            });
+        }, this).fetch();
+    },
+    _setHierarchy: function (hierarchy) {
+        // $('.hierarchy').val(hierarchy);
+        this.$el.html(ViewTemplate({hierarchy: hierarchy ? hierarchy : 'root'}));
+    },
+    _setOutput: function (outputId) {
+        this.selectedFolder = new FolderModel();
+        this.selectedFolder.set({'_id': outputId});
+        this.selectedFolder.on('g:saved', function (res) {
+            this.renderSelectFolder(this.selectedFolder);
+            this.selectedFolderId = this.selectedFolder.get('_id');
+        }, this).save();
+    },
+    _setOutputName: function (name) {
+        $('#splitJobName').val(name);
+    },
+    _setInputs: function (ids) {
+        console.log(ids)
+        // if (girder)
+        let hierarchyType = this.$('.hierarchy').val();
+        for (let i = 0; i < ids.length; i++ ) {
+            this.openedFolder = new FolderModel();
+            this.openedFolder.set({'_id': ids[i]});
+            this.openedFolder.on('g:saved', function (res) {
+                this.render(this.openedFolder, ids[i], hierarchyType);
+                this.openedFolderId = this.openedFolder.get('_id');
+                // if (!this.selectedFolderName) {
+                //     this.selectedFolderName = this.openedFolder.get('name');
+                // } else {
+                //     this.selectedFolderName = this.selectedFolderName + ' + ' + this.openedFolder.get('name');
+                // }
+            }, this).on('g:error', function (res) {
+                events.trigger('g:alert', {
+                    text: res.responseJSON.message,
+                    type: 'danger',
+                    timeout: 4000
+                });
+            }).save();
+        }
     }
 });
 

@@ -24,7 +24,7 @@ import router from '../../router';
 import UserView from '../widgets/UserViewWidget';
 import CollectionView from '../widgets/CollectionViewWidget';
 
-import SlurmSelection from 'girder_plugins/slurm/views/widgets/slurmSelection';
+// import SlurmSelection from 'girder_plugins/slurm/views/widgets/slurmSelection';
 
 var Layout = View.extend({
     events: {
@@ -111,13 +111,13 @@ var Layout = View.extend({
 
         this.$el.html(MainPageViewTemplate());
 
-        if (this.slurmSelection) {
-            this.slurmSelection.destroy()
-        }
-        this.slurmSelection = new SlurmSelection({
-            parentView: this,
-            el: '.slurmOptionsContent'
-        });
+        // if (this.slurmSelection) {
+        //     this.slurmSelection.destroy()
+        // }
+        // this.slurmSelection = new SlurmSelection({
+        //     parentView: this,
+        //     el: '.slurmOptionsContent'
+        // });
         let curRoute = Backbone.history.fragment,
             routeParts = splitRoute(curRoute),
             queryString = parseQueryString(routeParts.name);
