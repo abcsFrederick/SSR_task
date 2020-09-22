@@ -1,5 +1,5 @@
 ====================================
-SSR_task |build-status| |codecov-io|
+SSR_task |codecov-io|
 ====================================
 
 .. .. |build-status| image:: https://travis-ci.org/abcsFrederick/SSR_task.svg?branch=master
