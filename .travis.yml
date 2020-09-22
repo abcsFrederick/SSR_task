@@ -85,12 +85,12 @@ before_install:
     - girder_worker_path=$HOME/girder_worker
     - git clone https://github.com/girder/girder_worker.git $girder_worker_path && git -C $girder_worker_path checkout $GIRDER_WORKER_VERSION
     - cp $SSR_task_PATH/plugin_tests/data/girder_worker.cfg $girder_worker_path/girder_worker/worker.local.cfg
-    - if [ -n "${PY3}" ]; then
-      sudo pip2 install --no-cache-dir -U setuptools &&
-      sudo pip2 install --no-cache-dir -U $girder_worker_path'[girder_io,docker]' ;
-      else
-      pip install --no-cache-dir -U $girder_worker_path'[girder_io,docker]' ;
-      fi
+    # - if [ -n "${PY3}" ]; then
+    #   sudo pip2 install --no-cache-dir -U setuptools &&
+    #   sudo pip2 install --no-cache-dir -U $girder_worker_path'[girder_io,docker]' ;
+    #   else
+    #   pip install --no-cache-dir -U $girder_worker_path'[girder_io,docker]' ;
+    #   fi
 
     - Archive_path=$girder_path/plugins/Archive
     - git clone https://github.com/abcsFrederick/Archive.git $Archive_path && git -C $Archive_path checkout $ARCHIVE_VERSION
