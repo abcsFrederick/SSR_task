@@ -90,7 +90,7 @@ class DicomSplit(AccessControlledModel):
 
         else:
             job = Job().createJob(title=title, type='split',
-                                  handler='worker_handler', user=user)
+                                  handler='slurm_handler', user=user)
 
         # outPath = tempfile.mkdtemp(suffix="-" + str(job.get('_id')),
         #                            dir=Setting().get(PluginSettings.GIRDER_WORKER_TMP))
