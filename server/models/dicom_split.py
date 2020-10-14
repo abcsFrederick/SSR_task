@@ -222,8 +222,7 @@ class DicomSplit(AccessControlledModel):
         }
         job['reproduce'] = reproduce
         job = Job().save(job)
-        Job().scheduleJob(job)
-        # print job.get('_id')
+        Slurm().scheduleSlurm(job)
         return job
 
     def validate(self, dicom_split):
