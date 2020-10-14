@@ -187,7 +187,7 @@ def onZipFileSave(event):
             type='job_unzip_start', data=job, user=user,
             expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
         job = Job().save(job)
-        Job().scheduleJob(job)
+        events.trigger('slurm.schedule', info=job)
     except Exception:
         pass
 
