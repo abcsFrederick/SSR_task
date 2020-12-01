@@ -592,7 +592,7 @@ import argparse
 tmpDir = os.path.dirname(topFolder0)
 print('tmp directory: ', tmpDir)
 OutName = os.path.basename(outPath)
-print('output folder name: ', Outdir)
+print('output folder name: ', OutName)
 # redirect right work directory, seems a girder worker bug, tmp_root only works for fetching not writing
 Outdir = os.path.join(os.path.dirname(tmpDir), OutName)
 print('output path: ', Outdir)
