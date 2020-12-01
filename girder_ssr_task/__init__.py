@@ -72,7 +72,6 @@ def _updateJob(event):
     userId = event.info['job']['userId']
     user = UserModel().load(userId, force=True, fields=['email'])
     meta = job.get('meta', {})
-    print(job.get('handler'))
     if (job.get('handler') == 'worker_handler'):
         if (meta.get('creator') == 'dicom_split' and
                 meta.get('task') == 'splitDicom'):

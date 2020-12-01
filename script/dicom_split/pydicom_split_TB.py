@@ -599,7 +599,7 @@ axis = axis
 #     n = len(kwargs.get('series_instance_uids')) or kwargs.get('n')
 #     kwargs['study_instance_uids'] = [x667_uuid() for i in range(n)]
 # subfolders = [subfolders for subfolders in os.listdir(topFolder)]
-
+print('output path: ', Outdir)
 for index in range(len(subfolders)):
     directory = os.path.join(tmpDir, subfolders[index])
     print(directory)
