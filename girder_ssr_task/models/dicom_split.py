@@ -31,7 +31,7 @@ from girder.models.setting import Setting
 # from girder.plugins.jobs.models.job import Job
 from .job import Job
 
-from girder_worker import utils
+from girder_worker.girder_plugin import utils
 # import girder.plugins.slurm.girder_io.input as slurmGirderInput
 # from girder.plugins.slurm.models.slurm import Slurm as slurmModel
 from ..constants import PluginSettings
@@ -61,7 +61,8 @@ class DicomSplit(AccessControlledModel):
     #     return super(Histogram, self).remove(histogram, **kwargs)
 
     def createJob(self, fetchFolder, user, token, inputType, subfolders,
-                  axis, n_of_split, order, pushFolder, pushFolderName, ids, pushFolderId, slurm=False):
+                  axis, n_of_split, order, orderT, orderB, offset,
+                  pushFolder, pushFolderName, ids, pushFolderId, slurm=False):
         if inputType == 'girder':
             experiments = ''
             for folders in fetchFolder:
@@ -91,15 +92,15 @@ class DicomSplit(AccessControlledModel):
             job = Job().createJob(title=title, type='split',
                                   handler='worker_handler', user=user)
 
-        outPath = tempfile.mkdtemp(suffix="-" + str(job.get('_id')),
-                                   dir=Setting().get(PluginSettings.GIRDER_WORKER_TMP))
+        # outPath = tempfile.mkdtemp(suffix="-" + str(job.get('_id')),
+        #                            dir=Setting().get(PluginSettings.GIRDER_WORKER_TMP))
         outPath = os.path.join(Setting().get(PluginSettings.GIRDER_WORKER_TMP), pushFolderName)
         # print outPath
         jobToken = Job().createJobToken(job)
 
         # Not necessary needed for slurm
         path = os.path.join(os.path.dirname(__file__), '../../script/dicom_split/',
-                            'pydicom_split.py')
+                            'pydicom_split_TB.py')
         with open(path, 'r') as f:
             script = f.read()
 
@@ -121,6 +122,18 @@ class DicomSplit(AccessControlledModel):
                 'format': 'string'
             }, {
                 'id': 'order',
+                'type': 'string',
+                'format': 'string'
+            }, {
+                'id': 'orderT',
+                'type': 'string',
+                'format': 'string'
+            }, {
+                'id': 'orderB',
+                'type': 'string',
+                'format': 'string'
+            }, {
+                'id': 'offset',
                 'type': 'string',
                 'format': 'string'
             }, {
@@ -160,6 +173,24 @@ class DicomSplit(AccessControlledModel):
                 'type': 'string',
                 'format': 'string',
                 'data': order,
+            },
+            'orderT': {
+                'mode': 'inline',
+                'type': 'string',
+                'format': 'string',
+                'data': orderT,
+            },
+            'orderB': {
+                'mode': 'inline',
+                'type': 'string',
+                'format': 'string',
+                'data': orderB,
+            },
+            'offset': {
+                'mode': 'inline',
+                'type': 'string',
+                'format': 'string',
+                'data': offset,
             },
             'outPath': {
                 'mode': 'inline',
@@ -207,6 +238,7 @@ class DicomSplit(AccessControlledModel):
                                                     name='',
                                                     reference=reference),
         }
+        print (outputs)
         job['meta'] = {
             'creator': 'dicom_split',
             'task': 'splitDicom',

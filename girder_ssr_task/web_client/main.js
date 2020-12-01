@@ -2,6 +2,6 @@ import './routes';
 
 import { registerPluginNamespace } from '@girder/core/pluginUtils';
 
-import * as SSRTasks from './index';
+import * as SSRTask from './index';
 
-registerPluginNamespace('SSR_Tasks', SSRTasks);
+registerPluginNamespace('ssrtask', SSRTask);

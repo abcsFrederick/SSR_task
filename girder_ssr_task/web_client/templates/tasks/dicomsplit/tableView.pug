@@ -102,19 +102,27 @@
         th Pattern Pool
     tbody
       each pattern, index in pool
-        if index%1 === 0
-          tr
-        //- pattern --> "{'order': ['1', '1', '1'], 'axis': '1'}"
-        td.patternOption(order=pattern.order, axis=pattern.axis, draggable='true', ondragstart=`event.dataTransfer.setData('order','${pattern.order}');event.dataTransfer.setData('axis','${pattern.axis}')`)
-          if pattern.axis === '1'
-            each mouse in pattern.order
-              if mouse === '1'
-                img(src='static/built/assets/mouse.png')
-              else
-                img(src='static/built/assets/no.png')
-          if pattern.axis === '0'
-            each mouse in pattern.order
-              if mouse === '1'
-                img(src='static/built/assets/mouse.png', style='transform: rotate(-90deg)')
-              else
-                img(src='static/built/assets/no.png')
+        //- if index%1 === 0
+        tr
+          //- pattern --> "{'order': ['1', '1', '1'], 'axis': '1'}"
+          if pattern.TB === '1'
+            if pattern.orderT.length === 1
+              td.patternOption(order=pattern.order, axis=pattern.axis, draggable='true', ondragstart=`event.dataTransfer.setData('TB','${pattern.TB}');event.dataTransfer.setData('orderT','${pattern.orderT}');event.dataTransfer.setData('orderB','${pattern.orderB}');event.dataTransfer.setData('axis','${pattern.axis}')`)
+                  img(src='static/built/assets/TB12.png')
+            else if pattern.orderT.length === 2
+              td.patternOption(order=pattern.order, axis=pattern.axis, draggable='true', ondragstart=`event.dataTransfer.setData('TB','${pattern.TB}');event.dataTransfer.setData('orderT','${pattern.orderT}');event.dataTransfer.setData('orderB','${pattern.orderB}');event.dataTransfer.setData('axis','${pattern.axis}')`)
+                  img(src='static/built/assets/TB21.png')
+          else
+            td.patternOption(order=pattern.order, axis=pattern.axis, draggable='true', ondragstart=`event.dataTransfer.setData('order','${pattern.order}');event.dataTransfer.setData('axis','${pattern.axis}')`)
+              if pattern.axis === '1'
+                each mouse in pattern.order
+                  if mouse === '1'
+                    img(src='static/built/assets/mouse.png')
+                  else
+                    img(src='static/built/assets/no.png')
+              if pattern.axis === '0'
+                each mouse in pattern.order
+                  if mouse === '1'
+                    img(src='static/built/assets/mouse.png', style='transform: rotate(-90deg)')
+                  else
+                    img(src='static/built/assets/no.png')

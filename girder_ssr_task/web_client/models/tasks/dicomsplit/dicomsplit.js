@@ -56,9 +56,12 @@ var dicomsplitModel = Model.extend({
                 'n': JSON.stringify(this.get('n')),
                 'axis': JSON.stringify(this.get('axis')),
                 'order': JSON.stringify(this.get('order')),
+                'orderT': JSON.stringify(this.get('orderT')),
+                'orderB': JSON.stringify(this.get('orderB')),
+                'offset': JSON.stringify(this.get('offset')),
                 'pushFolderId': this.get('pushFolderId'),
                 'pushFolderName': this.get('pushFolderName'),
-                'modality': this.get('modality')
+                // 'modality': this.get('modality')
             }
         }).then((resp) => {
             return new JobModel(resp);

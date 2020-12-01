@@ -368,12 +368,15 @@ class SSR_task(Resource):
         .jsonParam('n', 'number of split', required=True)
         .jsonParam('axis', 'axis of split', required=True)
         .jsonParam('order', 'order', required=True)
+        .jsonParam('orderT', 'orderT', required=True)
+        .jsonParam('orderB', 'orderB', required=True)
+        .jsonParam('offset', 'offset', required=True)
         .param('pushFolderId', 'folder id for split result', required=True)
         .param('pushFolderName', 'folder id for split result', required=True)
         .param('inputType', 'Type of input', required=True,
                enum=['girder', 'archive'], strip=True)
     )
-    def dicom_split(self, ids, inputType, subfolders, n, axis, order, pushFolderId, pushFolderName):
+    def dicom_split(self, ids, inputType, subfolders, n, axis, order, orderT, orderB, offset, pushFolderId, pushFolderName):
         self.user = self.getCurrentUser()
         self.token = self.getCurrentToken()
         if inputType == 'archive':
@@ -389,7 +392,8 @@ class SSR_task(Resource):
         pushFolder = Folder().load(pushFolderId, level=AccessType.READ, user=self.user)
         return DicomSplit().createJob(fetchFolder, self.user,
                                       self.token, inputType, subfolders,
-                                      axis, n, order, pushFolder, pushFolderName, ids, pushFolderId, slurm=False)
+                                      axis, n, order, orderT, orderB, offset,
+                                      pushFolder, pushFolderName, ids, pushFolderId, slurm=False)
 
     @access.public
     @autoDescribeRoute(

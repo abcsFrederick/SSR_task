@@ -1,12 +1,21 @@
-if axis === '1'
-  each mouse in order
-    if mouse === '1'
-      img(src='static/built/assets/mouse.png')
-    else
-      img(src='static/built/assets/no.png')
-if axis === '0'
-  each mouse in order
-    if mouse === '1'
-      img(src='static/built/assets/mouse.png', style='transform: rotate(-90deg)')
-    else
-      img(src='static/built/assets/no.png')
+if TB
+  table
+  if orderT.length === 1
+    img(src='static/built/assets/TB12.png')
+    input.offset(placeholder='offset(5%)')
+  else if orderT.length === 2
+    img(src='static/built/assets/TB21.png')
+    input.offset(placeholder='offset(5%)')
+else
+  if axis === '1'
+    each mouse in order
+      if mouse === '1'
+        img(src='static/built/assets/mouse.png')
+      else
+        img(src='static/built/assets/no.png')
+  if axis === '0'
+    each mouse in order
+      if mouse === '1'
+        img(src='static/built/assets/mouse.png', style='transform: rotate(-90deg)')
+      else
+        img(src='static/built/assets/no.png')

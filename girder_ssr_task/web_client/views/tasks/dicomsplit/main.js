@@ -401,7 +401,10 @@ var DicomSplit = View.extend({
                         order: this.table.order,
                         pushFolderId: this.selectedFolderId,
                         pushFolderName: this.selectedFolderName,
-                        modality: this.modality
+                        modality: this.modality,
+                        orderT: this.table.orderT,
+                        orderB: this.table.orderB,
+                        offset: this.table.offset,
                     });
                     this.dicomSplit.createJob().done((job) => {
                         events.trigger('g:alert', {

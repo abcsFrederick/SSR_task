@@ -42,29 +42,48 @@ var DicomSplit = View.extend({
 
             e.preventDefault();
         },
-        'drop .pattern-drop-zone': 'patternDropped'
+        'drop .pattern-drop-zone': 'patternDropped',
+        'keyup .offset': 'setOffset'
     },
     initialize(settings) {
         this.defualtPool = [{'order': ['1', '1', '1'],
-            'axis': '1'},
+            'axis': '1',
+            'TB': '0'},
         {'order': ['0', '1', '1'],
-            'axis': '1'},
+            'axis': '1',
+            'TB': '0'},
         {'order': ['1', '0', '1'],
-            'axis': '1'},
+            'axis': '1',
+            'TB': '0'},
         {'order': ['1', '1', '0'],
-            'axis': '1'},
+            'axis': '1',
+            'TB': '0'},
         {'order': ['0', '0', '1'],
-            'axis': '1'},
+            'axis': '1',
+            'TB': '0'},
         {'order': ['0', '1', '0'],
-            'axis': '1'},
+            'axis': '1',
+            'TB': '0'},
         {'order': ['1', '0', '0'],
-            'axis': '1'},
+            'axis': '1',
+            'TB': '0'},
         {'order': ['1', '1'],
-            'axis': '1'},
+            'axis': '1',
+            'TB': '0'},
         {'order': ['0', '1'],
-            'axis': '1'},
+            'axis': '1',
+            'TB': '0'},
         {'order': ['1', '0'],
-            'axis': '1'}];
+            'axis': '1',
+            'TB': '0'},
+        {'orderT': ['1'],
+         'orderB': ['1', '1'],
+            'axis': '1',
+            'TB': '1'},
+        {'orderT': ['1', '1'],
+         'orderB': ['1'],
+            'axis': '1',
+            'TB': '1'}];
         this.settings = settings;
         // if (this.settings.modality === 'MRI') {
         if (!(settings.patients['MRI'].length + settings.patients['PTCT'].length)) {
@@ -89,9 +108,12 @@ var DicomSplit = View.extend({
         // }
         this.allPatientsLength = settings.patients['MRI'].length + settings.patients['PTCT'].length;
         this.subfolders = new Array(this.allPatientsLength);
-        this.n = new Array(settings.patients.length);
-        this.axis = new Array(settings.patients.length);
-        this.order = new Array(settings.patients.length);
+        this.n = new Array(this.allPatientsLength);
+        this.axis = new Array(this.allPatientsLength);
+        this.order = new Array(this.allPatientsLength);
+        this.orderT = new Array(this.allPatientsLength);
+        this.orderB = new Array(this.allPatientsLength);
+        this.offset = new Array(this.allPatientsLength).fill("5");
     },
     parseAndValidateSpec: function () {
         for (let index = 0; index < this.allPatientsLength; index++) {
@@ -115,22 +137,34 @@ var DicomSplit = View.extend({
             pname = $(e.currentTarget).attr('pname');
         e.stopPropagation();
         e.preventDefault();
-        let order = event.dataTransfer.getData('order').split(','),
-            axis = event.dataTransfer.getData('axis');
+        let TB = event.dataTransfer.getData('TB'),
+            axis = event.dataTransfer.getData('axis'),
+            order = event.dataTransfer.getData('order').split(','),
+            orderT = event.dataTransfer.getData('orderT').split(','),
+            orderB = event.dataTransfer.getData('orderB').split(',');
         $(e.currentTarget).html(PatternTemplate({
+            TB: TB,
             order: order,
-            axis: axis
+            axis: axis,
+            orderT: orderT,
+            orderB: orderB
         }));
         this.subfolders[index] = pname;
         this.n[index] = order.length;
         this.axis[index] = axis;
         this.order[index] = event.dataTransfer.getData('order');
-
+        this.orderT[index] = event.dataTransfer.getData('orderT');
+        this.orderB[index] = event.dataTransfer.getData('orderB');
         // e.stopPropagation();
         // e.preventDefault();
 
         // let dropedFolderId = event.dataTransfer.getData('folderId');
         // let dropedFolderName = event.dataTransfer.getData('folderName');
+    },
+    setOffset: function(e) {
+        let index = $(e.currentTarget).parent().attr('index');
+        this.offset[index] = $(e.currentTarget).val() || 5;
+        console.log(this.offset[index]);
     },
     appendRender: function (patients, experimentName, from) {
         let currentIndex = this.subfolders.length;
@@ -140,6 +174,9 @@ var DicomSplit = View.extend({
         this.n = this.n.concat(newPatientsArray);
         this.axis = this.axis.concat(newPatientsArray);
         this.order = this.order.concat(newPatientsArray);
+        this.orderT = this.orderT.concat(newPatientsArray);
+        this.orderB = this.orderB.concat(newPatientsArray);
+        this.offset = this.offset.concat(newPatientsArray);
         this.$('#paramPool tbody').append(AppendTableTemplate({
             currentIndex: currentIndex,
             experimentName: experimentName,

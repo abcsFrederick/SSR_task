@@ -20,7 +20,7 @@ from girder.settings import SettingDefault, SettingKey
 from girder.utility import setting_utilities, mail_utils
 from girder.models.user import User as UserModel
 from girder.models.setting import Setting
-from girder_worker import utils as workerUtils
+from girder_worker.girder_plugin import utils as workerUtils
 
 from .constants import PluginSettings
 from .models.link import Link
@@ -72,7 +72,8 @@ def _updateJob(event):
     userId = event.info['job']['userId']
     user = UserModel().load(userId, force=True, fields=['email'])
     meta = job.get('meta', {})
-    if (meta.get('handler') == 'worker_handler'):
+    print(job.get('handler'))
+    if (job.get('handler') == 'worker_handler'):
         if (meta.get('creator') == 'dicom_split' and
                 meta.get('task') == 'splitDicom'):
             status = job['status']

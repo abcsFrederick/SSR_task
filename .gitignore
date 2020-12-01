@@ -2,3 +2,5 @@
 .DS_Store
 gitScript.sh
 *.egg-info
+node_modules/
+__pycache__/

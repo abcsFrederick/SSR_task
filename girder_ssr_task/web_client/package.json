@@ -9,7 +9,9 @@
         "url": "https://github.com/abcsFrederick/SSR_task"
     },
     "peerDependencies": {
-        "@girder/core": "*"
+        "@girder/core": "*",
+        "@girder/jobs": "*",
+        "@girder/archive": "*"
     },
     "dependencies": {
         "popper.js":"^1.15.0",
