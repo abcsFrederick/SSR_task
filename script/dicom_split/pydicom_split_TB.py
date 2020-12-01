@@ -590,7 +590,12 @@ import argparse
 #     split_dicom_directory(directory, **kwargs)
 
 tmpDir = os.path.dirname(topFolder0)
-Outdir = outPath
+print('tmp directory: ', tmpDir)
+OutName = os.path.basename(outPath)
+print('output folder name: ', Outdir)
+# redirect right work directory, seems a girder worker bug, tmp_root only works for fetching not writing
+Outdir = os.path.join(os.path.dirname(tmpDir), OutName)
+print('output path: ', Outdir)
 # topFolder = topFolder
 subfolders = subfolders
 axis = axis
@@ -599,7 +604,6 @@ axis = axis
 #     n = len(kwargs.get('series_instance_uids')) or kwargs.get('n')
 #     kwargs['study_instance_uids'] = [x667_uuid() for i in range(n)]
 # subfolders = [subfolders for subfolders in os.listdir(topFolder)]
-print('output path: ', Outdir)
 for index in range(len(subfolders)):
     directory = os.path.join(tmpDir, subfolders[index])
     print(directory)
