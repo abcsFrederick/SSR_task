@@ -53,8 +53,6 @@ def _notifyUser(event, meta):
     else:
         taskName = meta.get('task')
     text = template.render(**params)
-    print('-----send to user-----')
-    print(text)
     mail_utils.sendEmail(
         to=email,
         toAdmins=False,
