@@ -53,9 +53,8 @@ def _notifyUser(event, meta):
     else:
         taskName = meta.get('task')
     text = template.render(**params)
-    mail_utils.sendEmail(
+    mail_utils.sendMail(
         to=email,
-        toAdmins=False,
         subject='Job Status: ' + taskName + ' finished',
         text=text)
 
