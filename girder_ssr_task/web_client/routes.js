@@ -5,8 +5,8 @@ import { exposePluginConfig } from '@girder/core/utilities/PluginUtils';
 import ConfigView from './views/configuration/configView';
 import TasksLayout from './views/layouts/main';
 
-exposePluginConfig('ssrtask', 'plugins/SSR_task/config');
-router.route('plugins/SSR_task/config', 'SSR_taskConfig', function () {
+exposePluginConfig('ssrtask', 'plugins/ssrtask/config');
+router.route('plugins/ssrtask/config', 'ssrtaskConfig', function () {
     events.trigger('g:navigateTo', ConfigView);
 });
 

@@ -11,4 +11,4 @@ each task in tasks
         a #{task}
   else
     li.nav-item.enabledTask(id=task)
-      a #{task}
+      a(id="v-pills-"+task,data-toggle="pill",href="#v-pills-"+task,role="tab",aria-controls="v-pills-"+task,aria-selected="true") #{task}

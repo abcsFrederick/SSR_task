@@ -7,7 +7,8 @@ requirements = [
     'girder>=3',
     'girder-worker[girder]',
     'girder-jobs',
-    'girder-archive'
+    'girder-archive',
+    'histomicsui'
 ]
 
 setup(

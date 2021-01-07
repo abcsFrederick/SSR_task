@@ -4,8 +4,7 @@ import shutil
 import datetime
 import bson
 
-from girder import plugin
-from girder import events
+from girder import plugin, events
 from mako.lookup import TemplateLookup
 
 from girder.models.notification import Notification
@@ -207,7 +206,8 @@ SettingDefault.defaults.update({
     PluginSettings.TASKS: {
         "Link": True,
         "DicomSplit": True,
-        "ExampleTask": False
+        "ExampleTask": False,
+        "Overlays": False
     }
 })
 SettingDefault.defaults.update({
