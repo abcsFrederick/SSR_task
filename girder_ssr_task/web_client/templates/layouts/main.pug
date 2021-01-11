@@ -5,7 +5,10 @@
       //- slurm setting
       //- i.icon-cog(data-toggle="collapse", href="#slurmOptionsContent", aria-expanded="false", aria-controls="slurmOptionsContent")
       //- #slurmOptionsContent.slurmOptionsContent.collapse
-    ul#taskNav.nav.flex-column.bg-white.mb-0
+    .row
+      #v-taskNav-tab.col-md-4.nav.flex-column.nav-pills(aria-orientation="vertical")
+        ul#taskNav.nav.flex-column.bg-white.mb-0
+      #v-taskNav-tabContent.col-md-8.tab-content
       //- each task in tasks
       //-   if currentTask === task
       //-     li.nav-item.enabledTask.active(id=task)

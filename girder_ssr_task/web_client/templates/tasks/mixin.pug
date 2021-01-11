@@ -1,0 +1,8 @@
+mixin description(task)
+  label #{task} Workflow
+  if task==='DicomSplit'
+    p Input .zip file should be downloaded from SAIP Image portal directly.
+    | For usage detail please download the 
+    a(href='static/built/doc/SAIP_DICOM_Split_documentation_v1.docx', style='color:#337ab7') manual.
+  if task==='Link'
+    p Link Waring

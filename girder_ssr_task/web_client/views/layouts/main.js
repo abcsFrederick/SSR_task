@@ -13,6 +13,7 @@ import ArchiveView from '@girder/archive/views/body/ArchiveView';
 
 import MainPageViewTemplate from '../../templates/layouts/main.pug';
 import TaskNavTemplate from '../../templates/layouts/taskNav.pug';
+import TaskNavDesTemplate from '../../templates/tasks/description.pug';
 import DataNavTemplate from '../../templates/layouts/dataNav.pug';
 import '../../stylesheets/layouts/main.styl';
 import '../../stylesheets/layouts/navTask.styl';
@@ -136,6 +137,10 @@ var Layout = View.extend({
             currentTask: e
         }));
 
+        this.$('#v-taskNav-tabContent').html(TaskNavDesTemplate({
+            tasks: availableTasks,
+            currentTask: e
+        }));
         // this.navTask = new navTask({
         //     el: $('.g-global-nav-main'),
         //     parentView: this,
