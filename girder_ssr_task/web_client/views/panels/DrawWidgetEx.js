@@ -10,16 +10,18 @@ wrap(DrawWidgetEx, 'render', function (render) {
     render.call(this);
     let overlays = this.parentView.overlays;
 
-    // if (this.workflowSelection) need to improve to remove duplicate view
-    if (this._skipRenderHTML) {
-        delete this._skipRenderHTML;
-    } else {
-      this.workflowSelection = new workflowSelection({
-          el: this.$('.h-elements-container'),
-          overlays: overlays,
-          elements: this.collection.models,
-          parentView: this
-      });
+    // if (this.workflowSelection) FIX: Needs to remove duplicate view
+    if (this.workflowSelection) {
+        this.workflowSelection.undelegateEvents();
+        this.workflowSelection.stopListening();
+        this.workflowSelection.off();
     }
+    this.workflowSelection = new workflowSelection({
+        el: this.$('.h-elements-container'),
+        overlays: overlays,
+        elements: this.collection.models,
+        parentView: this
+    });
+
     return this;
 });

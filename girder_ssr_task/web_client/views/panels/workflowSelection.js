@@ -48,12 +48,11 @@ var workflowSelection = View.extend({
                     overlays: this.overlays.toJSON()
                 }));
             }
-            
         }
-        
         return this;
     },
     pickWorkflow(evt) {
+        console.log('jige1')
         $('.overlayOptions .overlays').addClass('hidden');
         $('.overlayOptions').val(0);
         this.selectedWorkflow = $(evt.currentTarget).val();
@@ -76,7 +75,7 @@ var workflowSelection = View.extend({
             this.verisonControl = model.get('workflow')[this.selectedWorkflow];
             if (this.verisonControl.length) {
                 if (this.$('.result')) {$('.result').empty()}
-                
+
                 $('#workflowsResultSelection').append(versionTemplate({
                     results: this.verisonControl
                 }));
@@ -125,11 +124,10 @@ var workflowSelection = View.extend({
             }));
         })
     },
-    downloadStatistic () {
+    downloadStatistic() {
         console.log('download');
     },
-    save () {
-        window.test = this;
+    save() {
         let overlays = [this.$('.overlayOptions').val()];
         let annotations = [this.parentView.annotation.get('_id')];
         let items = [this.parentView.image.get('_id')];
