@@ -1,13 +1,17 @@
 import HeaderView from '@girder/histomicsui/views/layout/HeaderImageView';
 import { wrap } from '@girder/core/utilities/PluginUtils';
 
-import WorkflowsView from './workflowsView';
+import WorkflowsHeader from './workflowsHeader';
+
 
 wrap(HeaderView, 'render', function (render) {
     render.call(this);
-    new WorkflowsView({
-        el: this.$('.h-open-annotated-image').parent(),
-        parentView: this
-    }).render();
+    if (!this.workflowsHeader) {
+      this.workflowsHeader = new WorkflowsHeader({
+          el: this.$('.h-open-annotated-image').parent(),
+          parentView: this
+      });
+    }
+    this.workflowsHeader.renderWorkflowHeader();
     return this;
 });

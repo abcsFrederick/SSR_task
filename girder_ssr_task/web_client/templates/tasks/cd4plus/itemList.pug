@@ -1,0 +1,28 @@
+//- ul.g-item-list(style='padding:0px')
+//-   each item in items
+//-     li.g-item-list-entry(class=(highlightItem && item.id === selectedItemId ? 'g-selected' : ''), public=(isParentPublic ? 'true' : 'false'), style='list-style: none;')
+//-       a.g-item-list-link(g-item-cid=item.cid)
+//-         .large_image_container(style='min-width: 100px;')
+//-           .large_image_thumbnail(style='width: 100px;')
+//-             img.loaded(src=`api/v1/item/${item.id}/tiles/thumbnail?width=80&height=50`)
+//-         = item.name()
+
+li.wsi-list.col-md-12(style='list-style: none;')
+  .col-md-6
+    #cd4plus-WSIs-select-prepared-zone.wsis(item-id=wsi.id)
+      .large_image_container(style='min-width: 100px;')
+        .large_image_thumbnail(style='width: 100px;')
+          img.loaded(src=`api/v1/item/${wsi.id}/tiles/thumbnail?width=80&height=50`)
+      = wsi.name()
+  .col-md-3
+    #cd4plus-Masks-select-prepared-zone.masks
+    if masks.length
+      select.selectMask(item-id=wsi.id)
+        each mask in masks
+          option(id=mask._id) #{mask.name}
+  .col-md-3
+    #cd4plus-Annotations-select-prepared-zone.annotations
+      if annotations.length
+        select.selectAnnotation(item-id=wsi.id)
+          each annotation in annotations
+            option(id=annotation._id) #{annotation.annotation.name}

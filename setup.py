@@ -8,6 +8,7 @@ requirements = [
     'girder-worker[girder]',
     'girder-jobs',
     'girder-archive',
+    'girder-overlays',
     'histomicsui'
 ]
 

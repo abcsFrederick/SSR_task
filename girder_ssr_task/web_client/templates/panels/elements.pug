@@ -1,0 +1,7 @@
+- element = element.toJSON();
+- var label = (element.label || {}).value || (element.type === 'polyline' ? (element.closed ? 'polygon' : 'line') : element.type);
+span.icon-cog.h-edit-element(title='Change style')
+span.h-element-label(title=label) #{label}
+if Num_of_Cell
+  span.h-element-NumOfCell.h-element-label (#{Num_of_Cell.low}) (#{Num_of_Cell.mean}) (#{Num_of_Cell.high})
+span.icon-cancel.h-delete-element(title='Remove')

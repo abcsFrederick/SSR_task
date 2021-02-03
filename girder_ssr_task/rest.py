@@ -13,9 +13,12 @@ from girder.models.setting import Setting
 
 from girder_archive.models.folder import Folder as ArchiveFolder
 from girder_archive.models.item import Item as ArchiveItem
+from girder_overlays.models.overlay import Overlay
+
 from .constants import PluginSettings
 from .models.dicom_split import DicomSplit
 from .models.link import Link
+from .models.cd4_plus import Cd4Plus
 
 from .models.job import Job as JobModel
 from girder.constants import AccessType, SortDir
@@ -31,6 +34,10 @@ class SSR_task(Resource):
 
         self.route('GET', ('dicom_split',), self.getItemAndThumbnail)
         self.route('POST', ('dicom_split',), self.dicom_split)
+
+        self.route('POST', ('cd4_plus',), self.cd4_plus)
+        self.route('POST', ('cd4_plus_download',), self.cd4_plus_download)
+
         self.route('GET', ('settings',), self.getSettings)
 
         self.route('GET', ('job',), self.listJobs)
@@ -438,3 +445,47 @@ class SSR_task(Resource):
         return list(JobModel().list(
             user=user, offset=offset, limit=limit, types=types,
             statuses=statuses, sort=sort, currentUser=currentUser, parentJob=parent))
+
+    @access.public
+    @autoDescribeRoute(
+        Description('Split multiple in one dicom volumn.')
+        .jsonParam('itemIds', 'item ids of WSIs.', required=True)
+        .jsonParam('overlayIds', 'overlay record ids.', required=True)
+        .jsonParam('annotationIds', 'annotation ids.', required=True)
+        .jsonParam('mean', 'mean', required=True)
+        .jsonParam('stdDev', 'stdDev', required=True)
+    )
+    def cd4_plus(self, itemIds, overlayIds, annotationIds, mean, stdDev):
+        self.user = self.getCurrentUser()
+        self.token = self.getCurrentToken()
+
+        fetchWSIItems = []
+        fetchMaskFiles = []
+        for itemId in itemIds:
+            fetchWSIItems.append(Item().load(itemId, level=AccessType.READ, user=self.user))
+        sort = [
+                ('itemId', SortDir.ASCENDING),
+                ('index', SortDir.ASCENDING),
+                ('created', SortDir.ASCENDING),
+            ]
+        for overlayId in overlayIds:
+            overlayItemId = Overlay().load(overlayId, level=AccessType.READ, user=self.user)['overlayItemId']
+            query = {
+                'itemId': ObjectId(overlayItemId),
+                'mimeType': {'$regex': '^image/tiff'}
+            }
+            file = list(File().find(query, limit=2))[0]
+            fetchMaskFiles.append(file)
+        return Cd4Plus().createJob(fetchWSIItems, fetchMaskFiles, overlayIds, self.user, self.token, itemIds, overlayIds,
+                                   annotationIds, mean, stdDev, slurm=False)
+    @access.public
+    @autoDescribeRoute(
+        Description('Split multiple in one dicom volumn.')
+        .jsonParam('itemIds', 'item ids of WSIs.', required=True)
+        .jsonParam('overlayIds', 'overlay record ids.', required=True)
+        .jsonParam('annotationIds', 'annotation ids.', required=True)
+        .jsonParam('mean', 'mean', required=True)
+        .jsonParam('stdDev', 'stdDev', required=True)
+    )
+    def cd4_plus_download(self):
+        print('hah')

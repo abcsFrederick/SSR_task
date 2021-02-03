@@ -1,0 +1,13 @@
+#workflowsResultSelection
+  .workflowName
+    label Workflow
+    select.workflowOptions
+      option(value=0) 
+      each workflow in workflows
+        option(value=workflow) #{workflow}
+  .overlayName  
+    label Mask
+    select.overlayOptions
+      option(value=0) 
+      each overlay in overlays
+        option.overlays.hidden(value=overlay._id) #{overlay.name}

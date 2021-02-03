@@ -3,6 +3,7 @@ import os
 import shutil
 import datetime
 import bson
+import json
 
 from girder import plugin, events
 from mako.lookup import TemplateLookup
@@ -20,6 +21,8 @@ from girder.utility import setting_utilities, mail_utils
 from girder.models.user import User as UserModel
 from girder.models.setting import Setting
 from girder_worker.girder_plugin import utils as workerUtils
+# from girder_large_image_annotation.models.annotationelement import Annotationelement
+from girder_overlays.models.overlay import Overlay
 
 from .constants import PluginSettings
 from .models.link import Link
@@ -68,7 +71,7 @@ def _updateJob(event):
     else:
         job = event.info
     userId = event.info['job']['userId']
-    user = UserModel().load(userId, force=True, fields=['email'])
+    user = UserModel().load(userId, force=True)
     meta = job.get('meta', {})
     if (job.get('handler') == 'worker_handler'):
         if (meta.get('creator') == 'dicom_split' and
@@ -92,6 +95,63 @@ def _updateJob(event):
                 Notification().createNotification(
                     type='job_unzip_done', data=job, user=user,
                     expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
+        elif job['type'] == 'cd4':
+            status = job['status']
+            if status == JobStatus.SUCCESS or status == JobStatus.CANCELED or status == JobStatus.ERROR:
+                tmpPath = job.get('kwargs')['inputs']['outPath']['data']
+                mean = job.get('kwargs')['inputs']['mean']
+                stdDev = job.get('kwargs')['inputs']['stdDev']
+                # Update overlay record
+                with open(tmpPath) as json_file:
+                    masks = json.load(json_file)
+                    for mask in masks:
+                        if bool(mask):
+                            overlayId = list(mask.keys())[0]
+                            overlay = Overlay().load(overlayId, user=user)
+                            if "workflow" not in overlay:
+                                overlay["workflow"] = {}
+                            if "cd4+" not in overlay['workflow']:
+                                overlay['workflow']["cd4+"] = []
+                            newRecord = True
+                            version = len(overlay['workflow']["cd4+"]) + 1
+                            for record in overlay['workflow']["cd4+"]:
+                                if record["mean"] == mean["data"] and record["stdDev"] == stdDev["data"]:
+                                    newRecord = False
+                                    updatedRecord = record
+                                    break
+
+                            if newRecord:
+                                result = []
+                                for annotation in mask[overlayId]:
+                                    Num_of_Cell = annotation["Num_of_Cell"]
+                                    record = { "elementId": annotation["id"],
+                                               "Num_of_Cell": Num_of_Cell,
+                                               "name": annotation["label"]["value"] }
+                                    result.append(record)
+                                overlay['workflow']["cd4+"].append({ "created": datetime.datetime.utcnow(),
+                                                                     "mean": mean["data"],
+                                                                     "stdDev": stdDev["data"],
+                                                                     "result": result,
+                                                                     "version": version })
+                                Overlay().save(overlay)
+                            else:
+                                result = []
+                                for annotation in mask[overlayId]:
+                                    Num_of_Cell = annotation["Num_of_Cell"]
+                                    record = { "elementId": annotation["id"],
+                                               "Num_of_Cell": Num_of_Cell,
+                                               "name": annotation["label"]["value"] }
+                                    result.append(record)
+                                print(result)
+                                updatedRecord["result"] = result
+                                print(updatedRecord)
+                                Overlay().save(overlay)
+                shutil.rmtree(tmpPath)
+            if status == JobStatus.SUCCESS:
+                Notification().createNotification(
+                    type='job_email_sent', data=job, user=user,
+                    expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
+                _notifyUser(event, meta)
         else:
             return
     elif (meta.get('handler') == 'slurm_handler'):
@@ -204,10 +264,11 @@ def validateString(doc):
 SettingDefault.defaults.update({
     PluginSettings.GIRDER_WORKER_TMP: '/tmp/girder_worker',
     PluginSettings.TASKS: {
-        "Link": True,
-        "DicomSplit": True,
+        "Link": False,
+        "DicomSplit": False,
         "ExampleTask": False,
-        "Overlays": False
+        "Overlays": False,
+        "CD4+": False
     }
 })
 SettingDefault.defaults.update({

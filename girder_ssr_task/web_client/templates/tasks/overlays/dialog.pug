@@ -1,0 +1,32 @@
+.modal-dialog
+  .modal-content
+    form#batch-overlays-form.modal-form(role="form")
+      .modal-header
+        button.close(data-dismiss="modal", aria-hidden="true", type="button") &times;
+        h4.modal-title= title
+      .modal-body
+        #h-task-overlays-container.hidden
+        .row
+          #h-WSIs-select.h-task-overlays-select.button.btn.btn-default.col-md-6(type='button')
+            | #[span.icon-folder] Select a WSIs Folder
+          #h-Masks-select.h-task-overlays-select.button.btn.btn-default.col-md-6(type='button')
+            | #[span.icon-folder] Select a Masks Folder
+        .row
+          #overlays-preview.prepareOverlaysZone
+          .col-md-6
+            #h-WSIs-select-prepared-zone.wsis
+          .col-md-6
+            #h-Masks-select-prepared-zone.masks
+        .row
+          .form-group
+            label(for='h-overlays-name') Name
+            input#h-overlays-name.input-sm.form-control(
+              type='text', placeholder='Enter a name for the overlays', value='unknown')
+          .form-group
+            label(for='h-overlays-description') Description
+            textarea#h-overlays-description.form-control.input-sm(
+              rows='6', placeholder='Enter an optional description')
+              | #{description}
+          .g-validation-failed-message
+      .modal-footer
+        button.btn.btn-small.btn-primary.save-batch-overlays(type='button') Save

@@ -578,7 +578,18 @@ var HierarchyWidget = HierarchyWidgetView.extend({
             }
         }
         this._lastCheckbox = checkbox;
-    }
+    },
+
+    /**
+     * Called when the "select this folder" link is clicked.
+     */
+    selectFolder: function (e) {
+        e.preventDefault();
+        if (_.isFunction(this._onFolderSelect)) {
+            this._onFolderSelect(this.parentModel);
+        }
+        this.trigger('g:selected', this.parentModel);
+    },
 });
 
 export default HierarchyWidget;

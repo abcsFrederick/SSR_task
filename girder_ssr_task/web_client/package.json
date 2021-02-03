@@ -11,7 +11,8 @@
     "peerDependencies": {
         "@girder/core": "*",
         "@girder/jobs": "*",
-        "@girder/archive": "*"
+        "@girder/archive": "*",
+        "@girder/overlays": "*"
     },
     "dependencies": {
         "popper.js":"^1.15.0",
@@ -34,6 +35,11 @@
     "main": "./index.js",
     "girderPlugin": {
         "name": "ssrtask",
-        "main": "./main.js"
+        "main": "./main.js",
+        "dependencies": [
+            "histomicsui",
+            "configuration",
+            "overlays"
+        ]
     }
 }

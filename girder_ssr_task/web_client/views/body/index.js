@@ -1,7 +1,7 @@
-import workflowsView from './workflowsView';
+import workflowsHeader from './workflowsHeader';
 import headerEx from './headerEx';
 
 export {
-    workflowsView,
+    workflowsHeader,
     headerEx
 };

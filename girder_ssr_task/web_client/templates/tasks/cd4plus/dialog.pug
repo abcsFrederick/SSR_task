@@ -1,0 +1,29 @@
+.modal-dialog
+  .modal-content
+    form#batch-cd4plus-form.modal-form(role="form")
+      .modal-header
+        button.close(data-dismiss="modal", aria-hidden="true", type="button") &times;
+        h4.modal-title= title
+      .modal-body
+        #h-task-cd4plus-container.hidden
+        .row
+          #cd4plus-WSIs-select.h-task-cd4plus-select.button.btn.btn-default.col-md-12(type='button')
+            | #[span.icon-folder] Select a WSIs Folder
+        .row
+          ul#cd4plus-preview.preparecd4plusZone.g-item-list(style='padding: 0px;')
+          // .col-md-6
+          //   #cd4plus-WSIs-select-prepared-zone.wsis
+          // .col-md-3
+          //   #cd4plus-Masks-select-prepared-zone.masks
+          // .col-md-3
+          //   #cd4plus-Annotation-select-prepared-zone.masks
+        .row
+          .form-group
+            label(for='h-cd4plus-name') Parameters
+            input#h-cd4plus-mean.input-sm.form-control(
+              type='text', placeholder='Enter Mean', value='498')
+            input#h-cd4plus-stdDev.input-sm.form-control(
+              type='text', placeholder='Enter StdDev', value='151')
+          .g-validation-failed-message
+      .modal-footer
+        button.btn.btn-small.btn-primary.save-batch-cd4plus(type='button') Save

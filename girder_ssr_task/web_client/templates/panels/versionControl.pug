@@ -1,0 +1,9 @@
+.result
+  label Version
+  select.versionOptions
+    option(value=0)
+    each result in results
+      option(value=result.version, data-mean=result.mean, data-stddev=result.stdDev) Mean: #{result.mean} stdDev: #{result.stdDev}
+  span.icon-download(style='margin:5px;cursor: pointer;')
+  span.icon-play(style='margin:5px;cursor: pointer;')
+  //- span.icon-cd4countonsingleWSI
