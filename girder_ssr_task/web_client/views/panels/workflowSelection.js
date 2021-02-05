@@ -41,6 +41,7 @@ var workflowSelection = View.extend({
     render() {
         if (this.elements.length === 0) {
             this.$('#workflowsResultSelection').empty();
+            this.$('#annotationsHeader').empty();
         } else {
             if (!this.$('#workflowsResultSelection').length) {
                 this.$el.prepend(workflowSelectionTemplate({
@@ -52,7 +53,6 @@ var workflowSelection = View.extend({
         return this;
     },
     pickWorkflow(evt) {
-        console.log('jige1')
         $('.overlayOptions .overlays').addClass('hidden');
         $('.overlayOptions').val(0);
         this.selectedWorkflow = $(evt.currentTarget).val();

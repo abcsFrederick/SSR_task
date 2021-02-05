@@ -116,6 +116,11 @@ var overlayDialogView = View.extend({
         });
     },
     save () {
+        if (!this.validate()) {
+            console.log(this.$('.g-validation-failed-message'));
+            this.$('.g-validation-failed-message').html('Parameter missing');
+            return;
+        };
         let mean = $('#h-cd4plus-mean').val(),
             stdDev = $('#h-cd4plus-stdDev').val();
         let items = [],
@@ -151,6 +156,12 @@ var overlayDialogView = View.extend({
             });
         });
         this.$el.modal('hide');
+    },
+    validate() {
+        if (this.WSIs === undefined || this.$('#h-cd4plus-mean').val() === "" || this.$('#h-cd4plus-stdDev').val() === "") {
+            return false;
+        }
+        return true;
     }
 });
 
