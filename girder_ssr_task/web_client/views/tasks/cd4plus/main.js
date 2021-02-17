@@ -1,6 +1,7 @@
 import ItemCollection from '@girder/core/collections/ItemCollection';
 import View from '@girder/core/views/View';
 import events from '@girder/core/events';
+import eventStream from '@girder/core/utilities/EventStream';
 
 import { getCurrentUser, setCurrentUser, getCurrentToken, setCurrentToken, corsAuth } from '@girder/core/auth';
 import { handleClose, handleOpen } from '@girder/core/dialog';
@@ -23,7 +24,7 @@ import '@girder/core/utilities/jquery/girderModal';
 /**
  * This view shows a register modal dialog.
  */
-var overlayDialogView = View.extend({
+var cd4plusDialogView = View.extend({
     events: {
         'click .h-task-cd4plus-select': function (evt) {
             this.$('.h-task-cd4plus-select').attr('disabled', true);
@@ -31,6 +32,16 @@ var overlayDialogView = View.extend({
             this.elementId = evt.currentTarget.id;
         },
         'click .save-batch-cd4plus': 'save'
+    },
+    initialize(settings) {
+        this.listenTo(eventStream, 'g:event.job_email_sent', _.bind(function (event) {
+            events.trigger('g:alert', {
+                icon: 'ok',
+                text: 'Finish counting CD4+, please go ahead to check.',
+                type: 'success',
+                timeout: 4000
+            });
+        }, this));
     },
     render: function () {
         this.$el.html(cd4plusTemplate({
@@ -165,4 +176,4 @@ var overlayDialogView = View.extend({
     }
 });
 
-export default overlayDialogView;
+export default cd4plusDialogView;

@@ -4,6 +4,7 @@ import { restRequest } from '@girder/core/rest';
 
 import overlaysWorkflowView from '../tasks/overlays/main';
 import cd4plusWorkflowView from '../tasks/cd4plus/main';
+import aperioWorkflowView from '../tasks/aperio/main';
 
 import WorkflowsTemplate from '../../templates/body/WorkflowsHeader.pug';
 
@@ -25,6 +26,13 @@ var WorkflowsHeader = View.extend({
             }
             if (taskName === 'cd4+') {
                 this.workflowView = new cd4plusWorkflowView({
+                    el: $('#g-dialog-container'),
+                    parentView: this,
+                    workflow: $(evt.currentTarget).attr('data-name')
+                });
+            }
+            if (taskName === 'aperio') {
+                this.workflowView = new aperioWorkflowView({
                     el: $('#g-dialog-container'),
                     parentView: this,
                     workflow: $(evt.currentTarget).attr('data-name')

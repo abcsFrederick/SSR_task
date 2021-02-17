@@ -9,7 +9,8 @@ requirements = [
     'girder-jobs',
     'girder-archive',
     'girder-overlays',
-    'histomicsui'
+    'histomicsui',
+    'girder-large-image-annotation'
 ]
 
 setup(

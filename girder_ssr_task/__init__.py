@@ -142,16 +142,18 @@ def _updateJob(event):
                                                "Num_of_Cell": Num_of_Cell,
                                                "name": annotation["label"]["value"] }
                                     result.append(record)
-                                print(result)
                                 updatedRecord["result"] = result
-                                print(updatedRecord)
                                 Overlay().save(overlay)
-                shutil.rmtree(tmpPath)
-            if status == JobStatus.SUCCESS:
                 Notification().createNotification(
                     type='job_email_sent', data=job, user=user,
                     expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
                 _notifyUser(event, meta)
+                shutil.rmtree(tmpPath)
+            # if status == JobStatus.SUCCESS:
+            #     Notification().createNotification(
+            #         type='job_email_sent', data=job, user=user,
+            #         expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
+            #     _notifyUser(event, meta)
         else:
             return
     elif (meta.get('handler') == 'slurm_handler'):
@@ -266,11 +268,12 @@ SettingDefault.defaults.update({
     PluginSettings.TASKS: {
         "Link": False,
         "DicomSplit": False,
-        "ExampleTask": False,
+        "Aperio": False,
         "Overlays": False,
         "CD4+": False
     }
 })
+
 SettingDefault.defaults.update({
     SettingKey.EMAIL_FROM_ADDRESS: 'https://fr-s-ivg-ssr-p1.ncifcrf.gov/'
 })
