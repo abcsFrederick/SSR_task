@@ -114,8 +114,8 @@ var aperioDialogView = View.extend({
         restRequest({
             url: 'SSR_task/aperio_anno',
             method: 'POST',
-            data: { username: JSON.stringify(username),
-                    password: JSON.stringify(password),
+            data: { username: username,
+                    password: password,
                     itemIds: JSON.stringify(items),
                     aperioIds: JSON.stringify(aperioIds)
             }
@@ -127,6 +127,12 @@ var aperioDialogView = View.extend({
                 timeout: 4000
             });
         }).fail((error) => {
+            events.trigger('g:alert', {
+                icon: 'cancel',
+                text: error.responseJSON.message,
+                type: 'danger',
+                timeout: 4000
+            });
         });
         this.$el.modal('hide');
     },
