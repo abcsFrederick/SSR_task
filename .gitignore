@@ -4,3 +4,4 @@ gitScript.sh
 *.egg-info
 node_modules/
 __pycache__/
+*/**/node_modules/
