@@ -7,11 +7,12 @@
         th.nameHead Name
         th.patternHead Pattern
     tbody
+      --console.log('====')
       if hierarchyType === 'Experiment'
         tr
           td.experimentLabel(colspan='3')
             label #{experimentName}
-
+            button.removeExp x
       if patients['MRI'].length
         //- tr
         //-   td.modalityLabel(colspan='3')
@@ -23,11 +24,13 @@
               tr
                 td.experimentLabel(colspan='3')
                   label #{patient.experiment}
+                  button.removeExp x
             else if lastPatient !== patient.experiment
               - var lastPatient = patient.experiment
               tr
                 td.experimentLabel(colspan='3')
                   label #{patient.experiment}
+                  button.removeExp x
           tr
             if from === 'Archive'
               td.thumb
@@ -53,10 +56,12 @@
               tr
                 td.experimentLabel(colspan='3')
                   label #{patient.experiment}
+                  button.removeExp x
             else if lastPatient !== patient.experiment
               tr
                 td.experimentLabel(colspan='3')
                   label #{patient.experiment}
+                  button.removeExp x
           tr
             if from === 'Archive'
               if index % 2 === 0
