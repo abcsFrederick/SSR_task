@@ -1,4 +1,3 @@
-
 #paramPool.col-md-8
   table.table
     thead
@@ -7,86 +6,103 @@
         th.nameHead Name
         th.patternHead Pattern
     tbody
-      --console.log('====')
       if hierarchyType === 'Experiment'
-        tr
+        tr(data-droppedFolderId=droppedFolderId)
           td.experimentLabel(colspan='3')
             label #{experimentName}
-            button.removeExp x
-      if patients['MRI'].length
-        //- tr
-        //-   td.modalityLabel(colspan='3')
-        //-     label MRI
-        each patient, index in patients['MRI']
-          if hierarchyType === 'Root' 
-            if lastPatient === undefined
-              - var lastPatient = patient.experiment
-              tr
-                td.experimentLabel(colspan='3')
-                  label #{patient.experiment}
-                  button.removeExp x
-            else if lastPatient !== patient.experiment
-              - var lastPatient = patient.experiment
-              tr
-                td.experimentLabel(colspan='3')
-                  label #{patient.experiment}
-                  button.removeExp x
-          tr
+            label.removeExp x
+        if patients['MRI'].length !== 0
+          each patient, index in patients['MRI']
             if from === 'Archive'
-              td.thumb
-                img(src="static/built/mnt/scippy_images/" + patient.patient_path + '/' + patient.study_path + '/' + patient.series_path + '/' + patient.thumbnailId)
-              td.name #{patient.name}
-              td.pattern-drop-zone(pname="/mnt/scippy_images/" + patient.experiment + '/' + patient.patient_path + '/' + patient.study_path + '/' + patient.series_path, index=index)
+              tr(data-droppedFolderId=droppedFolderId)
+                td.thumb
+                  input.studyCheckbox(type="checkbox", checked=true)
+                  img(src="static/built/mnt/scippy_images/" + patient.patient_path + '/' + patient.study_path + '/' + patient.series_path + '/' + patient.thumbnailId)
+                td.name #{patient.name}
+                td.pattern-drop-zone(pname="/mnt/scippy_images/" + patient.experiment + '/' + patient.patient_path + '/' + patient.study_path + '/' + patient.series_path, index=index, modality='MRI')
                 i.icon-docs Drop a pattern from pool
             else
-              td.thumb
-                img(src="api/v1/file/" + patient.thumbnailId + "/download")
-              td.name #{patient.name}
-              if hierarchyType === 'Experiment'
-                td.pattern-drop-zone(pname=patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=index)
+              tr(data-droppedFolderId=droppedFolderId)
+                td.thumb
+                  input.studyCheckbox(type="checkbox", checked=true, index=patient._id)
+                  img(src="api/v1/file/" + patient.thumbnailId + "/download")
+                td.name
+                  span.patientName #{patient.patient_name.split(' ')[0]} 
+                  span #{patient.name}
+                td.pattern-drop-zone(pname=patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=patient._id, modality='MRI')
                   i.icon-docs Drop a pattern from pool
-              else if hierarchyType === 'Root'
-                td.pattern-drop-zone(pname=patient.rootFolder + '/' + patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=index)
-                  i.icon-docs Drop a pattern from pool
-      if patients['PTCT'].length
-        each patient, index in patients['PTCT']
-          if hierarchyType === 'Root'
-            if lastPatient === undefined
-              - var lastPatient = patient.experiment
-              tr
-                td.experimentLabel(colspan='3')
-                  label #{patient.experiment}
-                  button.removeExp x
-            else if lastPatient !== patient.experiment
-              tr
-                td.experimentLabel(colspan='3')
-                  label #{patient.experiment}
-                  button.removeExp x
-          tr
+        if patients['PTCT'].length !== 0
+          each patient, index in patients['PTCT']
             if from === 'Archive'
               if index % 2 === 0
-                tr
+                tr(data-droppedFolderId=droppedFolderId)
                   td.patientNameLabel(colspan='3')
                     label #{patient.name}
-              td.thumb
-                img(src="static/built/mnt/scippy_images/" + patient.patient_path + '/' + patient.study_path + '/' + patient.series_path + '/' + patient.thumbnailId)
-              td.name #{patient.name}
-              td.pattern-drop-zone(pname="/mnt/scippy_images/" + patient.experiment + '/' + patient.patient_path + '/' + patient.study_path + '/' + patient.series_path, index=index)
+              tr(data-droppedFolderId=droppedFolderId)
+                td.thumb
+                  input.studyCheckbox(type="checkbox", checked=true)
+                  img(src="static/built/mnt/scippy_images/" + patient.patient_path + '/' + patient.study_path + '/' + patient.series_path + '/' + patient.thumbnailId)
+                td.name #{patient.name}
+                td.pattern-drop-zone(pname="/mnt/scippy_images/" + patient.experiment + '/' + patient.patient_path + '/' + patient.study_path + '/' + patient.series_path, index=index, modality='PTCT')
                 i.icon-docs Drop a pattern from pool
             else
               if index % 2 === 0
-                tr
+                tr(data-droppedFolderId=droppedFolderId)
                   td.patientNameLabel(colspan='3')
                     label #{patient.patient_name}
-              td.thumb
-                img(src="api/v1/file/" + patient.thumbnailId + "/download")
-              td.name #{patient.name}
-              if hierarchyType === 'Experiment'
-                td.pattern-drop-zone(pname=patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=patients['MRI'].length + index)
-                  i.icon-docs Drop a pattern from pool
-              else if hierarchyType === 'Root'
-                td.pattern-drop-zone(pname=patient.rootFolder + '/' + patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=patients['MRI'].length + index)
-                  i.icon-docs Drop a pattern from pool
+              tr(data-droppedFolderId=droppedFolderId)
+                td.thumb
+                  input.studyCheckbox(type="checkbox", checked=true, index=patient._id)
+                  img(src="api/v1/file/" + patient.thumbnailId + "/download")
+                td.name
+                  span.patientName #{patient.patient_name.split(' ')[0]} 
+                  span #{patient.name}
+                td.pattern-drop-zone(pname=patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=patient._id, modality='PTCT')
+                    i.icon-docs Drop a pattern from pool
+
+
+      //- if hierarchyType === 'Root'
+
+      //- if patients['PTCT'].length
+      //-   each patient, index in patients['PTCT']
+      //-     if hierarchyType === 'Root'
+      //-       if lastPatient === undefined
+      //-         - var lastPatient = patient.experiment
+      //-         tr(data-experiment=experimentName)
+      //-           td.experimentLabel(colspan='3')
+      //-             label #{patient.experiment}
+      //-             label.removeExp x
+      //-       else if lastPatient !== patient.experiment
+      //-         tr(data-experiment=experimentName)
+      //-           td.experimentLabel(colspan='3')
+      //-             label #{patient.experiment}
+      //-             label.removeExp x
+      //-     tr(data-experiment=experimentName)
+      //-       if from === 'Archive'
+      //-         if index % 2 === 0
+      //-           tr(data-experiment=experimentName)
+      //-             td.patientNameLabel(colspan='3')
+      //-               label #{patient.name}
+      //-         td.thumb
+      //-           img(src="static/built/mnt/scippy_images/" + patient.patient_path + '/' + patient.study_path + '/' + patient.series_path + '/' + patient.thumbnailId)
+      //-         td.name #{patient.name}
+      //-         td.pattern-drop-zone(pname="/mnt/scippy_images/" + patient.experiment + '/' + patient.patient_path + '/' + patient.study_path + '/' + patient.series_path, index=index)
+      //-           i.icon-docs Drop a pattern from pool
+      //-       else
+      //-         if index % 2 === 0
+      //-           --console.log('tiger12')
+      //-           tr(data-experiment=experimentName)
+      //-             td.patientNameLabel(colspan='3')
+      //-               label #{patient.patient_name}
+      //-         td.thumb
+      //-           img(src="api/v1/file/" + patient.thumbnailId + "/download")
+      //-         td.name #{patient.name}
+      //-         if hierarchyType === 'Experiment'
+      //-           td.pattern-drop-zone(pname=patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=patients['MRI'].length + index)
+      //-             i.icon-docs Drop a pattern from pool
+      //-         else if hierarchyType === 'Root'
+      //-           td.pattern-drop-zone(pname=patient.rootFolder + '/' + patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=patients['MRI'].length + index)
+      //-             i.icon-docs Drop a pattern from pool
       //- else if modality === 'PTCT'
       //-   each patient, index in patients
       //-       if index % 2 === 0

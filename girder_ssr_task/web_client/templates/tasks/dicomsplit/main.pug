@@ -6,10 +6,10 @@
           label Option
         select.hierarchy.options-zone
           if hierarchy === 'root'
-            option(value='root', selected=true) A group of experiments
+            option(value='root', selected=true, disabled) A group of experiments(No available)
             option(value='experiments') Experiments
           else if hierarchy === 'experiments'
-            option(value='root') A group of experiments
+            option(value='root', disabled) A group of experiments(No available)
             option(value='experiments', selected=true) Experiments
       .col-md-7
         .inputLabel

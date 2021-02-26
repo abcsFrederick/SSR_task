@@ -589,7 +589,7 @@ import argparse
 # for directory in directories:
 #     split_dicom_directory(directory, **kwargs)
 
-tmpDir = os.path.dirname(topFolder0)
+# tmpDir = os.path.dirname(topFolder0)
 Outdir = outPath
 # topFolder = topFolder
 subfolders = subfolders
@@ -600,18 +600,31 @@ axis = axis
 #     kwargs['study_instance_uids'] = [x667_uuid() for i in range(n)]
 # subfolders = [subfolders for subfolders in os.listdir(topFolder)]
 print(Outdir)
+fetchFolders = []
 for index in range(len(subfolders)):
-    directory = os.path.join(tmpDir, subfolders[index])
-    print(directory)
-    if not orderT[index]:
-        n = int(n_of_split[index])
-        kwargs = {"axis": int(axis[index]), "n": int(n_of_split[index]), "order": order[index], "output_dir": Outdir, "study_instance_uids": [x667_uuid() for i in range(n)]}
-    else:
-        nTB = [str(len(orderT[index].split(','))) + ',' + str(len(orderB[index].split(',')))]
-        n = len(orderT[index].split(',')) + len(orderB[index].split(','))
-        kwargs = {"axis": int(axis[index]), "nTB": nTB, "orderT": orderT[index], "orderB": orderB[index], "offset": int(offset[index]), "output_dir": Outdir, "study_instance_uids": [x667_uuid() for i in range(n)]}
-    # print kwargs
-    split_dicom_directory(directory, **kwargs)
+    try:
+        topFolder = eval("topFolder" + str(index))
+        fetchFolders.append(topFolder)
+    except:
+        pass
+for index in range(len(subfolders)):
+    for fetchFolder in fetchFolders:
+        tmpDir = os.path.dirname(fetchFolder)
+        directory = os.path.join(tmpDir, subfolders[index])
+        print(directory)
+        print(os.path.isdir(directory))
+        if os.path.isdir(directory):
+    # directory = os.path.join(tmpDir, subfolders[index])
+            print(directory)
+            if not orderT[index]:
+                n = int(n_of_split[index])
+                kwargs = {"axis": int(axis[index]), "n": int(n_of_split[index]), "order": order[index], "output_dir": Outdir, "study_instance_uids": [x667_uuid() for i in range(n)]}
+            else:
+                nTB = [str(len(orderT[index].split(','))) + ',' + str(len(orderB[index].split(',')))]
+                n = len(orderT[index].split(',')) + len(orderB[index].split(','))
+                kwargs = {"axis": int(axis[index]), "nTB": nTB, "orderT": orderT[index], "orderB": orderB[index], "offset": int(offset[index]), "output_dir": Outdir, "study_instance_uids": [x667_uuid() for i in range(n)]}
+            # print kwargs
+            split_dicom_directory(directory, **kwargs)
 
 # for directory in directories:
 #     split_dicom_directory(directory, **kwargs)
