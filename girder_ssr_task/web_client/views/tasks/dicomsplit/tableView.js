@@ -183,14 +183,14 @@ var DicomSplit = View.extend({
         this.orderT[indexForList] = event.dataTransfer.getData('orderT');
         this.orderB[indexForList] = event.dataTransfer.getData('orderB');
 
-        console.log(this.index)
-        console.log(this.subfolders)
-        console.log(this.n)
-        console.log(this.axis)
-        console.log(this.order)
-        console.log(this.orderT)
-        console.log(this.orderB)
-        console.log(this.offset)
+        // console.log(this.index)
+        // console.log(this.subfolders)
+        // console.log(this.n)
+        // console.log(this.axis)
+        // console.log(this.order)
+        // console.log(this.orderT)
+        // console.log(this.orderB)
+        // console.log(this.offset)
         // e.stopPropagation();
         // e.preventDefault();
 
@@ -229,14 +229,14 @@ var DicomSplit = View.extend({
             droppedFolderId: droppedFolderId
         }));
 
-        console.log(this.index)
-        console.log(this.subfolders)
-        console.log(this.n)
-        console.log(this.axis)
-        console.log(this.order)
-        console.log(this.orderT)
-        console.log(this.orderB)
-        console.log(this.offset)
+        // console.log(this.index)
+        // console.log(this.subfolders)
+        // console.log(this.n)
+        // console.log(this.axis)
+        // console.log(this.order)
+        // console.log(this.orderT)
+        // console.log(this.orderB)
+        // console.log(this.offset)
     },
     removeExperiment: function (e) {
         let droppedFolderId = $(e.currentTarget).parent().parent().attr('data-droppedFolderId');
@@ -262,14 +262,14 @@ var DicomSplit = View.extend({
         this.parentView.openedFolders.splice(this.parentView.openedFolders.indexOf(droppedFolderId), 1);
 
         $('[data-droppedFolderId=' + droppedFolderId + ']').remove();
-        console.log(this.index)
-        console.log(this.subfolders)
-        console.log(this.n)
-        console.log(this.axis)
-        console.log(this.order)
-        console.log(this.orderT)
-        console.log(this.orderB)
-        console.log(this.offset)
+        // console.log(this.index)
+        // console.log(this.subfolders)
+        // console.log(this.n)
+        // console.log(this.axis)
+        // console.log(this.order)
+        // console.log(this.orderT)
+        // console.log(this.orderB)
+        // console.log(this.offset)
     }
     // renderBox(e) {
     //     let nOfSplit = $(e.currentTarget).val(),

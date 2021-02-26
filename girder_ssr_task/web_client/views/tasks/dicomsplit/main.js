@@ -394,14 +394,14 @@ var DicomSplit = View.extend({
                     }
                 }
                 if (this.table.parseAndValidateSpec()) {
-                    console.log(this.table.selectedSubfolders);
-                    console.log(this.table.selectedN);
-                    console.log(this.table.selectedAxis);
-                    console.log(this.table.selectedOrder);
-                    console.log(this.table.selectedOrderT);
-                    console.log(this.table.selectedOrderB);
-                    console.log(this.table.selectedOffset);
-                    console.log(this.dicomSplit.get('ids'));
+                    // console.log(this.table.selectedSubfolders);
+                    // console.log(this.table.selectedN);
+                    // console.log(this.table.selectedAxis);
+                    // console.log(this.table.selectedOrder);
+                    // console.log(this.table.selectedOrderT);
+                    // console.log(this.table.selectedOrderB);
+                    // console.log(this.table.selectedOffset);
+                    // console.log(this.dicomSplit.get('ids'));
                     this.dicomSplit.set({
                         inputType: this.inputType,
                         subfolders: this.table.selectedSubfolders,
