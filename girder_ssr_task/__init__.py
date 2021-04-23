@@ -13,6 +13,7 @@ from girder.models.file import File
 from girder.models.item import Item
 from girder.models.folder import Folder
 from girder.api.v1.token import Token
+from girder.utility.model_importer import ModelImporter
 
 from girder_jobs.models.job import Job
 from girder_jobs.constants import JobStatus
@@ -21,12 +22,13 @@ from girder.utility import setting_utilities, mail_utils
 from girder.models.user import User as UserModel
 from girder.models.setting import Setting
 from girder_worker.girder_plugin import utils as workerUtils
-# from girder_large_image_annotation.models.annotationelement import Annotationelement
-from girder_overlays.models.overlay import Overlay
+from girder_large_image_annotation.models.annotationelement import Annotationelement
+from girder_large_image_annotation.models.annotation import Annotation
+# from girder_overlays.models.overlay import Overlay
 
 from .constants import PluginSettings
-from .models.link import Link
-
+from .models.tasks.link import Link
+from .models.workflow import Workflow
 
 def _notifyUser(event, meta):
     userId = event.info['job']['userId']
@@ -107,53 +109,129 @@ def _updateJob(event):
                     for mask in masks:
                         if bool(mask):
                             overlayId = list(mask.keys())[0]
-                            overlay = Overlay().load(overlayId, user=user)
-                            if "workflow" not in overlay:
-                                overlay["workflow"] = {}
-                            if "cd4+" not in overlay['workflow']:
-                                overlay['workflow']["cd4+"] = []
-                            newRecord = True
-                            version = len(overlay['workflow']["cd4+"]) + 1
-                            for record in overlay['workflow']["cd4+"]:
-                                if record["mean"] == mean["data"] and record["stdDev"] == stdDev["data"]:
-                                    newRecord = False
-                                    updatedRecord = record
-                                    break
+                            includeAnnotations = mask[overlayId]['includeAnnotations']
+                            excludeAnnotations = mask[overlayId]['excludeAnnotations']
 
+                            # overlay = Overlay().load(overlayId, user=user)
+                            # item = Item().load(overlay.get('itemId'), user=user)
+                            # query all includeAnnotations/excludeAnnotations regardless order
+                            query = {"overlayItemId": overlayId,
+                                     "name": "cd4+",
+                                     "records.mean": mean["data"],
+                                     "records.stdDev": stdDev["data"],
+                                     "records.includeAnnotations": {"$size": len(includeAnnotations), "$all": includeAnnotations},
+                                     "records.excludeAnnotations": {"$size": len(excludeAnnotations), "$all": excludeAnnotations},
+                            }
+                            newRecord = False
+                            if len(list(Workflow().find(query))) == 0:
+                                newRecord = True
                             if newRecord:
-                                result = []
-                                for annotation in mask[overlayId]:
-                                    Num_of_Cell = annotation["Num_of_Cell"]
-                                    record = { "elementId": annotation["id"],
-                                               "Num_of_Cell": Num_of_Cell,
-                                               "name": annotation["label"]["value"] }
-                                    result.append(record)
-                                overlay['workflow']["cd4+"].append({ "created": datetime.datetime.utcnow(),
-                                                                     "mean": mean["data"],
-                                                                     "stdDev": stdDev["data"],
-                                                                     "result": result,
-                                                                     "version": version })
-                                Overlay().save(overlay)
-                            else:
-                                result = []
-                                for annotation in mask[overlayId]:
-                                    Num_of_Cell = annotation["Num_of_Cell"]
-                                    record = { "elementId": annotation["id"],
-                                               "Num_of_Cell": Num_of_Cell,
-                                               "name": annotation["label"]["value"] }
-                                    result.append(record)
-                                updatedRecord["result"] = result
-                                Overlay().save(overlay)
+                                # make a workflow record
+                                results = []
+                                elements =[]
+
+                                # elements: {
+                                #     "name": union_include_element_index,
+                                #     "inner_polygon": True/False,
+                                #     "fillColor": "rgba(0,0,0,0)",
+                                #     "lineColor": "rgb(0,255,0)",
+                                #     "lineWidth": 2,
+                                #     "type": "polyline",
+                                #     "closed": True,
+                                #     "points": inner_polygon_Array.tolist()/diff_polygon_Array.tolist(),
+                                #     "Num_of_Cell": {}/{...}
+                                # }
+                                for index, element in enumerate(mask[overlayId]['elements']):
+                                    record = [result for result in results if result['name'] == element["name"]]
+                                    if len(record) != 0:
+                                        if element['inner_polygon']:
+                                            record[0].update({'innerAnnotationElementId': []})
+                                        else:
+                                            record[0].update({'Num_of_Cell': element["Num_of_Cell"]})
+                                    else:
+                                        Num_of_Cell = element["Num_of_Cell"]
+                                        record = {"annotationElementId": "",
+                                                  "Num_of_Cell": Num_of_Cell,
+                                                  "name": element['name']}
+                                        if element["inner_polygon"]:
+                                            record["innerAnnotationElementId"] = []
+                                        results.append(record)
+                                    element["label"] = {"value": element['name']}
+                                    element["group"] = "Workflow(cd4+)"
+                                    del element["Num_of_Cell"]
+                                    elements.append(element)
+                                # print(results)
+                                doc = { "name": "cd4+",
+                                        "itemId": mask[overlayId]['itemId'],
+                                        "overlayItemId": overlayId,
+                                        "records": {
+                                            "mean": mean["data"],
+                                            "stdDev": stdDev["data"],
+                                            "includeAnnotations": includeAnnotations,
+                                            "excludeAnnotations": excludeAnnotations,
+                                            "results": results
+                                       }}
+                                workflow = Workflow().createWorkflow(doc, user)
+                                # Display as an annotation example
+                                # Annotation().createAnnotation(item, user, {"description":"cd4+", "elements": elements, "name":'workflow'})
+
+                                # we are using workflow id as fake annotation id
+                                doc={ "_id": workflow['_id'],
+                                      "_version": 0,
+                                      "annotation": {"elements": elements}}
+                                Annotationelement().updateElements(doc)
+                                annotationelements = list(Annotationelement().find({"annotationId": workflow['_id']}))
+                                names = []
+                                ids = []
+                                inner = []
+                                for index, element in enumerate(annotationelements):
+                                    names.append(element['element']['label']['value'])
+                                    ids.append(element['_id'])
+                                    inner.append(element['element']['inner_polygon'])
+                                for result in results:
+                                    if 'innerAnnotationElementId' in result:
+                                        indexOfIds = [i for i, x in enumerate(names) if x == str(result["name"])]
+                                        for indexOfId in indexOfIds:
+                                            print(inner[indexOfId])
+                                            print(type(inner[indexOfId]))
+                                            if inner[indexOfId]:
+                                                result['innerAnnotationElementId'].append(ids[indexOfId])
+                                            else:
+                                                result['annotationElementId'] = ids[indexOfId]
+                                    else:
+                                        indexOfId = int(names.index(str(result["name"])))
+                                        result['annotationElementId'] = ids[indexOfId]
+                                workflow["records"]["results"] = results
+                                Workflow().save(workflow)
+                Notification().createNotification(
+                    type='job_email_sent', data=job, user=user,
+                    expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
+                shutil.rmtree(tmpPath)
+                _notifyUser(event, meta)
+            if status == JobStatus.SUCCESS:
                 Notification().createNotification(
                     type='job_email_sent', data=job, user=user,
                     expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
                 _notifyUser(event, meta)
-                shutil.rmtree(tmpPath)
-            # if status == JobStatus.SUCCESS:
-            #     Notification().createNotification(
-            #         type='job_email_sent', data=job, user=user,
-            #         expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
-            #     _notifyUser(event, meta)
+        elif job['type'] == 'RNAScope':
+            status = job['status']
+            if status == JobStatus.SUCCESS or status == JobStatus.CANCELED or status == JobStatus.ERROR:
+                tmpPath = job.get('kwargs')['inputs']['outPath']['data']
+                pixels_per_virion = job.get('kwargs')['inputs']['pixels_per_virion']
+                pixel_threshold = job.get('kwargs')['inputs']['pixel_threshold']
+                roundness_threshold = job.get('kwargs')['inputs']['roundness_threshold']
+                # elements: {
+                #     "name": union_include_element_index,
+                #     "inner_polygon": True/False,
+                #     "fillColor": "rgba(0,0,0,0)",
+                #     "lineColor": "rgb(0,255,0)",
+                #     "lineWidth": 2,
+                #     "type": "polyline",
+                #     "closed": True,
+                #     "points": inner_polygon_Array.tolist()/diff_polygon_Array.tolist(),
+                #     "Num_of_Virion": 12,
+                #     "Num_of_ProductiveInfection": 43
+                # }
         else:
             return
     elif (meta.get('handler') == 'slurm_handler'):
@@ -270,7 +348,8 @@ SettingDefault.defaults.update({
         "DicomSplit": False,
         "Aperio": False,
         "Overlays": False,
-        "CD4+": False
+        "CD4+": False,
+        "Download_Statistic": False
     }
 })
 
@@ -285,6 +364,7 @@ class SSRTaskPlugin(plugin.GirderPlugin):
     DISPLAY_NAME = 'SSRTask'
     CLIENT_SOURCE_PATH = 'web_client'
     def load(self, info):
+        ModelImporter.registerModel('workflow', Workflow, 'SSRTask')
         info['apiRoot'].SSR_task = rest.SSR_task()
         Link()
         events.bind('jobs.job.update.after', 'SSRTask', _updateJob)

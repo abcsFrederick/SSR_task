@@ -101,8 +101,8 @@ var aperioDialogView = View.extend({
         };
         let username = $('#h-aperio-username').val(),
             password = $('#h-aperio-password').val();
-        let items = [],
-            aperioIds = [];
+        let items = ['2'],
+            aperioIds = ['1'];
         for (let i = 0; i < this.WSIs.length; i++) {
             $('.wsis[item-id='+this.WSIs[i].get('_id' )+']');
             let overlay = $('.selectMask[item-id='+this.WSIs[i].get('_id' )+'] option:selected').attr('id');
@@ -120,6 +120,10 @@ var aperioDialogView = View.extend({
                     aperioIds: JSON.stringify(aperioIds)
             }
         }).done(() => {
+            // annotation refresh
+            // Need a better way
+            this.parentView.parentView.parentView.parentView.bodyView.annotationSelector._refreshAnnotations();
+
             events.trigger('g:alert', {
                 icon: 'ok',
                 text: 'Fetching finished.',

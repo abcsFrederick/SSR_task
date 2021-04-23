@@ -1,33 +1,39 @@
+import json
+import ujson
+import struct
 from bson import ObjectId
 import os
 import uuid
 import xml.etree.ElementTree as ET
 
-from girder.api.rest import Resource, filtermodel
-from girder.api.describe import Description, autoDescribeRoute
+from girder.api.rest import Resource, filtermodel, loadmodel, setContentDisposition, setResponseHeader, setRawResponse
+from girder.api.describe import Description, autoDescribeRoute, describeRoute
 from girder.api import access
 from girder.models.file import File
 from girder.models.item import Item
 from girder.models.folder import Folder
-from girder.constants import AccessType, TokenScope
+from girder.constants import AccessType, TokenScope, SortDir
 from girder.exceptions import ValidationException, AccessException  # , GirderException
 from girder.models.setting import Setting
+from girder.utility import JsonEncoder
+from girder.utility.progress import setResponseTimeLimit
 
 from girder_archive.models.folder import Folder as ArchiveFolder
 from girder_archive.models.item import Item as ArchiveItem
-from girder_overlays.models.overlay import Overlay
+# from girder_overlays.models.overlay import Overlay
 from girder_large_image_annotation.models.annotation import Annotation
+from girder_large_image_annotation.models.annotationelement import Annotationelement
 
 from .constants import PluginSettings
-from .models.dicom_split import DicomSplit
-from .models.link import Link
-from .models.cd4_plus import Cd4Plus
+from .models.tasks.dicom_split import DicomSplit
+from .models.tasks.link import Link
+from .models.tasks.cd4_plus import Cd4Plus
+from .models.workflow import Workflow
 
 from .models.job import Job as JobModel
 
 from girder_archive.external.aperio_proxy import AperioProxy
 
-from girder.constants import AccessType, SortDir
 
 class SSR_task(Resource):
     def __init__(self):
@@ -42,13 +48,19 @@ class SSR_task(Resource):
         self.route("POST", ("dicom_split",), self.dicom_split)
 
         self.route("POST", ("cd4_plus",), self.cd4_plus)
-        self.route("POST", ("cd4_plus_download",), self.cd4_plus_download)
+
+        self.route("GET", ("workflow", "statistic", "download",), self.statistic_download)
+        self.route("POST", ("workflow", "statistic", "download",), self.statistic_download)
 
         self.route("POST", ("aperio_anno",), self.aperio_anno)
 
         self.route("GET", ("settings",), self.getSettings)
 
         self.route("GET", ("job",), self.listJobs)
+
+        self.route("GET", ("workflow",), self.findWorkflows)
+        self.route("GET", ("workflow", ":id",), self.getWorkflow)
+        self.route("DELETE", ("workflow", ":id",), self.deleteWorkflow)
     # Find link record based on original item ID or parentId(to check chirdren links)
     # Return only record that have READ access(>=0) to user.
     @access.user(scope=TokenScope.DATA_READ)
@@ -458,12 +470,13 @@ class SSR_task(Resource):
     @autoDescribeRoute(
         Description("Split multiple in one dicom volumn.")
         .jsonParam("itemIds", "item ids of WSIs.", required=True)
-        .jsonParam("overlayIds", "overlay record ids.", required=True)
-        .jsonParam("annotationIds", "annotation ids.", required=True)
+        .jsonParam("overlayItemIds", "overlay item ids.", required=True)
+        .jsonParam("includeAnnotationIds", "include annotation ids.", required=True)
+        .jsonParam("excludeAnnotationIds", "exclude annotation ids.", required=True)
         .jsonParam("mean", "mean", required=True)
         .jsonParam("stdDev", "stdDev", required=True)
     )
-    def cd4_plus(self, itemIds, overlayIds, annotationIds, mean, stdDev):
+    def cd4_plus(self, itemIds, overlayItemIds, includeAnnotationIds, excludeAnnotationIds, mean, stdDev):
         self.user = self.getCurrentUser()
         self.token = self.getCurrentToken()
 
@@ -476,28 +489,58 @@ class SSR_task(Resource):
                 ("index", SortDir.ASCENDING),
                 ("created", SortDir.ASCENDING),
             ]
-        for overlayId in overlayIds:
-            overlayItemId = Overlay().load(overlayId, level=AccessType.READ, user=self.user)["overlayItemId"]
+        for overlayItemId in overlayItemIds:
+            # overlayItemId = Overlay().load(overlayId, level=AccessType.READ, user=self.user)["overlayItemId"]
             query = {
                 "itemId": ObjectId(overlayItemId),
                 "mimeType": {"$regex": "^image/tiff"}
             }
             file = list(File().find(query, limit=2))[0]
             fetchMaskFiles.append(file)
-        return Cd4Plus().createJob(fetchWSIItems, fetchMaskFiles, overlayIds, self.user, self.token, itemIds, overlayIds,
-                                   annotationIds, mean, stdDev, slurm=False)
-    @access.public
+        return Cd4Plus().createJob(fetchWSIItems, fetchMaskFiles, overlayItemIds, self.user, self.token, itemIds,
+                                   includeAnnotationIds, excludeAnnotationIds, mean, stdDev, slurm=False)
+    
+    @access.public(scope=TokenScope.DATA_READ, cookie=True)
     @autoDescribeRoute(
-        Description("Split multiple in one dicom volumn.")
-        .jsonParam("itemIds", "item ids of WSIs.", required=True)
-        .jsonParam("overlayIds", "overlay record ids.", required=True)
-        .jsonParam("annotationIds", "annotation ids.", required=True)
-        .jsonParam("mean", "mean", required=True)
-        .jsonParam("stdDev", "stdDev", required=True)
+        Description("Download statistic.")
+        .param("workflowName", "Name of workflow.", required=True)
+        .param("workflowType", "Type of workflow.", required=True)
+        .jsonParam('resources', 'A JSON object defining resources to download',
+                   required=False, requireObject=True)
+        .produces('text/csv')
     )
-    def cd4_plus_download(self):
-        print("hah")
-
+    def statistic_download(self, workflowName, workflowType, resources):
+        user = self.getCurrentUser()
+        objectIds = [ObjectId(id) for id in resources.get('workflowId', [])]
+        # filters = {'_id': {'$in': objectIds}}
+        if workflowType == 'cd4+':
+            setContentDisposition('CD4+_' + workflowName + '.csv')
+            setResponseHeader('Content-Type', 'text/csv')
+            setRawResponse()
+            header = ','.join((
+                'batch',
+                'image',
+                'ROI',
+                'low',
+                'mean',
+                'high',
+                'pixels'
+            )) + '\n'
+            for objectId in objectIds:
+                workflow = Workflow().load(objectId, level=AccessType.READ, user=user)
+                item = Item().load(workflow['itemId'], level=AccessType.READ, user=user)
+                batchFolder = Folder().load(item['folderId'], level=AccessType.READ, user=user)
+                values = ('workflow: ' + workflow['name'], 'Mean: ' + str(workflow['records']['mean']),
+                          'StdDev: ' + str(workflow['records']['stdDev']))
+                header += ','.join(map(str, values)) + '\n'
+                for roi in workflow['records']['results']:
+                    values = ( batchFolder['name'], item['name'], roi['name'],
+                               roi['Num_of_Cell']['low'], roi['Num_of_Cell']['mean'],
+                               roi['Num_of_Cell']['high'], roi['Num_of_Cell']['pixels'])
+                    header += ','.join(map(str, values)) + '\n'
+                header += '\n'
+            return header
+            
     @access.user
     @autoDescribeRoute(
         Description("Split multiple in one dicom volumn.")
@@ -541,7 +584,6 @@ class SSR_task(Resource):
                         annotation = annotations[0]
                         annotation["annotation"]["elements"] = []
                     for region in root.iter("Region"):
-                        print(region.get("Type"))
                         # rectangle
                         if region.get("Type") == "1":
                             print('in rectangle')
@@ -570,7 +612,6 @@ class SSR_task(Resource):
                             annotation["annotation"]["elements"].append(element)
                         # polygon
                         if region.get("Type") == "0":
-                            print('in polygon')
                             points = []
                             for vertex in region.iter('Vertex'):
                                 point = [float(vertex.attrib['X']), float(vertex.attrib['Y']), float(vertex.attrib['Z'])]
@@ -586,4 +627,145 @@ class SSR_task(Resource):
                                         "type": "polyline" }
                             annotation["annotation"]["elements"].append(element)
                     annotation = Annotation().updateAnnotation(annotation, updateUser=self.user)
-                
+    @access.user(scope=TokenScope.DATA_READ)
+    @autoDescribeRoute(
+        Description("Find all Workflows.")
+        .param('name', 'Pass to lookup workflows by exact name match.', required=False)
+        .param('itemId', 'Pass to lookup workflows by exact item id match.', required=False)
+        .param('folderId', 'Lookup workflows of items under a folder id.', required=False)
+        .errorResponse()
+    )         
+    def findWorkflows(self, params):
+        user = self.getCurrentUser()
+        query = {}
+        if params["name"]:
+            query["name"] = params["name"]
+        if params["itemId"]:
+            query["itemId"] = params["itemId"]
+
+        workflows = Workflow().find(query=query)
+        if params["folderId"]:
+            def filterItems(workflow):
+                if workflow['itemId'] in itemIds:
+                    return True
+                else:
+                    return False
+            folderId = params["folderId"]
+            folder = Folder().load(folderId, level=AccessType.READ, user=user)
+            items = Folder().childItems(folder)
+            itemIds = [str(item['_id']) for item in items]
+
+            workflows = list(filter(filterItems, workflows))
+
+        return workflows
+
+    @access.user(scope=TokenScope.DATA_READ)
+    @autoDescribeRoute(
+        Description('Get elements and fake an annotation by workflow id.')
+        .param('id', 'The ID of the workflow.', paramType='path')
+        .param('centroids', 'If true, only return the centroids of each '
+               'element.  The results are returned as a packed binary array '
+               'with a json wrapper.', dataType='boolean', required=False)
+        .pagingParams(defaultSort='_id', defaultLimit=None,
+                      defaultSortDir=SortDir.ASCENDING)
+        .errorResponse('ID was invalid.')
+    )
+    def getWorkflow(self, id, params):
+        user = self.getCurrentUser()
+        workflow = Workflow().load(id, user=user, level=AccessType.READ)
+        setResponseTimeLimit(86400)
+        worflowFakeAnnotation = {
+            "_id": workflow["_id"],
+            "itemId": workflow["itemId"],
+            "created": workflow["created"],
+            "creatorId": workflow["creatorId"],
+            "updated": workflow["updated"],
+            "updatedId": workflow["updatedId"],
+            "_version": 0,
+            "annotation": {
+                "description": workflow["name"],
+                "elements": [],
+                "name": "workflow"
+            }
+        }
+        breakStr = b'"elements": ['
+        base = json.dumps(worflowFakeAnnotation, sort_keys=True, allow_nan=False,
+                          cls=JsonEncoder).encode('utf8').split(breakStr)
+
+        centroids = str(params.get('centroids')).lower() == 'true'
+        def generateResult():
+            info = {}
+            idx = 0
+            yield base[0]
+            yield breakStr
+            collect = []
+            if centroids:
+                # Add a null byte to indicate the start of the binary data
+                yield b'\x00'
+            for element in Annotationelement().yieldElements(worflowFakeAnnotation, params, info):
+                # The json conversion is fastest if we use defaults as much as
+                # possible.  The only value in an annotation element that needs
+                # special handling is the id, so cast that ourselves and then
+                # use a json encoder in the most compact form.
+                if isinstance(element, dict):
+                    element['id'] = str(element['id'])
+                else:
+                    element = struct.pack(
+                        '>QL', int(element[0][:16], 16), int(element[0][16:24], 16)
+                    ) + struct.pack('<fffl', *element[1:])
+                # Use ujson; it is much faster.  The standard json library
+                # could be used in its most default mode instead like so:
+                #   result = json.dumps(element, separators=(',', ':'))
+                # Collect multiple elements before emitting them.  This
+                # balances using less memoryand streaming right away with
+                # efficiency in dumping the json.  Experimentally, 100 is
+                # significantly faster than 10 and not much slower than 1000.
+                collect.append(element)
+                if len(collect) >= 100:
+                    if isinstance(collect[0], dict):
+                        yield (b',' if idx else b'') + ujson.dumps(collect).encode('utf8')[1:-1]
+                    else:
+                        yield b''.join(collect)
+                    idx += 1
+                    collect = []
+            if len(collect):
+                if isinstance(collect[0], dict):
+                    yield (b',' if idx else b'') + ujson.dumps(collect).encode('utf8')[1:-1]
+                else:
+                    yield b''.join(collect)
+            if centroids:
+                # Add a final null byte to indicate the end of the binary data
+                yield b'\x00'
+            yield base[1].rstrip().rstrip(b'}')
+            yield b', "_elementQuery": '
+            yield json.dumps(
+                info, sort_keys=True, allow_nan=False, cls=JsonEncoder).encode('utf8')
+            yield b'}'
+
+        if centroids:
+            setResponseHeader('Content-Type', 'application/octet-stream')
+        else:
+            setResponseHeader('Content-Type', 'application/json')
+        return generateResult
+
+    @access.user(scope=TokenScope.DATA_OWN)
+    @autoDescribeRoute(
+        Description('Get overlay by ID.')
+        .param('id', 'The ID of the workflow.', paramType='path')
+        .errorResponse('ID was invalid.')
+        .errorResponse('Read access was denied for the overlay.', 403)
+        .errorResponse('Overlay not found.', 404)
+    )
+    @loadmodel(model='workflow', plugin='SSRTask', level=AccessType.WRITE)
+    @filtermodel(model='workflow', plugin='SSRTask')
+    def deleteWorkflow(self, workflow):
+        # remove corresponding annoations
+        if workflow['records']:
+            records = workflow['records']
+            if records['results']:
+                results = records['results']
+                for result in results:
+                    # annotationElementId = result["annotationElementId"]
+                    Annotationelement().removeWithQuery({"annotationId": workflow['_id']})
+                    # TODO remove ananotation elements related to that workflow
+        Workflow().remove(workflow)

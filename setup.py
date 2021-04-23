@@ -8,7 +8,7 @@ requirements = [
     'girder-worker[girder]',
     'girder-jobs',
     'girder-archive',
-    'girder-overlays',
+    # 'girder-overlays',
     'histomicsui',
     'girder-large-image-annotation'
 ]

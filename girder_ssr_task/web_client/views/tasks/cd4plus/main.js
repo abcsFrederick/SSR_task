@@ -128,33 +128,37 @@ var cd4plusDialogView = View.extend({
     },
     save () {
         if (!this.validate()) {
-            console.log(this.$('.g-validation-failed-message'));
             this.$('.g-validation-failed-message').html('Parameter missing');
             return;
         };
         let mean = $('#h-cd4plus-mean').val(),
             stdDev = $('#h-cd4plus-stdDev').val();
         let items = [],
-            overlays = [],
-            annotations = [];
+            overlayItemIds = [],
+            includeAnnotations = [],
+            excludeAnnotations = [];
         for (let i = 0; i < this.WSIs.length; i++) {
             $('.wsis[item-id='+this.WSIs[i].get('_id' )+']');
-            let overlay = $('.selectMask[item-id='+this.WSIs[i].get('_id' )+'] option:selected').attr('id');
-            let annotation = $('.selectAnnotation[item-id='+this.WSIs[i].get('_id' )+'] option:selected').attr('id') || "";
+            let overlay = $('.selectMask[item-id='+this.WSIs[i].get('_id' )+'] option:selected').attr('overlayItem-id');
+            let includeAnnotation = $('.includedAnnotation[item-id='+this.WSIs[i].get('_id' )+'] option:selected').attr('id') || "";
+            let excludeAnnotation = $('.excludedAnnotation[item-id='+this.WSIs[i].get('_id' )+'] option:selected').attr('id') || "";
             items.push(this.WSIs[i].get('_id' ));
-            overlays.push(overlay);
-            annotations.push(annotation);
+            overlayItemIds.push(overlay);
+            includeAnnotations.push(includeAnnotation);
+            excludeAnnotations.push(excludeAnnotation);
         }
+
         // console.log(items);
-        // console.log(overlays);
+        // console.log(overlayItemIds);
         // console.log(annotations);
         // console.log(mean);
         // console.log(stdDev);
         this.cd4plus = new CD4plusModel();
         this.cd4plus.set({
             itemIds: items,
-            overlayIds: overlays,
-            annotationIds: annotations,
+            overlayItemIds: overlayItemIds,
+            includeAnnotationIds: includeAnnotations,
+            excludeAnnotationIds: excludeAnnotations,
             mean: parseInt(mean),
             stdDev: parseInt(stdDev)
         });

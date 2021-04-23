@@ -29,12 +29,12 @@ from girder.models.model_base import AccessControlledModel
 from girder.models.setting import Setting
 
 # from girder.plugins.jobs.models.job import Job
-from .job import Job
+from ..job import Job
 
 from girder_worker.girder_plugin import utils
 # import girder.plugins.slurm.girder_io.input as slurmGirderInput
 # from girder.plugins.slurm.models.slurm import Slurm as slurmModel
-from ..constants import PluginSettings
+from ...constants import PluginSettings
 
 
 class DicomSplit(AccessControlledModel):

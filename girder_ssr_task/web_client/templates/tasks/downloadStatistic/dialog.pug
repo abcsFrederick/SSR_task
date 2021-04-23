@@ -1,0 +1,24 @@
+.modal-dialog(role='document')
+  .modal-content.h-download-statistics-dialog
+    .modal-header
+      button.close(type='button', data-dismiss='modal', aria-label='Close')
+        span(aria-hidden='true') &times;
+      h4.modal-title Download statistics
+    .modal-body
+      #batch-root-container.g-hierarchy-root-container.form-group
+        i.icon-folder-open
+          span(style='font-size:15px;font-weight: bold;') #{openedImagePath}
+      #batch-workflow-container.g-hierarchy-root-container.form-group
+      .g-hierarchy-widget-container.g-wait-for-root.form-group.hidden
+        .g-hierarchy-widget
+          .g-hierarchy-actions-header
+            input#image-select-all.g-select-all(type="checkbox", title="Select / Unselect all")
+            span Select images
+          #image-list-container.g-folder-list-container
+      .g-workflow-container.form-group
+      .g-validation-failed-message
+    .modal-footer
+      a.btn.btn-small.btn-default(data-dismiss='modal') Cancel
+      button.g-submit-button.btn.btn-small.btn-primary(type='submit')
+        i.icon-download
+        = 'Download'

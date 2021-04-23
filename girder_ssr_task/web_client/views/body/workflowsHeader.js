@@ -5,6 +5,7 @@ import { restRequest } from '@girder/core/rest';
 import overlaysWorkflowView from '../tasks/overlays/main';
 import cd4plusWorkflowView from '../tasks/cd4plus/main';
 import aperioWorkflowView from '../tasks/aperio/main';
+import downloadStatisticView from '../tasks/downloadStatistic/main';
 
 import WorkflowsTemplate from '../../templates/body/WorkflowsHeader.pug';
 
@@ -38,20 +39,31 @@ var WorkflowsHeader = View.extend({
                     workflow: $(evt.currentTarget).attr('data-name')
                 });
             }
+            if (taskName === 'download_statistic') {
+                this.workflowView = new downloadStatisticView({
+                    el: $('#g-dialog-container'),
+                    parentView: this,
+                    workflow: $(evt.currentTarget).attr('data-name')
+                });
+            }
             this.workflowView.render();
         }
     },
     initialize: function (settings) {
         Object.filter = (obj, predicate) =>
             Object.keys(obj).filter((key) => predicate(obj[key]));
-        restRequest({
-            type: 'GET',
-            url: 'SSR_task/settings'
-        }).done((resp) => {
-            this.settings = resp;
-            this.renderWorkflowHeader();
-            // test workflow template
-            // this.renderTest()
+        this.listenTo(events, 'h:imageOpened', (largeImage) => {
+            if (!largeImage) return;
+            this._openImage = largeImage;
+            restRequest({
+                type: 'GET',
+                url: 'SSR_task/settings'
+            }).done((resp) => {
+                this.settings = resp;
+                this.renderWorkflowHeader();
+                // test workflow template
+                // this.renderTest()
+            });
         });
         // this.$('.h-workflow-dropdown-link').insertBefore('.h-open-labeled-image');
     },
@@ -67,10 +79,10 @@ var WorkflowsHeader = View.extend({
     },
     // test workflow template
     renderTest() {
-        this.workflowView = new cd4plusWorkflowView({
+        this.workflowView = new downloadStatisticView({
             el: $('.h-image-view-container'),
             parentView: this,
-            workflow: 'cd4+'
+            workflow: 'download_statistic'
         });
         this.workflowView.render();
     }

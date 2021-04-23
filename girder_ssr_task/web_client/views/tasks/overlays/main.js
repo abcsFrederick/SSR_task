@@ -1,6 +1,6 @@
 import ItemCollection from '@girder/core/collections/ItemCollection';
 import View from '@girder/core/views/View';
-// import events from '@girder/core/events';
+import events from '@girder/core/events';
 import { getCurrentUser, setCurrentUser, getCurrentToken, setCurrentToken, corsAuth } from '@girder/core/auth';
 import { handleClose, handleOpen } from '@girder/core/dialog';
 import { restRequest } from '@girder/core/rest';
@@ -99,6 +99,8 @@ var overlayDialogView = View.extend({
             name: this.$('#h-overlays-name').val(),
             description: this.$('#h-overlays-description').val(),
             overlayItemId: this.Masks[i].id
+          }).on('g:saved',function () {
+              events.trigger('workflow:overlay');
           }).save();
         }
         this.$el.modal('hide');

@@ -1,9 +1,13 @@
-.result
-  label Version
-  select.versionOptions
-    option(value=0)
-    each result in results
-      option(value=result.version, data-mean=result.mean, data-stddev=result.stdDev) Mean: #{result.mean} stdDev: #{result.stdDev}
-  span.icon-download(style='margin:5px;cursor: pointer;')
-  span.icon-play(style='margin:5px;cursor: pointer;')
-  //- span.icon-cd4countonsingleWSI
+each version in verisons
+  .version-group(data-workflow=version.get('_id'),data-overlay=version.get('overlayItemId'))
+    .version-group-name(data-workflow=version.get('_id'),data-overlay=version.get('overlayItemId'))
+      i.icon-eye-off
+      i.icon-folder
+      i.icon-eye(style="display: none;")
+      i.icon-folder-open(style="display: none;")
+      if workflow === 'cd4+'
+        | Mean: #{version.get('records').mean} StdDev: #{version.get('records').stdDev}
+      i.icon-download(style="float: right;", title='Download report', data-workflow=version.get('_id'))
+      i.icon-cancel(style="float: right;", title='Remove', data-workflow=version.get('_id'))
+
+    .version-annotations

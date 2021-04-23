@@ -5,34 +5,53 @@ import tempfile
 from girder.models.setting import Setting
 from girder.models.model_base import AccessControlledModel
 from girder_worker.girder_plugin import utils
-from .job import Job
-from ..constants import PluginSettings
+from ..job import Job
+from ...constants import PluginSettings
 
 
 class Cd4Plus(AccessControlledModel):
     def initialize(self):
         self.name = 'cd4Plus'
 
-    def createJob(self, fetchWSIs, fetchMaskFiles, overlayIds, user, token, itemIds, maskIds,
-                  annotationIds, mean, stdDev, slurm=False):
+    def createJob(self, fetchWSIs, fetchMaskFiles, overlayItemIds, user, token, itemIds,
+                  includeAnnotationIds, excludeAnnotationIds, mean, stdDev, slurm=False):
         wsi = ''
         for fetchWSI in fetchWSIs:
             wsi = wsi + fetchWSI['name'] + ' '  # noqa
         title = 'CD4+ for counting cell for WSI %s in girder' % wsi
 
-        annotations = []
-        for annotationId in annotationIds:
-            if annotationId != '':
-                request = utils.getWorkerApiUrl() + '/annotation/' + annotationId
+        includeAnnotations = []
+        for includeAnnotationId in includeAnnotationIds:
+            if includeAnnotationId == '':
+                includeAnnotations.append('')
+            elif includeAnnotationId == 'entireMask':
+                includeAnnotations.append('entireMask')
+            else:
+                request = utils.getWorkerApiUrl() + '/annotation/' + includeAnnotationId
                 headers = {'Girder-Token': token['_id']}
                 resp = requests.get(request, headers=headers)
                 # print resp.json()
                 # function
                 # elements = AnnotationResource().getAnnotation(id, params={})
-                annotation = resp.json()
-                annotations.append(annotation)
+                includeAnnotation = resp.json()
+                includeAnnotations.append(includeAnnotation)
+
+        excludeAnnotations = []
+        for excludeAnnotationId in excludeAnnotationIds:
+            if excludeAnnotationId == '':
+                excludeAnnotations.append('')
+            elif excludeAnnotationId == 'noExclude':
+                excludeAnnotations.append('noExclude')
             else:
-                annotations.append('')
+                request = utils.getWorkerApiUrl() + '/annotation/' + excludeAnnotationId
+                headers = {'Girder-Token': token['_id']}
+                resp = requests.get(request, headers=headers)
+                # print resp.json()
+                # function
+                # elements = AnnotationResource().getAnnotation(id, params={})
+                excludeAnnotation = resp.json()
+                excludeAnnotations.append(excludeAnnotation)
+
         if slurm is True:
             job = Job().createJob(title=title, type='cd4',
                               handler='slurm_handler', user=user)
@@ -59,7 +78,7 @@ class Cd4Plus(AccessControlledModel):
         jobToken = Job().createJobToken(job)
 
         # # Not necessary needed for slurm
-        path = os.path.join(os.path.dirname(__file__), '../../script/cd4plus/',
+        path = os.path.join(os.path.dirname(__file__), '../../../script/cd4plus/',
                             'countCell.py')
         with open(path, 'r') as f:
             script = f.read()
@@ -69,11 +88,19 @@ class Cd4Plus(AccessControlledModel):
             'script': script,
             'name': title,
             'inputs': [{
-                'id': 'overlayIds',
+                'id': 'itemIds',
                 'type': 'string',
                 'format': 'string'
             },{
-                'id': 'annotations',
+                'id': 'overlayItemIds',
+                'type': 'string',
+                'format': 'string'
+            }, {
+                'id': 'includeAnnotations',
+                'type': 'string',
+                'format': 'string'
+            }, {
+                'id': 'excludeAnnotations',
                 'type': 'string',
                 'format': 'string'
             }, {
@@ -98,17 +125,29 @@ class Cd4Plus(AccessControlledModel):
         }
 
         inputs = {
-            'overlayIds': {
+            'itemIds': {
                 'mode': 'inline',
                 'type': 'string',
                 'format': 'string',
-                'data': overlayIds,
+                'data': itemIds,
             },
-            'annotations': {
+            'overlayItemIds': {
                 'mode': 'inline',
                 'type': 'string',
                 'format': 'string',
-                'data': annotations,
+                'data': overlayItemIds,
+            },
+            'includeAnnotations': {
+                'mode': 'inline',
+                'type': 'string',
+                'format': 'string',
+                'data': includeAnnotations,
+            },
+            'excludeAnnotations': {
+                'mode': 'inline',
+                'type': 'string',
+                'format': 'string',
+                'data': excludeAnnotations,
             },
             'mean': {
                 'mode': 'inline',

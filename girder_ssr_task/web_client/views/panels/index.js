@@ -1,7 +1,5 @@
-import * as DrawWidgetEx from './DrawWidgetEx';
-import * as workflowSelection from './workflowSelection';
+import * as WorkflowSelector from './WorkflowSelector';
 
 export {
-    DrawWidgetEx,
-    workflowSelection
+    WorkflowSelector
 };

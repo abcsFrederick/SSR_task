@@ -3,7 +3,7 @@ button.h-workflow-dropdown-link.btn.btn-default.navbar-btn(data-toggle='dropdown
 ul.h-workflow-dropdown.dropdown-menu(role='menu')
   each workflow in workflows
     li.dropdown-workflow
-      a.workflow-list(data-name=workflow) #{workflow}
+      a.workflow-list(data-name=workflow) #{workflow.replace('_',' ')}
   //- a.h-analyses-dropdown-link(data-toggle='dropdown')
   //- | #[span.icon-tasks] Analyses #[span.icon-down-open]
   //- ul.h-analyses-dropdown.dropdown-menu(role='menu')
