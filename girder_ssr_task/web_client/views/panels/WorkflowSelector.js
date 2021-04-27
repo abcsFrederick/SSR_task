@@ -14,6 +14,7 @@ import drawWidget from '@girder/histomicsui/templates/panels/drawWidget.pug';
 import workflowSelectorWidget from '../../templates/panels/workflowSelector.pug';
 import VersionTemplate from '../../templates/panels/versionControl.pug';
 import elementsTemplate from '../../templates/panels/elements.pug';
+import { WORKFLOWS } from '../../constants';
 
 // import _ from 'underscore';
 // import View from '@girder/core/views/View';
