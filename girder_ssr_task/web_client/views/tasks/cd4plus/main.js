@@ -15,9 +15,6 @@ import BrowserWidget from './browserWidget';
 import prepareHeaderTemplate from '../../../templates/tasks/cd4plus/Header.pug';
 import ItemListTemplate from '../../../templates/tasks/cd4plus/itemList.pug';
 
-import OverlayModel from '@girder/overlays/models/OverlayModel';
-import OverlayCollection from '@girder/overlays/collections/OverlayCollection';
-
 import '@girder/core/utilities/jquery/girderEnable';
 import '@girder/core/utilities/jquery/girderModal';
 

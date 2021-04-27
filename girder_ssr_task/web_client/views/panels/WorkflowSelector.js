@@ -6,7 +6,6 @@ import { getCurrentUser } from '@girder/core/auth';
 import eventStream from '@girder/core/utilities/EventStream';
 
 // import workflowSelection from './workflowSelection';
-import OverlayCollection from '@girder/overlays/collections/OverlayCollection';
 import WorkflowCollection from '../../collections/tasks/workflow';
 import WorkflowModel from '../../models/tasks/workflow';
 

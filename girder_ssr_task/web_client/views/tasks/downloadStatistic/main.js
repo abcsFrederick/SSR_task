@@ -16,9 +16,6 @@ import workflowOptionTemplates from '../../../templates/tasks/downloadStatistic/
 import ImageListWidget from '../../../views/widgets/ImageListWidget';
 import WorkflowCollection from '../../../collections/tasks/workflow';
 
-import OverlayModel from '@girder/overlays/models/OverlayModel';
-import OverlayCollection from '@girder/overlays/collections/OverlayCollection';
-
 import '@girder/core/utilities/jquery/girderEnable';
 import '@girder/core/utilities/jquery/girderModal';
 
