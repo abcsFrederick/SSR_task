@@ -23,7 +23,7 @@ li.wsi-list.col-md-12(style='list-style: none;text-align: center')
   .col-md-3
     .cd4plus-Annotations-select-prepared-zone.annotations(style='overflow-y: auto;')
       select.includedAnnotation(item-id=wsi.id,style='min-width: 100%;max-width: 100%')
-        option#entireMask ALL
+        option#entireMask WSI
         if annotations.length
           each annotation in annotations
             option(id=annotation._id) #{annotation.annotation.name}

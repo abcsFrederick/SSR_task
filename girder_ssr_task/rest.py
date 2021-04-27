@@ -531,7 +531,7 @@ class SSR_task(Resource):
                 item = Item().load(workflow['itemId'], level=AccessType.READ, user=user)
                 batchFolder = Folder().load(item['folderId'], level=AccessType.READ, user=user)
                 values = ('workflow: ' + workflow['name'], 'Mean: ' + str(workflow['records']['mean']),
-                          'StdDev: ' + str(workflow['records']['stdDev']))
+                          'StdDev: ' + str(workflow['records']['stdDev']), 'Timestamp: ' + str(workflow['created']))
                 header += ','.join(map(str, values)) + '\n'
                 for roi in workflow['records']['results']:
                     values = ( batchFolder['name'], item['name'], roi['name'],

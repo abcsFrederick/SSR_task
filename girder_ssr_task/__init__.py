@@ -4,6 +4,8 @@ import shutil
 import datetime
 import bson
 import json
+import uuid
+import xml.etree.ElementTree as ET
 
 from girder import plugin, events
 from mako.lookup import TemplateLookup
@@ -14,6 +16,7 @@ from girder.models.item import Item
 from girder.models.folder import Folder
 from girder.api.v1.token import Token
 from girder.utility.model_importer import ModelImporter
+from girder.constants import AccessType
 
 from girder_jobs.models.job import Job
 from girder_jobs.constants import JobStatus
@@ -24,7 +27,7 @@ from girder.models.setting import Setting
 from girder_worker.girder_plugin import utils as workerUtils
 from girder_large_image_annotation.models.annotationelement import Annotationelement
 from girder_large_image_annotation.models.annotation import Annotation
-# from girder_overlays.models.overlay import Overlay
+from girder_large_image_annotation.rest.annotation import AnnotationResource
 
 from .constants import PluginSettings
 from .models.tasks.link import Link
@@ -112,8 +115,6 @@ def _updateJob(event):
                             includeAnnotations = mask[overlayId]['includeAnnotations']
                             excludeAnnotations = mask[overlayId]['excludeAnnotations']
 
-                            # overlay = Overlay().load(overlayId, user=user)
-                            # item = Item().load(overlay.get('itemId'), user=user)
                             # query all includeAnnotations/excludeAnnotations regardless order
                             query = {"overlayItemId": overlayId,
                                      "name": "cd4+",
@@ -237,100 +238,219 @@ def _updateJob(event):
     elif (meta.get('handler') == 'slurm_handler'):
         pass
 
-def onZipFileSave(event):
+def onFileSave(event):
     file_ = event.info
-    try:
-        zipExt = file_['exts'].index('zip')
-        # if zipExt:
-        user = UserModel().load(file_['creatorId'], force=True)
+    if file_.get('mimeType') == 'application/zip' and 'zip' in file_.get('exts'):
+        try:
+            zipExt = file_['exts'].index('zip')
+            # if zipExt:
+            user = UserModel().load(file_['creatorId'], force=True)
 
-        file = File().load(file_['_id'], user=user, force=True)
-        item = Item().load(file_['itemId'], user=user, force=True)
-        folder = Folder().load(item['folderId'], user=user, force=True)
-        # zipfolder = Folder().createFolder(parent=folder, name=item['name'] + ' zip',
-        #                       parentType='folder', creator=user)
+            file = File().load(file_['_id'], user=user, force=True)
+            item = Item().load(file_['itemId'], user=user, force=True)
+            folder = Folder().load(item['folderId'], user=user, force=True)
+            # zipfolder = Folder().createFolder(parent=folder, name=item['name'] + ' zip',
+            #                       parentType='folder', creator=user)
 
-        token = Token().currentSession()
+            token = Token().currentSession()
 
-        path = os.path.join(os.path.dirname(__file__), 'unzip.py')
-        with open(path, 'r') as f:
-            script = f.read()
-        title = 'Unzip zip experiment: %s' % file_['name']
-        job = Job().createJob(
-            title=title, type='unzip', handler='worker_handler',
-            user=user)
+            path = os.path.join(os.path.dirname(__file__), 'unzip.py')
+            with open(path, 'r') as f:
+                script = f.read()
+            title = 'Unzip zip experiment: %s' % file_['name']
+            job = Job().createJob(
+                title=title, type='unzip', handler='worker_handler',
+                user=user)
 
-        jobToken = Job().createJobToken(job)
-        folderName = os.path.splitext(file_['name'])[0]
-        existing = Folder().findOne({
-            'parentId': folder['_id'],
-            'name': folderName,
-            'parentCollection': 'folder'
-        })
-        if existing:
-            Item().remove(item)
-            Notification().createNotification(
-                type='upload_same', data=job, user=user,
-                expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
-            return
-        outputName = folderName
+            jobToken = Job().createJobToken(job)
+            folderName = os.path.splitext(file_['name'])[0]
+            existing = Folder().findOne({
+                'parentId': folder['_id'],
+                'name': folderName,
+                'parentCollection': 'folder'
+            })
+            if existing:
+                Item().remove(item)
+                Notification().createNotification(
+                    type='upload_same', data=job, user=user,
+                    expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
+                return
+            outputName = folderName
 
-        task = {
-            'mode': 'python',
-            'script': script,
-            'name': title,
-            'inputs': [{
-                'id': 'in_path',
-                'target': 'filepath',
-                'type': 'string',
-                'format': 'text'
-            }, {
-                'id': 'out_filename',
-                'type': 'string',
-                'format': 'text'
-            }],
-            'outputs': [{
-                'id': 'out_path',
-                'target': 'filepath',
-                'type': 'string',
-                'format': 'text'
-            }]
-        }
-        inputs = {
-            'in_path': workerUtils.girderInputSpec(
-                file, resourceType='file', token=token),
-            # 'in_path': {
-            #     'mode': 'local',
-            #     'path': os.path.join(assetstore['root'], file_['path'])
-            # },
-            'out_filename': {
-                'mode': 'inline',
-                'type': 'string',
-                'format': 'text',
-                'data': outputName
+            task = {
+                'mode': 'python',
+                'script': script,
+                'name': title,
+                'inputs': [{
+                    'id': 'in_path',
+                    'target': 'filepath',
+                    'type': 'string',
+                    'format': 'text'
+                }, {
+                    'id': 'out_filename',
+                    'type': 'string',
+                    'format': 'text'
+                }],
+                'outputs': [{
+                    'id': 'out_path',
+                    'target': 'filepath',
+                    'type': 'string',
+                    'format': 'text'
+                }]
             }
-        }
-        outputs = {
-            'out_path': workerUtils.girderOutputSpec(
-                parent=folder, token=token, parentType='folder')
-        }
-        job['kwargs'] = {
-            'task': task,
-            'inputs': inputs,
-            'outputs': outputs,
-            'jobInfo': workerUtils.jobInfoSpec(job, jobToken),
-            'auto_convert': False,
-            'validate': False
-        }
-        Notification().createNotification(
-            type='job_unzip_start', data=job, user=user,
-            expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
-        job = Job().save(job)
-        Job().scheduleJob(job)
-    except Exception:
-        pass
+            inputs = {
+                'in_path': workerUtils.girderInputSpec(
+                    file, resourceType='file', token=token),
+                # 'in_path': {
+                #     'mode': 'local',
+                #     'path': os.path.join(assetstore['root'], file_['path'])
+                # },
+                'out_filename': {
+                    'mode': 'inline',
+                    'type': 'string',
+                    'format': 'text',
+                    'data': outputName
+                }
+            }
+            outputs = {
+                'out_path': workerUtils.girderOutputSpec(
+                    parent=folder, token=token, parentType='folder')
+            }
+            job['kwargs'] = {
+                'task': task,
+                'inputs': inputs,
+                'outputs': outputs,
+                'jobInfo': workerUtils.jobInfoSpec(job, jobToken),
+                'auto_convert': False,
+                'validate': False
+            }
+            Notification().createNotification(
+                type='job_unzip_start', data=job, user=user,
+                expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
+            job = Job().save(job)
+            Job().scheduleJob(job)
+        except Exception:
+            pass
+    if 'xml' in file_.get('exts'):
+        user = UserModel().load(file_['creatorId'], force=True)
+        xmlItem = Item().load(file_['itemId'], force=True)
 
+        folder = Folder().load(xmlItem['folderId'], force=True)
 
+        wsiName = [os.path.splitext(file_['name'])[0] + '.svs', os.path.splitext(file_['name'])[0] + '.tiff']
+        wsiItems = list(Folder().childItems(folder, user={'admin': True}, limit=2,
+                                            filters={'name': {'$in': wsiName}}))
+        # print('==========wsiItems========')
+        # print(wsiItems)
+        if len(wsiItems) == 0:
+            item = xmlItem
+        else:
+            item = wsiItems[0]
+        with File().open(file_) as f:
+            contents = b''
+            while True:
+                chunk = f.read()
+                if not chunk:
+                    break
+                contents += chunk
+            contents = contents.decode()
+            tree = ET.ElementTree(ET.fromstring(contents))
+            root = tree.getroot()
+            if root.tag == "Annotations":
+                query = {'_active': {'$ne': False}}
+                query['itemId'] = item['_id']
+                query['annotation.name'] = os.path.splitext(file_['name'])[0]
+                fields = list(
+                    (
+                        'annotation.name', 'annotation.description', 'access', 'groups', '_version'
+                    ) + Annotation().baseFields)
+                annotations = list(Annotation().findWithPermissions(
+                    query, fields=fields, user=user, level=AccessType.READ))
+                if len(annotations) == 0:
+                    annotationBody = { "description": "Parsing from xml",
+                                       "elements": [],
+                                       "name": os.path.splitext(file_['name'])[0] }
+                    annotation = Annotation().createAnnotation(
+                        item, user, annotationBody)
+                else:
+                    annotation = annotations[0]
+                    annotation["annotation"]["elements"] = []
+                for region in root.iter("Region"):
+                    # rectangle
+                    if region.get("Type") == "1":
+                        # print('in rectangle')
+                        xList = []
+                        yList = []
+                        for vertex in region.iter('Vertex'):
+                            xList.append(float(vertex.attrib['X']))
+                            yList.append(float(vertex.attrib['Y']))
+                        bbox = [float(min(xList)), float(min(yList)), float(max(xList)), float(max(yList))]
+                        width = bbox[2] - bbox[0] + 1  # + 1?
+                        height = bbox[3] - bbox[1] + 1   # + 1?
+                        centerX = bbox[0] + width
+                        centerY = bbox[1] + height
+                        element = { "center": [centerX, centerY, 0],
+                                    "fillColor": "rgba(0,0,0,0)",
+                                    "group": "default",
+                                    "height": height,
+                                    "id": uuid.uuid4().hex[:24],
+                                    "label": { "value": region.get("Id") },
+                                    "lineColor": "rgb(0,0,255)",
+                                    "lineWidth": 2,
+                                    "normal": [0, 0, 1],
+                                    "rotation": 0,
+                                    "type": "rectangle",
+                                    "width": width }
+                        annotation["annotation"]["elements"].append(element)
+                    # polygon
+                    if region.get("Type") == "0":
+                        # print('in polygon')
+                        points = []
+                        for vertex in region.iter('Vertex'):
+                            point = [float(vertex.attrib['X']), float(vertex.attrib['Y']), float(vertex.attrib['Z'])]
+                            points.append(point)
+                        element = { "closed": True,
+                                    "fillColor": "rgba(0,0,0,0)",
+                                    "group": "default",
+                                    "id": uuid.uuid4().hex[:24],
+                                    "label": { "value": region.get("Id") },
+                                    "lineColor": "rgb(0,0,255)",
+                                    "lineWidth": 2,
+                                    "points": points,
+                                    "type": "polyline" }
+                        annotation["annotation"]["elements"].append(element)
+                annotation = Annotation().updateAnnotation(annotation, updateUser=user)
+
+    if 'tif' in file_.get('exts') or 'svs' in file_.get('exts'):
+        user = UserModel().load(file_['creatorId'], force=True)
+        item = Item().load(file_['itemId'], force=True)
+
+        folder = Folder().load(item['folderId'], force=True)
+
+        xmlName = os.path.splitext(file_['name'])[0] + '.xml'
+        xmlItems = list(Folder().childItems(folder, user={'admin': True}, limit=2,
+                                            filters={'name': xmlName}))
+        # print('==========xmlItems========')
+        # print(xmlItems[0]['_id'])
+        # print('==========item========')
+        # print(item['_id'])
+        if len(xmlItems) == 0:
+            return
+        else:
+            query = {'_active': {'$ne': False}}
+            query['itemId'] = xmlItems[0]['_id']
+            query['annotation.name'] = os.path.splitext(file_['name'])[0]
+            fields = list(
+                (
+                    'annotation.name', 'annotation.description', 'access', 'groups', '_version'
+                ) + Annotation().baseFields)
+            annotations = list(Annotation().findWithPermissions(
+                query, fields=fields, user=user, level=AccessType.READ))
+            annotation = annotations[0]
+            annotation = Annotation().load(annotation['_id'], force=True)
+            annotation['itemId'] = item['_id']
+            Annotation().updateAnnotation(annotation, updateUser=user)
+            Item().remove(xmlItems[0])
 @setting_utilities.validator({
     PluginSettings.GIRDER_WORKER_TMP,
     PluginSettings.TASKS
@@ -349,6 +469,7 @@ SettingDefault.defaults.update({
         "Aperio": False,
         "Overlays": False,
         "CD4+": False,
+        "RNAScope": False,
         "Download_Statistic": False
     }
 })
@@ -368,4 +489,4 @@ class SSRTaskPlugin(plugin.GirderPlugin):
         info['apiRoot'].SSR_task = rest.SSR_task()
         Link()
         events.bind('jobs.job.update.after', 'SSRTask', _updateJob)
-        events.bind('model.file.save.after', 'SSRTask', onZipFileSave)
+        events.bind('model.file.save.after', 'SSRTask', onFileSave)
