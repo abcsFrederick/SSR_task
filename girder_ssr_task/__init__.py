@@ -357,69 +357,70 @@ def onFileSave(event):
             tree = ET.ElementTree(ET.fromstring(contents))
             root = tree.getroot()
             if root.tag == "Annotations":
-                query = {'_active': {'$ne': False}}
-                query['itemId'] = item['_id']
-                query['annotation.name'] = os.path.splitext(file_['name'])[0]
-                fields = list(
-                    (
-                        'annotation.name', 'annotation.description', 'access', 'groups', '_version'
-                    ) + Annotation().baseFields)
-                annotations = list(Annotation().findWithPermissions(
-                    query, fields=fields, user=user, level=AccessType.READ))
-                if len(annotations) == 0:
-                    annotationBody = { "description": "Parsing from xml",
-                                       "elements": [],
-                                       "name": os.path.splitext(file_['name'])[0] }
-                    annotation = Annotation().createAnnotation(
-                        item, user, annotationBody)
-                else:
-                    annotation = annotations[0]
-                    annotation["annotation"]["elements"] = []
-                for region in root.iter("Region"):
-                    # rectangle
-                    if region.get("Type") == "1":
-                        # print('in rectangle')
-                        xList = []
-                        yList = []
-                        for vertex in region.iter('Vertex'):
-                            xList.append(float(vertex.attrib['X']))
-                            yList.append(float(vertex.attrib['Y']))
-                        bbox = [float(min(xList)), float(min(yList)), float(max(xList)), float(max(yList))]
-                        width = bbox[2] - bbox[0] + 1  # + 1?
-                        height = bbox[3] - bbox[1] + 1   # + 1?
-                        centerX = bbox[0] + width
-                        centerY = bbox[1] + height
-                        element = { "center": [centerX, centerY, 0],
-                                    "fillColor": "rgba(0,0,0,0)",
-                                    "group": "default",
-                                    "height": height,
-                                    "id": uuid.uuid4().hex[:24],
-                                    "label": { "value": region.get("Id") },
-                                    "lineColor": "rgb(0,0,255)",
-                                    "lineWidth": 2,
-                                    "normal": [0, 0, 1],
-                                    "rotation": 0,
-                                    "type": "rectangle",
-                                    "width": width }
-                        annotation["annotation"]["elements"].append(element)
-                    # polygon
-                    if region.get("Type") == "0":
-                        # print('in polygon')
-                        points = []
-                        for vertex in region.iter('Vertex'):
-                            point = [float(vertex.attrib['X']), float(vertex.attrib['Y']), float(vertex.attrib['Z'])]
-                            points.append(point)
-                        element = { "closed": True,
-                                    "fillColor": "rgba(0,0,0,0)",
-                                    "group": "default",
-                                    "id": uuid.uuid4().hex[:24],
-                                    "label": { "value": region.get("Id") },
-                                    "lineColor": "rgb(0,0,255)",
-                                    "lineWidth": 2,
-                                    "points": points,
-                                    "type": "polyline" }
-                        annotation["annotation"]["elements"].append(element)
-                annotation = Annotation().updateAnnotation(annotation, updateUser=user)
+                for Annotation in root.iter("Annotation"):
+                    query = {'_active': {'$ne': False}}
+                    query['itemId'] = item['_id']
+                    query['annotation.name'] = Annotation.get("Id")
+                    fields = list(
+                        (
+                            'annotation.name', 'annotation.description', 'access', 'groups', '_version'
+                        ) + Annotation().baseFields)
+                    annotations = list(Annotation().findWithPermissions(
+                        query, fields=fields, user=user, level=AccessType.READ))
+                    if len(annotations) == 0:
+                        annotationBody = { "description": "Parsing from xml",
+                                           "elements": [],
+                                           "name": Annotation.get("Id") }
+                        annotation = Annotation().createAnnotation(
+                            item, user, annotationBody)
+                    else:
+                        annotation = annotations[0]
+                        annotation["annotation"]["elements"] = []
+                    for region in Annotation.iter("Region"):
+                        # rectangle
+                        if region.get("Type") == "1":
+                            # print('in rectangle')
+                            xList = []
+                            yList = []
+                            for vertex in region.iter('Vertex'):
+                                xList.append(float(vertex.attrib['X']))
+                                yList.append(float(vertex.attrib['Y']))
+                            bbox = [float(min(xList)), float(min(yList)), float(max(xList)), float(max(yList))]
+                            width = bbox[2] - bbox[0] + 1  # + 1?
+                            height = bbox[3] - bbox[1] + 1   # + 1?
+                            centerX = bbox[0] + width
+                            centerY = bbox[1] + height
+                            element = { "center": [centerX, centerY, 0],
+                                        "fillColor": "rgba(0,0,0,0)",
+                                        "group": "default",
+                                        "height": height,
+                                        "id": uuid.uuid4().hex[:24],
+                                        "label": { "value": region.get("Id") },
+                                        "lineColor": "rgb(0,0,255)",
+                                        "lineWidth": 2,
+                                        "normal": [0, 0, 1],
+                                        "rotation": 0,
+                                        "type": "rectangle",
+                                        "width": width }
+                            annotation["annotation"]["elements"].append(element)
+                        # polygon
+                        if region.get("Type") == "0":
+                            # print('in polygon')
+                            points = []
+                            for vertex in region.iter('Vertex'):
+                                point = [float(vertex.attrib['X']), float(vertex.attrib['Y']), float(vertex.attrib['Z'])]
+                                points.append(point)
+                            element = { "closed": True,
+                                        "fillColor": "rgba(0,0,0,0)",
+                                        "group": "default",
+                                        "id": uuid.uuid4().hex[:24],
+                                        "label": { "value": region.get("Id") },
+                                        "lineColor": "rgb(0,0,255)",
+                                        "lineWidth": 2,
+                                        "points": points,
+                                        "type": "polyline" }
+                            annotation["annotation"]["elements"].append(element)
+                    annotation = Annotation().updateAnnotation(annotation, updateUser=user)
         if len(wsiItems) != 0:
             Item().remove(xmlItem)
     if 'tif' in file_.get('exts') or 'svs' in file_.get('exts'):
@@ -438,7 +439,7 @@ def onFileSave(event):
         if len(xmlItems) != 0:
             query = {'_active': {'$ne': False}}
             query['itemId'] = xmlItems[0]['_id']
-            query['annotation.name'] = os.path.splitext(file_['name'])[0]
+            # query['annotation.name'] = os.path.splitext(file_['name'])[0]
             fields = list(
                 (
                     'annotation.name', 'annotation.description', 'access', 'groups', '_version'
