@@ -595,8 +595,8 @@ class SSR_task(Resource):
                             bbox = [float(min(xList)), float(min(yList)), float(max(xList)), float(max(yList))]
                             width = bbox[2] - bbox[0] + 1  # + 1?
                             height = bbox[3] - bbox[1] + 1   # + 1?
-                            centerX = bbox[0] + width
-                            centerY = bbox[1] + height
+                            centerX = bbox[0] + width / 2
+                            centerY = bbox[1] + height / 2
                             element = { "center": [centerX, centerY, 0],
                                         "fillColor": "rgba(0,0,0,0)",
                                         "group": "default",
