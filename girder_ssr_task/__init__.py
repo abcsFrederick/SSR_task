@@ -29,7 +29,7 @@ from girder_large_image_annotation.models.annotationelement import Annotationele
 from girder_large_image_annotation.models.annotation import Annotation
 from girder_large_image_annotation.rest.annotation import AnnotationResource
 
-from .constants import PluginSettings
+from .constants import PluginSettings, PAIP2021ColonColor
 from .models.tasks.link import Link
 from .models.workflow import Workflow
 
@@ -362,8 +362,13 @@ def onFileSave(event):
                     query['itemId'] = item['_id']
                     if Anno.get("Name") is not None:
                         layerName = str(Anno.get("Id")) + " " + Anno.get("Name")
+                        if Anno.get("Name") in PAIP2021ColonColor:
+                            color = PAIP2021ColonColor[Anno.get("Name")]
+                        else: 
+                            color = "rgb(0,0,255)"
                     else:
                         layerName = str(Anno.get("Id"))
+                        color = "rgb(0,0,255)"
                     query['annotation.name'] = layerName
                     fields = list(
                         (
@@ -401,7 +406,7 @@ def onFileSave(event):
                                         "height": height,
                                         "id": uuid.uuid4().hex[:24],
                                         "label": { "value": region.get("Id") },
-                                        "lineColor": "rgb(0,0,255)",
+                                        "lineColor": color,
                                         "lineWidth": 2,
                                         "normal": [0, 0, 1],
                                         "rotation": 0,
@@ -421,7 +426,7 @@ def onFileSave(event):
                                             "group": "default",
                                             "id": uuid.uuid4().hex[:24],
                                             "label": { "value": region.get("Id") },
-                                            "lineColor": "rgb(0,0,255)",
+                                            "lineColor": color,
                                             "lineWidth": 2,
                                             "points": points,
                                             "type": "polyline" }
@@ -435,7 +440,7 @@ def onFileSave(event):
                                             "group": "default",
                                             "id": uuid.uuid4().hex[:24],
                                             "label": { "value": region.get("Id") },
-                                            "lineColor": "rgb(0,0,255)",
+                                            "lineColor": color,
                                             "lineWidth": 2,
                                             "points": points,
                                             "type": "polyline" }
