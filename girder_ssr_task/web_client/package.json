@@ -37,8 +37,7 @@
         "name": "ssrtask",
         "main": "./main.js",
         "dependencies": [
-            "histomicsui",
-            "overlays"
+            "histomicsui"
         ]
     }
 }
