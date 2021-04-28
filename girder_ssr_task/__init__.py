@@ -357,10 +357,14 @@ def onFileSave(event):
             tree = ET.ElementTree(ET.fromstring(contents))
             root = tree.getroot()
             if root.tag == "Annotations":
-                for Annotation in root.iter("Annotation"):
+                for Anno in root.iter("Annotation"):
                     query = {'_active': {'$ne': False}}
                     query['itemId'] = item['_id']
-                    query['annotation.name'] = Annotation.get("Id")
+                    if Anno.get("Name") is not None:
+                        layerName = str(Anno.get("Id")) + " " + Anno.get("Name")
+                    else:
+                        layerName = str(Anno.get("Id"))
+                    query['annotation.name'] = layerName
                     fields = list(
                         (
                             'annotation.name', 'annotation.description', 'access', 'groups', '_version'
@@ -370,13 +374,14 @@ def onFileSave(event):
                     if len(annotations) == 0:
                         annotationBody = { "description": "Parsing from xml",
                                            "elements": [],
-                                           "name": Annotation.get("Id") }
+                                           "name": layerName}
                         annotation = Annotation().createAnnotation(
                             item, user, annotationBody)
                     else:
                         annotation = annotations[0]
                         annotation["annotation"]["elements"] = []
-                    for region in Annotation.iter("Region"):
+
+                    for region in Anno.iter("Region"):
                         # rectangle
                         if region.get("Type") == "1":
                             # print('in rectangle')
@@ -407,19 +412,34 @@ def onFileSave(event):
                         if region.get("Type") == "0":
                             # print('in polygon')
                             points = []
-                            for vertex in region.iter('Vertex'):
-                                point = [float(vertex.attrib['X']), float(vertex.attrib['Y']), float(vertex.attrib['Z'])]
-                                points.append(point)
-                            element = { "closed": True,
-                                        "fillColor": "rgba(0,0,0,0)",
-                                        "group": "default",
-                                        "id": uuid.uuid4().hex[:24],
-                                        "label": { "value": region.get("Id") },
-                                        "lineColor": "rgb(0,0,255)",
-                                        "lineWidth": 2,
-                                        "points": points,
-                                        "type": "polyline" }
-                            annotation["annotation"]["elements"].append(element)
+                            if Anno.get("Name") == "perineural invasion junction":
+                                for vertex in region.iter('Vertex'):
+                                    point = [float(vertex.attrib['X']), float(vertex.attrib['Y']), float(vertex.attrib['Z'])]
+                                    points.append(point)
+                                element = { "closed": False,
+                                            "fillColor": "rgba(0,0,0,0)",
+                                            "group": "default",
+                                            "id": uuid.uuid4().hex[:24],
+                                            "label": { "value": region.get("Id") },
+                                            "lineColor": "rgb(0,0,255)",
+                                            "lineWidth": 2,
+                                            "points": points,
+                                            "type": "polyline" }
+                                annotation["annotation"]["elements"].append(element)
+                            else:
+                                for vertex in region.iter('Vertex'):
+                                    point = [float(vertex.attrib['X']), float(vertex.attrib['Y']), float(vertex.attrib['Z'])]
+                                    points.append(point)
+                                element = { "closed": True,
+                                            "fillColor": "rgba(0,0,0,0)",
+                                            "group": "default",
+                                            "id": uuid.uuid4().hex[:24],
+                                            "label": { "value": region.get("Id") },
+                                            "lineColor": "rgb(0,0,255)",
+                                            "lineWidth": 2,
+                                            "points": points,
+                                            "type": "polyline" }
+                                annotation["annotation"]["elements"].append(element)
                     annotation = Annotation().updateAnnotation(annotation, updateUser=user)
         if len(wsiItems) != 0:
             Item().remove(xmlItem)
@@ -446,10 +466,10 @@ def onFileSave(event):
                 ) + Annotation().baseFields)
             annotations = list(Annotation().findWithPermissions(
                 query, fields=fields, user=user, level=AccessType.READ))
-            annotation = annotations[0]
-            annotation = Annotation().load(annotation['_id'], force=True)
-            annotation['itemId'] = item['_id']
-            Annotation().updateAnnotation(annotation, updateUser=user)
+            for annotation in annotations:
+                annotation = Annotation().load(annotation['_id'], force=True)
+                annotation['itemId'] = item['_id']
+                Annotation().updateAnnotation(annotation, updateUser=user)
             Item().remove(xmlItems[0])
 @setting_utilities.validator({
     PluginSettings.GIRDER_WORKER_TMP,
