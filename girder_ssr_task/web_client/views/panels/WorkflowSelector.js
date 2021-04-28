@@ -1,5 +1,5 @@
 import View from '@girder/core/views/View';
-import ImageView from '@girder/overlays/views/body/ImageView';
+// import ImageView from '@girder/overlays/views/body/ImageView';
 import hImageView from '@girder/histomicsui/views/body/ImageView';
 import { wrap } from '@girder/core/utilities/PluginUtils';
 import { restRequest } from '@girder/core/rest';
@@ -39,24 +39,24 @@ wrap(hImageView, 'initialize', function (render) {
     this.workflowSelector = new WorkflowSelector({
         parentView: this
     });
-
+    console.log(this)
     return this;
 });
 
-wrap(ImageView, 'render', function (render) {console.log('hsers');
-    render.call(this);
-    console.log('hsers');
-    $('<div/>').addClass('h-workflow-selector s-panel')
-        .insertAfter(this.$('#h-metadata-panel'));
-    if (this.viewerWidget) {
-        this.viewerWidget.on('g:imageRendered', () => {
-            this.workflowSelector
-                .setViewer(this.viewerWidget)
-                .setElement('.h-workflow-selector');
-        });
-    }
-    return this;
-});
+// wrap(hImageView, 'render', function (render) {console.log('hsers');
+//     render.call(this);
+//     console.log('hsers');
+//     $('<div/>').addClass('h-workflow-selector s-panel')
+//         .insertAfter(this.$('#h-metadata-panel'));
+//     if (this.viewerWidget) {
+//         this.viewerWidget.on('g:imageRendered', () => {
+//             this.workflowSelector
+//                 .setViewer(this.viewerWidget)
+//                 .setElement('.h-workflow-selector');
+//         });
+//     }
+//     return this;
+// });
 
 var WorkflowSelector = View.extend({
     events: {
@@ -71,8 +71,8 @@ var WorkflowSelector = View.extend({
         'click .icon-download': 'download'
     },
     initialize: function (settings) {
-        this.overlays = settings.overlays;
-        this.elements = settings.elements;
+        // this.overlays = settings.overlays;
+        // this.elements = settings.elements;
         this.workflowName = [];
 
         this.on('h:mouseon', (model) => {

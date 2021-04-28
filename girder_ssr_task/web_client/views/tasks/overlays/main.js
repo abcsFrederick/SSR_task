@@ -12,7 +12,7 @@ import BrowserWidget from './browserWidget';
 
 import ItemListTemplate from '../../../templates/tasks/overlays/itemList.pug';
 
-import OverlayModel from '@girder/overlays/models/OverlayModel';
+// import OverlayModel from '@girder/overlays/models/OverlayModel';
 
 import '@girder/core/utilities/jquery/girderEnable';
 import '@girder/core/utilities/jquery/girderModal';
@@ -93,15 +93,15 @@ var overlayDialogView = View.extend({
         this.$('.g-validation-failed-message').removeClass('hidden').text('WSI should equal to Mask');
       } else {
         for (let i = 0; i < this.WSIs.length; i++) {
-          let overlay = new OverlayModel();
-          overlay.set({
-            itemId: this.WSIs[i].id,
-            name: this.$('#h-overlays-name').val(),
-            description: this.$('#h-overlays-description').val(),
-            overlayItemId: this.Masks[i].id
-          }).on('g:saved',function () {
-              events.trigger('workflow:overlay');
-          }).save();
+          // let overlay = new OverlayModel();
+          // overlay.set({
+          //   itemId: this.WSIs[i].id,
+          //   name: this.$('#h-overlays-name').val(),
+          //   description: this.$('#h-overlays-description').val(),
+          //   overlayItemId: this.Masks[i].id
+          // }).on('g:saved',function () {
+          //     events.trigger('workflow:overlay');
+          // }).save();
         }
         this.$el.modal('hide');
       }
