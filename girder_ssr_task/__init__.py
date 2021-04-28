@@ -342,9 +342,7 @@ def onFileSave(event):
                                             filters={'name': {'$in': wsiName}}))
         # print('==========wsiItems========')
         # print(wsiItems)
-        if len(wsiItems) == 0:
-            item = xmlItem
-        else:
+        if len(wsiItems) != 0:
             item = wsiItems[0]
         with File().open(file_) as f:
             contents = b''
@@ -420,7 +418,8 @@ def onFileSave(event):
                                     "type": "polyline" }
                         annotation["annotation"]["elements"].append(element)
                 annotation = Annotation().updateAnnotation(annotation, updateUser=user)
-
+        if len(wsiItems) != 0:
+            Item().remove(xmlItem)
     if 'tif' in file_.get('exts') or 'svs' in file_.get('exts'):
         user = UserModel().load(file_['creatorId'], force=True)
         item = Item().load(file_['itemId'], force=True)
@@ -434,9 +433,7 @@ def onFileSave(event):
         # print(xmlItems[0]['_id'])
         # print('==========item========')
         # print(item['_id'])
-        if len(xmlItems) == 0:
-            return
-        else:
+        if len(xmlItems) != 0:
             query = {'_active': {'$ne': False}}
             query['itemId'] = xmlItems[0]['_id']
             query['annotation.name'] = os.path.splitext(file_['name'])[0]
@@ -450,7 +447,7 @@ def onFileSave(event):
             annotation = Annotation().load(annotation['_id'], force=True)
             annotation['itemId'] = item['_id']
             Annotation().updateAnnotation(annotation, updateUser=user)
-            # Item().remove(xmlItems[0])
+            Item().remove(xmlItems[0])
 @setting_utilities.validator({
     PluginSettings.GIRDER_WORKER_TMP,
     PluginSettings.TASKS
