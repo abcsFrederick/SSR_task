@@ -1,5 +1,6 @@
 import View from '@girder/core/views/View';
 import ImageView from '@girder/overlays/views/body/ImageView';
+import hImageView from '@girder/histomicsui/views/body/ImageView';
 import { wrap } from '@girder/core/utilities/PluginUtils';
 import { restRequest } from '@girder/core/rest';
 import { getCurrentUser } from '@girder/core/auth';
@@ -32,7 +33,7 @@ import events from '@girder/core/events';
 // import headerTemplate from '../../templates/panels/headerTemplate.pug';
 import '../../stylesheets/panels/workflowSelection.styl';
 
-wrap(ImageView, 'initialize', function (render) {
+wrap(hImageView, 'initialize', function (render) {
     render.call(this);
 
     this.workflowSelector = new WorkflowSelector({
@@ -42,9 +43,9 @@ wrap(ImageView, 'initialize', function (render) {
     return this;
 });
 
-wrap(ImageView, 'render', function (render) {
+wrap(ImageView, 'render', function (render) {console.log('hsers');
     render.call(this);
-
+    console.log('hsers');
     $('<div/>').addClass('h-workflow-selector s-panel')
         .insertAfter(this.$('#h-metadata-panel'));
     if (this.viewerWidget) {

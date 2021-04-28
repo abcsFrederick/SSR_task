@@ -450,7 +450,7 @@ def onFileSave(event):
             annotation = Annotation().load(annotation['_id'], force=True)
             annotation['itemId'] = item['_id']
             Annotation().updateAnnotation(annotation, updateUser=user)
-            Item().remove(xmlItems[0])
+            # Item().remove(xmlItems[0])
 @setting_utilities.validator({
     PluginSettings.GIRDER_WORKER_TMP,
     PluginSettings.TASKS
