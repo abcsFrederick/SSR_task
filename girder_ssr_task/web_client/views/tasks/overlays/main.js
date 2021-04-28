@@ -93,15 +93,33 @@ var overlayDialogView = View.extend({
         this.$('.g-validation-failed-message').removeClass('hidden').text('WSI should equal to Mask');
       } else {
         for (let i = 0; i < this.WSIs.length; i++) {
-          // let overlay = new OverlayModel();
-          // overlay.set({
-          //   itemId: this.WSIs[i].id,
-          //   name: this.$('#h-overlays-name').val(),
-          //   description: this.$('#h-overlays-description').val(),
-          //   overlayItemId: this.Masks[i].id
-          // }).on('g:saved',function () {
-          //     events.trigger('workflow:overlay');
-          // }).save();
+            let data = {
+                "itemId": this.WSIs[i].id,
+                "name": this.$('#h-overlays-name').val(),
+                "description": this.$('#h-overlays-description').val(),
+                "overlayItemId": this.Masks[i].id,
+                "displayed": true,
+                "opacity": 1.0,
+                "label": false,
+                "invertLabel": true,
+                "flattenLabel": false,
+                "bitmask": false,
+                "offset": {x: 0, y: 0},
+                "colormapId": null,
+                "threshold": {max: 255, min: 0},
+                "thresholdBit": {max: 8, min: 1}
+            }
+            restRequest({
+                url: 'overlay',
+                method: 'POST',
+                contentType: 'application/json',
+                processData: false,
+                data: JSON.stringify(data)
+            }).done((resp) => {
+                events.trigger('workflow:overlay');
+            }).fail((err) => {
+                this.trigger('g:error', err);
+            });
         }
         this.$el.modal('hide');
       }
