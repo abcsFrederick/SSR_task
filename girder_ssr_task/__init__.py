@@ -333,16 +333,18 @@ def onFileSave(event):
             pass
     if 'xml' in file_.get('exts'):
         user = UserModel().load(file_['creatorId'], force=True)
-        item = Item().load(file_['itemId'], force=True)
+        xmlItem = Item().load(file_['itemId'], force=True)
 
-        folder = Folder().load(item['folderId'], force=True)
+        folder = Folder().load(xmlItem['folderId'], force=True)
 
         wsiName = [os.path.splitext(file_['name'])[0] + '.svs', os.path.splitext(file_['name'])[0] + '.tiff']
         wsiItems = list(Folder().childItems(folder, user={'admin': True}, limit=2,
                                             filters={'name': {'$in': wsiName}}))
         # print('==========wsiItems========')
         # print(wsiItems)
-        if len(wsiItems) != 0:
+        if len(wsiItems) == 0:
+            item = xmlItem
+        else:
             item = wsiItems[0]
         with File().open(file_) as f:
             contents = b''
@@ -419,7 +421,7 @@ def onFileSave(event):
                         annotation["annotation"]["elements"].append(element)
                 annotation = Annotation().updateAnnotation(annotation, updateUser=user)
         if len(wsiItems) != 0:
-            Item().remove(item)
+            Item().remove(xmlItem)
     if 'tif' in file_.get('exts') or 'svs' in file_.get('exts'):
         user = UserModel().load(file_['creatorId'], force=True)
         item = Item().load(file_['itemId'], force=True)
