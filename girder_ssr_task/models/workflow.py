@@ -12,7 +12,7 @@ class Workflow(acl_mixin.AccessControlMixin, Model):
         self.name = 'workflow'
         self.ensureIndices([
             # 'itemId',
-            'overlayItemId',
+            'relatedId',
             'creatorId',
             'name',
             'records'
@@ -31,7 +31,7 @@ class Workflow(acl_mixin.AccessControlMixin, Model):
             'created',
             'updated',
             'name',
-            'overlayItemId',
+            'relatedId',
             'records'
         )
         self.exposeFields(AccessType.READ, fields)
@@ -51,7 +51,7 @@ class Workflow(acl_mixin.AccessControlMixin, Model):
         validation = (
             # ('itemId', 'Overlay must have a parent item ID'),
             ('creatorId', 'Overlay must have a creator ID'),
-            ('overlayItemId', 'Overlay must have an overlay item ID'),
+            ('relatedId', 'Must have an overlay item or CSV file ID'),
             ('name', 'Workflow must have a name'),
             ('records', 'Workflow should have some records')
         )

@@ -3,3 +3,9 @@ each result in records.results
     .version-element(data-id=result.annotationElementId,data-innerid=result.innerAnnotationElementId)
       span.version-element-label(title=result.name) #{result.name}: 
       span.version-element-NumOfCell.version-element-label (#{result.Num_of_Cell.low}) (#{result.Num_of_Cell.mean}) (#{result.Num_of_Cell.high})
+  if workflow === 'rnascope'
+    .version-element(data-id=result.annotationElementId,data-innerid=result.innerAnnotationElementId)
+      span.version-element-label(title=result.name) #{result.name}: 
+      span.version-element-Nums.version-element-label NoV.(#{result.Num_of_Virion}) NoI.(#{result.Num_of_ProductiveInfection})
+
+i.icon-info.hints(title='R. Roundness Threshold, I. Productive Infection, V. Virion Pixel, NoV. Number of Virion, NoI. Number of Productive Infection', style='cursor:help') **Hints

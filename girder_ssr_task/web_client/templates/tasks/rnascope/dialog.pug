@@ -1,0 +1,20 @@
+.modal-dialog
+  .modal-content
+    form#batch-rnascope-form.modal-form(role="form")
+      .modal-header
+        button.close(data-dismiss="modal", aria-hidden="true", type="button") &times;
+        h4.modal-title= title
+      .modal-body
+        #h-task-rnascope-container.hidden
+        .row
+          #rnascope-WSIs-select.h-task-rnascope-select.button.btn.btn-default.col-md-12(type='button')
+            | #[span.icon-folder] Select a WSIs Folder
+        .row
+          ul#rnascope-preview.preparernascopeZone.g-item-list(style='padding: 0px;')
+        .row
+          p *Round. Roundness Threshold,
+            |  Infect. Productive Infection,
+            |  Virion. Virion Pixel
+          .g-validation-failed-message
+      .modal-footer
+        button.btn.btn-small.btn-primary.save-batch-rnascope(type='button') Save

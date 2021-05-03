@@ -6,6 +6,7 @@ import overlaysWorkflowView from '../tasks/overlays/main';
 import cd4plusWorkflowView from '../tasks/cd4plus/main';
 import aperioWorkflowView from '../tasks/aperio/main';
 import downloadStatisticView from '../tasks/downloadStatistic/main';
+import rnascopeView from '../tasks/rnascope/main';
 
 import WorkflowsTemplate from '../../templates/body/WorkflowsHeader.pug';
 
@@ -46,6 +47,13 @@ var WorkflowsHeader = View.extend({
                     workflow: $(evt.currentTarget).attr('data-name')
                 });
             }
+            if (taskName === 'rnascope') {
+                this.workflowView = new rnascopeView({
+                    el: $('#g-dialog-container'),
+                    parentView: this,
+                    workflow: $(evt.currentTarget).attr('data-name')
+                });
+            }
             this.workflowView.render();
         }
     },
@@ -79,10 +87,10 @@ var WorkflowsHeader = View.extend({
     },
     // test workflow template
     renderTest() {
-        this.workflowView = new downloadStatisticView({
+        this.workflowView = new rnascopeView({
             el: $('.h-image-view-container'),
             parentView: this,
-            workflow: 'download_statistic'
+            workflow: 'rnascope'
         });
         this.workflowView.render();
     }

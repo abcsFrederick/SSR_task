@@ -5,6 +5,7 @@ from bson import ObjectId
 import os
 import uuid
 import xml.etree.ElementTree as ET
+import re
 
 from girder.api.rest import Resource, filtermodel, loadmodel, setContentDisposition, setResponseHeader, setRawResponse
 from girder.api.describe import Description, autoDescribeRoute, describeRoute
@@ -24,10 +25,11 @@ from girder_archive.models.item import Item as ArchiveItem
 from girder_large_image_annotation.models.annotation import Annotation
 from girder_large_image_annotation.models.annotationelement import Annotationelement
 
-from .constants import PluginSettings
+from .constants import PluginSettings, CSV_DIRECTORY
 from .models.tasks.dicom_split import DicomSplit
 from .models.tasks.link import Link
 from .models.tasks.cd4_plus import Cd4Plus
+from .models.tasks.rnascope import RNAScope
 from .models.workflow import Workflow
 
 from .models.job import Job as JobModel
@@ -48,6 +50,8 @@ class SSR_task(Resource):
         self.route("POST", ("dicom_split",), self.dicom_split)
 
         self.route("POST", ("cd4_plus",), self.cd4_plus)
+
+        self.route("POST", ("rnascope",), self.rnascope)
 
         self.route("GET", ("workflow", "statistic", "download",), self.statistic_download)
         self.route("POST", ("workflow", "statistic", "download",), self.statistic_download)
@@ -500,6 +504,56 @@ class SSR_task(Resource):
         return Cd4Plus().createJob(fetchWSIItems, fetchMaskFiles, overlayItemIds, self.user, self.token, itemIds,
                                    includeAnnotationIds, excludeAnnotationIds, mean, stdDev, slurm=False)
     
+    @access.public
+    @autoDescribeRoute(
+        Description("Split multiple in one dicom volumn.")
+        .jsonParam("itemIds", "item ids of WSIs.", required=True)
+        # .jsonParam("overlayItemIds", "overlay item ids.", required=True)
+        .jsonParam("includeAnnotationIds", "include annotation ids.", required=True)
+        # .jsonParam("excludeAnnotationIds", "exclude annotation ids.", required=True)
+        .jsonParam("roundnessThresholds", "roundnessThresholds", required=True)
+        .jsonParam("pixelThresholds", "pixelThresholds", required=True)
+        .jsonParam("pixelsPerVirions", "pixelsPerVirions", required=True)
+    )
+    def rnascope(self, itemIds, includeAnnotationIds, roundnessThresholds, pixelThresholds, pixelsPerVirions):
+        self.user = self.getCurrentUser()
+        self.token = self.getCurrentToken()
+
+        fetchWSIItems = []
+        fetchCSVFiles = []
+        csvFileIds = []
+
+        for itemId in itemIds:
+            item = Item().load(itemId, level=AccessType.READ, user=self.user)
+            fetchWSIItems.append(item)
+            wsiFolder = Folder().load(item['folderId'], force=True)
+            parentFolder = Folder().load(wsiFolder['parentId'], force=True)
+            regx = re.compile(CSV_DIRECTORY, re.IGNORECASE)
+            csvFolders = list(Folder().childFolders(parentFolder,
+                                                    wsiFolder['parentCollection'],
+                                                    user={'admin': True}, limit=2,
+                                                    filters={'name': regx}))
+            if not csvFolders or len(csvFolders) > 1:
+                raise ValidationException("csv folder is missing or more than on csv type folder existed")
+            query = {
+                "name": os.path.splitext(item['name'])[0] + '.csv',
+                "folderId": csvFolders[0]['_id']
+            }
+            csvItem = list(Item().find(query, limit=2))[0]
+
+
+            query = {
+                "itemId": csvItem['_id'],
+                "mimeType": {"$regex": "^text/csv"}
+            }
+            file = list(File().find(query, limit=2))[0]
+            fetchCSVFiles.append(file)
+            csvFileIds.append(str(file['_id']))
+
+        return RNAScope().createJob(fetchWSIItems, fetchCSVFiles, csvFileIds, self.user, self.token,
+                                    itemIds, includeAnnotationIds, roundnessThresholds,
+                                    pixelThresholds, pixelsPerVirions)
+
     @access.public(scope=TokenScope.DATA_READ, cookie=True)
     @autoDescribeRoute(
         Description("Download statistic.")

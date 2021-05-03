@@ -9,3 +9,5 @@ PAIP2021ColonColor = {
     "tumor without nerve": "rgb(0,255,0)",
     "nontumor without nerve": "rgb(0,255,240)"
 }
+
+CSV_DIRECTORY = '.*csv.*'

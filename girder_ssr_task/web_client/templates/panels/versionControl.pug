@@ -7,6 +7,8 @@ each version in verisons
       i.icon-folder-open(style="display: none;")
       if workflow === 'cd4+'
         | Mean: #{version.get('records').mean} StdDev: #{version.get('records').stdDev}
+      if workflow === 'rnascope'
+        | I.: #{version.get('records').pixelThreshold} V.: #{version.get('records').pixelsPerVirion} R.: #{version.get('records').roundnessThreshold}
       i.icon-download(style="float: right;", title='Download report', data-workflow=version.get('_id'))
       i.icon-cancel(style="float: right;", title='Remove', data-workflow=version.get('_id'))
 

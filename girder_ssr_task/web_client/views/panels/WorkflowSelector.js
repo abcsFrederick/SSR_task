@@ -1,6 +1,5 @@
 import View from '@girder/core/views/View';
-// import ImageView from '@girder/overlays/views/body/ImageView';
-import hImageView from '@girder/histomicsui/views/body/ImageView';
+import ImageView from '@girder/histomicsui/views/body/ImageView';
 import { wrap } from '@girder/core/utilities/PluginUtils';
 import { restRequest } from '@girder/core/rest';
 import { getCurrentUser } from '@girder/core/auth';
@@ -33,13 +32,12 @@ import events from '@girder/core/events';
 // import headerTemplate from '../../templates/panels/headerTemplate.pug';
 import '../../stylesheets/panels/workflowSelection.styl';
 
-wrap(hImageView, 'initialize', function (render) {
+wrap(ImageView, 'initialize', function (render) {
     render.call(this);
 
     this.workflowSelector = new WorkflowSelector({
         parentView: this
     });
-    console.log(this)
     return this;
 });
 

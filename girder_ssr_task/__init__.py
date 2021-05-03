@@ -116,12 +116,12 @@ def _updateJob(event):
                             excludeAnnotations = mask[overlayId]['excludeAnnotations']
 
                             # query all includeAnnotations/excludeAnnotations regardless order
-                            query = {"overlayItemId": overlayId,
-                                     "name": "cd4+",
-                                     "records.mean": mean["data"],
-                                     "records.stdDev": stdDev["data"],
-                                     "records.includeAnnotations": {"$size": len(includeAnnotations), "$all": includeAnnotations},
-                                     "records.excludeAnnotations": {"$size": len(excludeAnnotations), "$all": excludeAnnotations},
+                            query = { "relatedId": overlayId,
+                                      "name": "cd4+",
+                                      "records.mean": mean["data"],
+                                      "records.stdDev": stdDev["data"],
+                                      "records.includeAnnotations": {"$size": len(includeAnnotations), "$all": includeAnnotations},
+                                      "records.excludeAnnotations": {"$size": len(excludeAnnotations), "$all": excludeAnnotations},
                             }
                             newRecord = False
                             if len(list(Workflow().find(query))) == 0:
@@ -164,7 +164,7 @@ def _updateJob(event):
                                 # print(results)
                                 doc = { "name": "cd4+",
                                         "itemId": mask[overlayId]['itemId'],
-                                        "overlayItemId": overlayId,
+                                        "relatedId": overlayId,
                                         "records": {
                                             "mean": mean["data"],
                                             "stdDev": stdDev["data"],
@@ -177,9 +177,9 @@ def _updateJob(event):
                                 # Annotation().createAnnotation(item, user, {"description":"cd4+", "elements": elements, "name":'workflow'})
 
                                 # we are using workflow id as fake annotation id
-                                doc={ "_id": workflow['_id'],
-                                      "_version": 0,
-                                      "annotation": {"elements": elements}}
+                                doc = { "_id": workflow['_id'],
+                                        "_version": 0,
+                                        "annotation": {"elements": elements}}
                                 Annotationelement().updateElements(doc)
                                 annotationelements = list(Annotationelement().find({"annotationId": workflow['_id']}))
                                 names = []
@@ -214,25 +214,129 @@ def _updateJob(event):
                     type='job_email_sent', data=job, user=user,
                     expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
                 _notifyUser(event, meta)
-        elif job['type'] == 'RNAScope':
+        elif job['type'] == 'rnascope':
             status = job['status']
             if status == JobStatus.SUCCESS or status == JobStatus.CANCELED or status == JobStatus.ERROR:
                 tmpPath = job.get('kwargs')['inputs']['outPath']['data']
-                pixels_per_virion = job.get('kwargs')['inputs']['pixels_per_virion']
-                pixel_threshold = job.get('kwargs')['inputs']['pixel_threshold']
-                roundness_threshold = job.get('kwargs')['inputs']['roundness_threshold']
-                # elements: {
-                #     "name": union_include_element_index,
-                #     "inner_polygon": True/False,
-                #     "fillColor": "rgba(0,0,0,0)",
-                #     "lineColor": "rgb(0,255,0)",
-                #     "lineWidth": 2,
-                #     "type": "polyline",
-                #     "closed": True,
-                #     "points": inner_polygon_Array.tolist()/diff_polygon_Array.tolist(),
-                #     "Num_of_Virion": 12,
-                #     "Num_of_ProductiveInfection": 43
-                # }
+
+                with open(tmpPath) as json_file:
+                    masks = json.load(json_file)
+                    for mask in masks:
+                        if bool(mask):
+                            print('--------------0----------')
+                            csvFileId = list(mask.keys())[0]
+                            includeAnnotations = mask[csvFileId]['includeAnnotations']
+                            pixelsPerVirion = mask[csvFileId]['pixelsPerVirion']
+                            pixelThreshold = mask[csvFileId]['pixelThreshold']
+                            roundnessThreshold = mask[csvFileId]['roundnessThreshold']
+                            print('--------------0.5----------')
+                            # excludeAnnotations = mask[csvFileId]['excludeAnnotations']
+                            query = { "relatedId": csvFileId,
+                                      "name": "rnascope",
+                                      "records.pixelsPerVirions": pixelsPerVirion,
+                                      "records.pixelThresholds": pixelThreshold,
+                                      "records.roundnessThresholds": roundnessThreshold,
+                                      "records.includeAnnotations": {"$size": len(includeAnnotations), "$all": includeAnnotations},
+                                      # "records.excludeAnnotations": {"$size": len(excludeAnnotations), "$all": excludeAnnotations},
+                            }
+                            newRecord = False
+                            print('--------------1----------')
+                            if len(list(Workflow().find(query))) == 0:
+                                newRecord = True
+                            if newRecord:
+                                # make a workflow record
+                                results = []
+                                elements =[]
+                                # elements: {
+                                #     "name": union_include_element_index,
+                                #     "inner_polygon": True/False,
+                                #     "fillColor": "rgba(0,0,0,0)",
+                                #     "lineColor": "rgb(0,255,0)",
+                                #     "lineWidth": 2,
+                                #     "type": "polyline",
+                                #     "closed": True,
+                                #     "points": inner_polygon_Array.tolist()/diff_polygon_Array.tolist(),
+                                #     "roundnessThreshold": roundnessThreshold,
+                                #     "pixelThreshold": pixelThreshold,
+                                #     "pixelsPerVirion": pixelsPerVirion,
+                                #     "Num_of_Virion": 12,
+                                #     "Num_of_ProductiveInfection": 43
+                                # }
+                                for index, element in enumerate(mask[csvFileId]['elements']):
+                                    record = [result for result in results if result['name'] == element["name"]]
+                                    if len(record) != 0:
+                                        if element['inner_polygon']:
+                                            record[0].update({'innerAnnotationElementId': []})
+                                        else:
+                                            record[0].update({'Num_of_Cell': element["Num_of_Cell"]})
+                                    else:
+                                        Num_of_Virion = element["Num_of_Virion"]
+                                        Num_of_ProductiveInfection = element["Num_of_ProductiveInfection"]
+                                        record = { "annotationElementId": "",
+                                                   "Num_of_Virion": Num_of_Virion,
+                                                   "Num_of_ProductiveInfection": Num_of_ProductiveInfection,
+                                                   "name": element['name']}
+                                        if element["inner_polygon"]:
+                                            record["innerAnnotationElementId"] = []
+                                        results.append(record)
+                                    element["label"] = {"value": element['name']}
+                                    element["group"] = "Workflow(rnascope)"
+                                    del element["Num_of_Virion"]
+                                    del element["Num_of_ProductiveInfection"]
+                                    elements.append(element)
+                                print('--------------2----------')
+                                doc = { "name": "rnascope",
+                                        "itemId": mask[csvFileId]['itemId'],
+                                        "relatedId": csvFileId,
+                                        "records": {
+                                            "roundnessThreshold": roundnessThreshold,
+                                            "pixelThreshold": pixelThreshold,
+                                            "pixelsPerVirion": pixelsPerVirion,
+                                            "includeAnnotations": includeAnnotations,
+                                            # "excludeAnnotations": excludeAnnotations,
+                                            "results": results
+                                       }}
+                                print(doc)
+                                workflow = Workflow().createWorkflow(doc, user)
+                                print('--------------3----------')
+                                doc = { "_id": workflow['_id'],
+                                        "_version": 0,
+                                        "annotation": {"elements": elements}}
+                                Annotationelement().updateElements(doc)
+                                print('--------------4----------')
+                                annotationelements = list(Annotationelement().find({"annotationId": workflow['_id']}))
+                                names = []
+                                ids = []
+                                inner = []
+                                for index, element in enumerate(annotationelements):
+                                    names.append(element['element']['label']['value'])
+                                    ids.append(element['_id'])
+                                    inner.append(element['element']['inner_polygon'])
+                                for result in results:
+                                    if 'innerAnnotationElementId' in result:
+                                        indexOfIds = [i for i, x in enumerate(names) if x == str(result["name"])]
+                                        for indexOfId in indexOfIds:
+                                            print(inner[indexOfId])
+                                            print(type(inner[indexOfId]))
+                                            if inner[indexOfId]:
+                                                result['innerAnnotationElementId'].append(ids[indexOfId])
+                                            else:
+                                                result['annotationElementId'] = ids[indexOfId]
+                                    else:
+                                        indexOfId = int(names.index(str(result["name"])))
+                                        result['annotationElementId'] = ids[indexOfId]
+                                workflow["records"]["results"] = results
+                                Workflow().save(workflow)
+                Notification().createNotification(
+                    type='job_email_sent', data=job, user=user,
+                    expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
+                shutil.rmtree(tmpPath)
+                _notifyUser(event, meta)
+            if status == JobStatus.SUCCESS:
+                Notification().createNotification(
+                    type='job_email_sent', data=job, user=user,
+                    expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
+                _notifyUser(event, meta)
         else:
             return
     elif (meta.get('handler') == 'slurm_handler'):

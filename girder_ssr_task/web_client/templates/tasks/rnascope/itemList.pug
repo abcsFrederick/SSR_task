@@ -1,0 +1,36 @@
+//- ul.g-item-list(style='padding:0px')
+//-   each item in items
+//-     li.g-item-list-entry(class=(highlightItem && item.id === selectedItemId ? 'g-selected' : ''), public=(isParentPublic ? 'true' : 'false'), style='list-style: none;')
+//-       a.g-item-list-link(g-item-cid=item.cid)
+//-         .large_image_container(style='min-width: 100px;')
+//-           .large_image_thumbnail(style='width: 100px;')
+//-             img.loaded(src=`api/v1/item/${item.id}/tiles/thumbnail?width=80&height=50`)
+//-         = item.name()
+
+li.wsi-list.col-md-12(style='list-style: none;text-align: center')
+  .col-md-3
+    .cd4plus-WSIs-select-prepared-zone.wsis(item-id=wsi.id,style='overflow-y: auto;')
+      .large_image_container(style='min-width: 100px;')
+        .large_image_thumbnail(style='width: 100px;')
+          img.loaded(src=`api/v1/item/${wsi.id}/tiles/thumbnail?width=80&height=50`)
+      = wsi.name()
+  .col-md-3
+    .cd4plus-Annotations-select-prepared-zone.annotations(style='overflow-y: auto;')
+      select.includedAnnotation(item-id=wsi.id,style='min-width: 100%;max-width: 100%')
+        option#entireMask WSI
+        if annotations.length
+          each annotation in annotations
+            option(id=annotation._id) #{annotation.annotation.name}
+  //- .col-md-3
+  //-   .cd4plus-Annotations-select-prepared-zone.annotations(style='overflow-y: auto;')
+  //-     select.excludedAnnotation(item-id=wsi.id,style='min-width: 100%;max-width: 100%')
+  //-       option#noExclude None
+  //-       if annotations.length
+  //-         each annotation in annotations
+  //-           option(id=annotation._id) #{annotation.annotation.name}
+  .col-md-2
+    input.parameters.roundnessThreshold(item-id=wsi.id, value=parameters.roundnessThreshold, style='min-width: 100%;max-width: 100%')
+  .col-md-2
+    input.parameters.pixelThreshold(item-id=wsi.id, value=parameters.pixelThreshold, style='min-width: 100%;max-width: 100%')
+  .col-md-2
+    input.parameters.pixelsPerVirion(item-id=wsi.id, value=parameters.pixelsPerVirion, style='min-width: 100%;max-width: 100%')
