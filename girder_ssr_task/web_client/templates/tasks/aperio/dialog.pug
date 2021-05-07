@@ -12,12 +12,18 @@
         .row
           ul#aperio-preview.prepareaperioZone.g-item-list(style='padding: 0px;')
         .row
-          .form-group
-            label(for='h-aperio-name') Parameters
-            input#h-aperio-username.input-sm.form-control(
+          ul.nav.navbar-nav
+            li
+              a#AperioLogin.loginNav.active(style="padding: 10px 10px;", url="SSR_task/aperio_anno") Aperio
+            li
+              a#HaloLogin.loginNav(style="padding: 10px 10px;", url="SSR_task/halo_anno") Halo
+        .row
+          .loginForm
+            // label(for='h-aperio-name') Parameters
+            input#h-db-username.input-sm.form-control(
               type='text', placeholder='username')
-            input#h-aperio-password.input-sm.form-control(
+            input#h-db-password.input-sm.form-control(
               type='password', placeholder='password')
-          .g-validation-failed-message
+        .g-validation-failed-message
       .modal-footer
         button.btn.btn-small.btn-primary.query-batch-aperio(type='button') Query

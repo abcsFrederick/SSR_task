@@ -35,7 +35,7 @@ from .models.workflow import Workflow
 from .models.job import Job as JobModel
 
 from girder_archive.external.aperio_proxy import AperioProxy
-
+from girder_archive.external.halo_proxy import  HaloProxy
 
 class SSR_task(Resource):
     def __init__(self):
@@ -57,6 +57,7 @@ class SSR_task(Resource):
         self.route("POST", ("workflow", "statistic", "download",), self.statistic_download)
 
         self.route("POST", ("aperio_anno",), self.aperio_anno)
+        self.route('POST', ("halo_anno",), self.halo_anno)
 
         self.route("GET", ("settings",), self.getSettings)
 
@@ -599,15 +600,14 @@ class SSR_task(Resource):
     @autoDescribeRoute(
         Description("Split multiple in one dicom volumn.")
         .jsonParam("itemIds", "item ids of WSIs.", required=True)
-        .jsonParam("aperioIds", "aperio ids.", required=True)
         .param("username", "username of aperio portal.", required=True)
         .param("password", "password of aperio portal.", required=True)
     )
-    def aperio_anno(self, itemIds, aperioIds, username, password):
+    def aperio_anno(self, itemIds, username, password):
         self.user = self.getCurrentUser()
-        for index in range(len(aperioIds)):
+        for index in range(len(itemIds)):
             item = Item().load(itemIds[index], level=AccessType.READ, user=self.user)
-            id, ext = os.path.splitext(aperioIds[index])
+            id, ext = os.path.splitext(item["name"])
             if ("largeImage" in item) and ext in [".tif",".svs",".tiff"]:
                 aperio = AperioProxy(username, password)
                 htmlString = aperio.getAnn(id)
@@ -681,6 +681,88 @@ class SSR_task(Resource):
                                         "type": "polyline" }
                             annotation["annotation"]["elements"].append(element)
                     annotation = Annotation().updateAnnotation(annotation, updateUser=self.user)
+    
+    @access.user
+    @autoDescribeRoute(
+        Description("Split multiple in one dicom volumn.")
+        .jsonParam("itemIds", "item ids of WSIs.", required=True)
+        .param("username", "username of aperio portal.", required=True)
+        .param("password", "password of aperio portal.", required=True)
+    )
+    def halo_anno(self, itemIds, username, password):
+        self.user = self.getCurrentUser()
+        for index in range(len(itemIds)):
+            item = Item().load(itemIds[index], level=AccessType.READ, user=self.user)
+            id, ext = os.path.splitext(item["name"])
+
+            halo = HaloProxy(username, password)
+            htmlString = halo.getAnn(id)
+            layers = htmlString[0]['annotationLayers']
+            if len(layers):
+                for layer in layers:
+                    query = {'_active': {'$ne': False}}
+                    query['itemId'] = item['_id']
+                    query['annotation.name'] = layer['name']
+                    query['annotation.description'] = 'Fetched from Halo DB'
+                    fields = list(
+                        (
+                            'annotation.name', 'annotation.description', 'access', 'groups', '_version'
+                        ) + Annotation().baseFields)
+                    annotations = list(Annotation().findWithPermissions(
+                        query, fields=fields, user=self.user, level=AccessType.READ))
+                    if len(annotations) == 0:
+                        annotationBody = { "description": "Fetched from Halo DB",
+                                           "elements": [],
+                                           "name": layer['name']}
+                        annotation = Annotation().createAnnotation(
+                            item, self.user, annotationBody)
+                    else:
+                        annotation = annotations[0]
+                        annotation["annotation"]["elements"] = []
+                    for region in layer['regions']:
+                        geometry = json.loads(region['geometry'])
+                        if region['shapeType'] == 'RECTANGLE':
+                            x_min = float(min(geometry['coordinates'][0][0], geometry['coordinates'][1][0]))
+                            x_max = float(max(geometry['coordinates'][0][0], geometry['coordinates'][1][0]))
+                            y_min = float(min(geometry['coordinates'][0][1], geometry['coordinates'][1][1]))
+                            y_max = float(max(geometry['coordinates'][0][1], geometry['coordinates'][1][1]))
+
+                            width = x_max - x_min + 1  # + 1?
+                            height = y_max - y_min + 1   # + 1?
+                            centerX = x_min + width / 2
+                            centerY = y_min + height / 2
+                            element = { "center": [centerX, centerY, 0],
+                                        "fillColor": "rgba(0,0,0,0)",
+                                        "group": "default",
+                                        "height": height,
+                                        "id": uuid.uuid4().hex[:24],
+                                        "label": { "value": str(region['pk']) },
+                                        "lineColor": layer['color'],
+                                        "lineWidth": 2,
+                                        "normal": [0, 0, 1],
+                                        "rotation": 0,
+                                        "type": "rectangle",
+                                        "width": width }
+                            annotation["annotation"]["elements"].append(element)
+                        if region['shapeType'] == 'POLYGON':
+                            points = []
+                            for vertex in geometry['coordinates']:
+                                point = [float(vertex[0]), float(vertex[1]), 0]
+                                points.append(point)
+                            element = { "closed": True,
+                                        "fillColor": "rgba(0,0,0,0)",
+                                        "group": "default",
+                                        "id": uuid.uuid4().hex[:24],
+                                        "label": { "value": str(region['pk']) },
+                                        "lineColor": layer['color'],
+                                        "lineWidth": 2,
+                                        "points": points,
+                                        "type": "polyline" }
+                            annotation["annotation"]["elements"].append(element)
+                        if region['shapeType'] == 'ELLIPSE':
+                            pass
+                    annotation = Annotation().updateAnnotation(annotation, updateUser=self.user)
+
     @access.user(scope=TokenScope.DATA_READ)
     @autoDescribeRoute(
         Description("Find all Workflows.")

@@ -1,4 +1,3 @@
-from . import rest
 import os
 import shutil
 import datetime
@@ -29,6 +28,7 @@ from girder_large_image_annotation.models.annotationelement import Annotationele
 from girder_large_image_annotation.models.annotation import Annotation
 from girder_large_image_annotation.rest.annotation import AnnotationResource
 
+from . import rest
 from .constants import PluginSettings, PAIP2021ColonColor
 from .models.tasks.link import Link
 from .models.workflow import Workflow

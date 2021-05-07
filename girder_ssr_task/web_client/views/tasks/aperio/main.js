@@ -15,6 +15,8 @@ import BrowserWidget from './browserWidget';
 // import prepareHeaderTemplate from '../../../templates/tasks/cd4plus/Header.pug';
 import ItemListTemplate from '../../../templates/tasks/aperio/itemList.pug';
 
+import '../../../stylesheets/tasks/authentication/authentication.styl';
+
 import '@girder/core/utilities/jquery/girderEnable';
 import '@girder/core/utilities/jquery/girderModal';
 
@@ -28,9 +30,16 @@ var aperioDialogView = View.extend({
             this.$('#h-task-aperio-container').removeClass('hidden');
             this.elementId = evt.currentTarget.id;
         },
+        'click .loginNav':function (evt) {
+            $('.loginNav').removeClass('active');
+            $(evt.currentTarget).addClass('active');
+            $('.LoginForm').hide();
+            this.auth_url = $(evt.currentTarget).attr('url');
+        },
         'click .query-batch-aperio': 'query'
     },
     initialize(settings) {
+        this.auth_url = 'SSR_task/aperio_anno';
         // this.listenTo(eventStream, 'g:event.job_email_sent', _.bind(function (event) {
         //     events.trigger('g:alert', {
         //         icon: 'ok',
@@ -42,7 +51,7 @@ var aperioDialogView = View.extend({
     },
     render: function () {
         this.$el.html(aperioTemplate({
-            title: 'Aperio Database annotation fetching'
+            title: 'Aperio/Halo Database annotation fetching'
         }))
         .girderModal(this);
 
@@ -93,28 +102,22 @@ var aperioDialogView = View.extend({
     },
     query () {
         if (!this.validate()) {
-            this.$('.g-validation-failed-message').html('Username/password or ');
+            this.$('.g-validation-failed-message').html('Username/password or no WSI folder selected.');
             return;
         };
-        let username = $('#h-aperio-username').val(),
-            password = $('#h-aperio-password').val();
-        let items = ['2'],
-            aperioIds = ['1'];
+        let username = $('#h-db-username').val(),
+            password = $('#h-db-password').val();
+        let items = [];
         for (let i = 0; i < this.WSIs.length; i++) {
-            $('.wsis[item-id='+this.WSIs[i].get('_id' )+']');
-            let overlay = $('.selectMask[item-id='+this.WSIs[i].get('_id' )+'] option:selected').attr('id');
-            let annotation = $('.selectAnnotation[item-id='+this.WSIs[i].get('_id' )+'] option:selected').attr('id') || "";
             items.push(this.WSIs[i].get('_id' ));
-            aperioIds.push(this.WSIs[i].get('name' ));
         }
 
         restRequest({
-            url: 'SSR_task/aperio_anno',
+            url: this.auth_url,
             method: 'POST',
             data: { username: username,
                     password: password,
-                    itemIds: JSON.stringify(items),
-                    aperioIds: JSON.stringify(aperioIds)
+                    itemIds: JSON.stringify(items)
             }
         }).done(() => {
             // annotation refresh
