@@ -595,7 +595,7 @@ SettingDefault.defaults.update({
     PluginSettings.TASKS: {
         "Link": False,
         "DicomSplit": False,
-        "Aperio": False,
+        "Archive": False,
         "Overlays": False,
         "CD4+": False,
         "RNAScope": False,
