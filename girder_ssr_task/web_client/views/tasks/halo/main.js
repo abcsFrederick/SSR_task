@@ -8,12 +8,12 @@ import { handleClose, handleOpen } from '@girder/core/dialog';
 import { restRequest } from '@girder/core/rest';
 
 import CD4plusModel from '../../../models/tasks/cd4plus/cd4plus';
-import aperioTemplate from '../../../templates/tasks/aperio/dialog.pug';
+import haloTemplate from '../../../templates/tasks/halo/dialog.pug';
 
 import BrowserWidget from './browserWidget';
 
 // import prepareHeaderTemplate from '../../../templates/tasks/cd4plus/Header.pug';
-import ItemListTemplate from '../../../templates/tasks/aperio/itemList.pug';
+import ItemListTemplate from '../../../templates/tasks/halo/itemList.pug';
 
 import '../../../stylesheets/tasks/authentication/authentication.styl';
 
@@ -23,23 +23,17 @@ import '@girder/core/utilities/jquery/girderModal';
 /**
  * This view shows a register modal dialog.
  */
-var aperioDialogView = View.extend({
+var haloDialogView = View.extend({
     events: {
-        'click .h-task-aperio-select': function (evt) {
-            this.$('.h-task-aperio-select').attr('disabled', true);
-            this.$('#h-task-aperio-container').removeClass('hidden');
+        'click .h-task-halo-select': function (evt) {
+            this.$('.h-task-halo-select').attr('disabled', true);
+            this.$('#h-task-halo-container').removeClass('hidden');
             this.elementId = evt.currentTarget.id;
         },
-        'click .loginNav':function (evt) {
-            $('.loginNav').removeClass('active');
-            $(evt.currentTarget).addClass('active');
-            $('.LoginForm').hide();
-            this.auth_url = $(evt.currentTarget).attr('url');
-        },
-        'click .query-batch-aperio': 'query'
+        'click .query-batch-halo': 'query'
     },
     initialize(settings) {
-        this.auth_url = 'SSR_task/aperio_anno';
+        this.auth_url = 'SSR_task/halo_anno';
         // this.listenTo(eventStream, 'g:event.job_email_sent', _.bind(function (event) {
         //     events.trigger('g:alert', {
         //         icon: 'ok',
@@ -50,8 +44,8 @@ var aperioDialogView = View.extend({
         // }, this));
     },
     render: function () {
-        this.$el.html(aperioTemplate({
-            title: 'Aperio Database annotation fetching'
+        this.$el.html(haloTemplate({
+            title: 'Halo Database annotation fetching'
         }))
         .girderModal(this);
 
@@ -70,7 +64,7 @@ var aperioDialogView = View.extend({
                 pageLimit: 50
             },
             root: this.overlayRoot
-        }).setElement($('#h-task-aperio-container')).render();
+        }).setElement($('#h-task-halo-container')).render();
         this.listenTo(this._browserWidget, 'g:selected', this._selectFolder);
 
         return this;
@@ -80,22 +74,22 @@ var aperioDialogView = View.extend({
         if (folder) {
             this.$('#' + this.elementId).text(folder.get('name'));
         }
-        this.$('#h-task-aperio-container').addClass('hidden');
-        this.$('.h-task-aperio-select').attr('disabled', false);
+        this.$('#h-task-halo-container').addClass('hidden');
+        this.$('.h-task-halo-select').attr('disabled', false);
         this.collection = new ItemCollection();
         this.collection.fetch({ folderId: folder.get('_id') }).done(() => {
             // this.$('#' + this.elementId + '-prepared-zone').html(ItemListTemplate({
             //   items: this.collection.toArray()
             // }))
-            if (this.elementId === 'aperio-WSIs-select') {
+            if (this.elementId === 'halo-WSIs-select') {
                 this.WSIs = this.collection.toArray();
             }
 
             if (this.WSIs) {
-                this.$('#aperio-preview').html('');
-                // this.$('#aperio-preview').append(prepareHeaderTemplate());
+                this.$('#halo-preview').html('');
+                // this.$('#halo-preview').append(prepareHeaderTemplate());
             }
-            this.$('#aperio-preview').append(ItemListTemplate({
+            this.$('#halo-preview').append(ItemListTemplate({
                 wsis: this.WSIs
             }));
         });
@@ -141,11 +135,11 @@ var aperioDialogView = View.extend({
         this.$el.modal('hide');
     },
     validate() {
-        if (this.WSIs === undefined || this.$('#h-aperio-username').val() === "" || this.$('#h-aperio-password').val() === "") {
+        if (this.WSIs === undefined || this.$('#h-halo-username').val() === "" || this.$('#h-halo-password').val() === "") {
             return false;
         }
         return true;
     }
 });
 
-export default aperioDialogView;
+export default haloDialogView;

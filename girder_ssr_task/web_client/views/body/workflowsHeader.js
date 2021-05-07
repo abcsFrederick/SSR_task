@@ -5,6 +5,7 @@ import { restRequest } from '@girder/core/rest';
 import overlaysWorkflowView from '../tasks/overlays/main';
 import cd4plusWorkflowView from '../tasks/cd4plus/main';
 import aperioWorkflowView from '../tasks/aperio/main';
+import haloWorkflowView from '../tasks/halo/main';
 import downloadStatisticView from '../tasks/downloadStatistic/main';
 import rnascopeView from '../tasks/rnascope/main';
 
@@ -35,6 +36,13 @@ var WorkflowsHeader = View.extend({
             }
             if (taskName === 'aperio') {
                 this.workflowView = new aperioWorkflowView({
+                    el: $('#g-dialog-container'),
+                    parentView: this,
+                    workflow: $(evt.currentTarget).attr('data-name')
+                });
+            }
+            if (taskName === 'halo') {
+                this.workflowView = new haloWorkflowView({
                     el: $('#g-dialog-container'),
                     parentView: this,
                     workflow: $(evt.currentTarget).attr('data-name')
