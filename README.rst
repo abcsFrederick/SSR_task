@@ -14,14 +14,23 @@ Girder plugin for SSR Task deploy.
 
 Available Tasks:
  For Radiology
+ 
  1. Dicom Split
+ 
  2. Link
+ 
  For Pathology
+ 
  3. Aperio
+ 
  4. Halo
+ 
  5. Overlays
+ 
  6. CD4+
+ 
  7. RNAScope
+ 
  8. Download_Statistic
 
 Make sure set up girder-worker worker.local.cfg(for fetching) and SSR_task.GIRDER_WORKER_TMP(for writing) setting to the same place you want(large storage prefer). Otherwise fetched input and written output will be saved in different place.
