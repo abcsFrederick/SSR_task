@@ -25,7 +25,7 @@ from girder_archive.models.item import Item as ArchiveItem
 from girder_large_image_annotation.models.annotation import Annotation
 from girder_large_image_annotation.models.annotationelement import Annotationelement
 
-from .constants import PluginSettings, CSV_DIRECTORY
+from .constants import PluginSettings, CSV_DIRECTORY, AnnotationColorMap
 from .models.tasks.dicom_split import DicomSplit
 from .models.tasks.link import Link
 from .models.tasks.cd4_plus import Cd4Plus
@@ -643,68 +643,80 @@ class SSR_task(Resource):
                 root = tree.getroot()
                 if root.tag == "Annotations":
                     # TODO:update if exist
-                    query = {'_active': {'$ne': False}}
-                    query['itemId'] = item['_id']
-                    query['annotation.name'] = 'AperioDB'
-                    fields = list(
-                        (
-                            'annotation.name', 'annotation.description', 'access', 'groups', '_version'
-                        ) + Annotation().baseFields)
-                    annotations = list(Annotation().findWithPermissions(
-                        query, fields=fields, user=self.user, level=AccessType.READ))
-                    if len(annotations) == 0:
-                        annotationBody = { "description": "Query from Aperio DB",
-                                           "elements": [],
-                                           "name": "AperioDB" }
-                        annotation = Annotation().createAnnotation(
-                            item, self.user, annotationBody)
-                    else:
-                        annotation = annotations[0]
-                        annotation["annotation"]["elements"] = []
-                    for region in root.iter("Region"):
-                        # rectangle
-                        if region.get("Type") == "1":
-                            print('in rectangle')
-                            xList = []
-                            yList = []
-                            for vertex in region.iter('Vertex'):
-                                xList.append(float(vertex.attrib['X']))
-                                yList.append(float(vertex.attrib['Y']))
-                            bbox = [float(min(xList)), float(min(yList)), float(max(xList)), float(max(yList))]
-                            width = bbox[2] - bbox[0] + 1  # + 1?
-                            height = bbox[3] - bbox[1] + 1   # + 1?
-                            centerX = bbox[0] + width / 2
-                            centerY = bbox[1] + height / 2
-                            element = { "center": [centerX, centerY, 0],
-                                        "fillColor": "rgba(0,0,0,0)",
-                                        "group": "default",
-                                        "height": height,
-                                        "id": uuid.uuid4().hex[:24],
-                                        "label": { "value": region.get("Id") },
-                                        "lineColor": "rgb(0,0,255)",
-                                        "lineWidth": 2,
-                                        "normal": [0, 0, 1],
-                                        "rotation": 0,
-                                        "type": "rectangle",
-                                        "width": width }
-                            annotation["annotation"]["elements"].append(element)
-                        # polygon
-                        if region.get("Type") == "0":
-                            points = []
-                            for vertex in region.iter('Vertex'):
-                                point = [float(vertex.attrib['X']), float(vertex.attrib['Y']), float(vertex.attrib['Z'])]
-                                points.append(point)
-                            element = { "closed": True,
-                                        "fillColor": "rgba(0,0,0,0)",
-                                        "group": "default",
-                                        "id": uuid.uuid4().hex[:24],
-                                        "label": { "value": region.get("Id") },
-                                        "lineColor": "rgb(0,0,255)",
-                                        "lineWidth": 2,
-                                        "points": points,
-                                        "type": "polyline" }
-                            annotation["annotation"]["elements"].append(element)
-                    annotation = Annotation().updateAnnotation(annotation, updateUser=self.user)
+                    for Anno in root.iter("Annotation"):
+                        query = {'_active': {'$ne': False}}
+                        query['itemId'] = item['_id']
+                        if Anno.get("Name") is not None:
+                            layerName = str(Anno.get("Id")) + " " + Anno.get("Name")
+                            if Anno.get("Name") in AnnotationColorMap:
+                                color = AnnotationColorMap[Anno.get("Name")]
+                            else: 
+                                color = "rgb(0,0,255)"
+                        else:
+                            layerName = str(Anno.get("Id"))
+                            color = "rgb(0,0,255)"
+                        query['annotation.name'] = layerName
+
+                        fields = list(
+                            (
+                                'annotation.name', 'annotation.description', 'access', 'groups', '_version'
+                            ) + Annotation().baseFields)
+                        annotations = list(Annotation().findWithPermissions(
+                            query, fields=fields, user=self.user, level=AccessType.READ))
+                        if len(annotations) == 0:
+                            annotationBody = { "description": "Query and Parse from Aperio DB",
+                                               "elements": [],
+                                               "name": layerName }
+                            annotation = Annotation().createAnnotation(
+                                item, self.user, annotationBody)
+                        else:
+                            annotation = annotations[0]
+                            annotation["annotation"]["elements"] = []
+
+                        for region in root.iter("Region"):
+                            # rectangle
+                            if region.get("Type") == "1":
+                                print('in rectangle')
+                                xList = []
+                                yList = []
+                                for vertex in region.iter('Vertex'):
+                                    xList.append(float(vertex.attrib['X']))
+                                    yList.append(float(vertex.attrib['Y']))
+                                bbox = [float(min(xList)), float(min(yList)), float(max(xList)), float(max(yList))]
+                                width = bbox[2] - bbox[0] + 1  # + 1?
+                                height = bbox[3] - bbox[1] + 1   # + 1?
+                                centerX = bbox[0] + width / 2
+                                centerY = bbox[1] + height / 2
+                                element = { "center": [centerX, centerY, 0],
+                                            "fillColor": "rgba(0,0,0,0)",
+                                            "group": "default",
+                                            "height": height,
+                                            "id": uuid.uuid4().hex[:24],
+                                            "label": { "value": region.get("Id") },
+                                            "lineColor": color,
+                                            "lineWidth": 2,
+                                            "normal": [0, 0, 1],
+                                            "rotation": 0,
+                                            "type": "rectangle",
+                                            "width": width }
+                                annotation["annotation"]["elements"].append(element)
+                            # polygon
+                            if region.get("Type") == "0":
+                                points = []
+                                for vertex in region.iter('Vertex'):
+                                    point = [float(vertex.attrib['X']), float(vertex.attrib['Y']), float(vertex.attrib['Z'])]
+                                    points.append(point)
+                                element = { "closed": True,
+                                            "fillColor": "rgba(0,0,0,0)",
+                                            "group": "default",
+                                            "id": uuid.uuid4().hex[:24],
+                                            "label": { "value": region.get("Id") },
+                                            "lineColor": color,
+                                            "lineWidth": 2,
+                                            "points": points,
+                                            "type": "polyline" }
+                                annotation["annotation"]["elements"].append(element)
+                        annotation = Annotation().updateAnnotation(annotation, updateUser=self.user)
     
     @access.user
     @autoDescribeRoute(

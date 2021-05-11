@@ -223,13 +223,11 @@ def _updateJob(event):
                     masks = json.load(json_file)
                     for mask in masks:
                         if bool(mask):
-                            print('--------------0----------')
                             csvFileId = list(mask.keys())[0]
                             includeAnnotations = mask[csvFileId]['includeAnnotations']
                             pixelsPerVirion = mask[csvFileId]['pixelsPerVirion']
                             pixelThreshold = mask[csvFileId]['pixelThreshold']
                             roundnessThreshold = mask[csvFileId]['roundnessThreshold']
-                            print('--------------0.5----------')
                             # excludeAnnotations = mask[csvFileId]['excludeAnnotations']
                             query = { "relatedId": csvFileId,
                                       "name": "rnascope",
@@ -240,7 +238,6 @@ def _updateJob(event):
                                       # "records.excludeAnnotations": {"$size": len(excludeAnnotations), "$all": excludeAnnotations},
                             }
                             newRecord = False
-                            print('--------------1----------')
                             if len(list(Workflow().find(query))) == 0:
                                 newRecord = True
                             if newRecord:
@@ -284,7 +281,7 @@ def _updateJob(event):
                                     del element["Num_of_Virion"]
                                     del element["Num_of_ProductiveInfection"]
                                     elements.append(element)
-                                print('--------------2----------')
+
                                 doc = { "name": "rnascope",
                                         "itemId": mask[csvFileId]['itemId'],
                                         "relatedId": csvFileId,
@@ -296,14 +293,14 @@ def _updateJob(event):
                                             # "excludeAnnotations": excludeAnnotations,
                                             "results": results
                                        }}
-                                print(doc)
+
                                 workflow = Workflow().createWorkflow(doc, user)
-                                print('--------------3----------')
+
                                 doc = { "_id": workflow['_id'],
                                         "_version": 0,
                                         "annotation": {"elements": elements}}
                                 Annotationelement().updateElements(doc)
-                                print('--------------4----------')
+
                                 annotationelements = list(Annotationelement().find({"annotationId": workflow['_id']}))
                                 names = []
                                 ids = []

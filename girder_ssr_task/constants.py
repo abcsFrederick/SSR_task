@@ -10,4 +10,8 @@ PAIP2021ColonColor = {
     "nontumor without nerve": "rgb(0,255,240)"
 }
 
+AnnotationColorMap = {
+  
+}
+
 CSV_DIRECTORY = '.*csv.*'
