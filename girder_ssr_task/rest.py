@@ -585,13 +585,37 @@ class SSR_task(Resource):
                 workflow = Workflow().load(objectId, level=AccessType.READ, user=user)
                 item = Item().load(workflow['itemId'], level=AccessType.READ, user=user)
                 batchFolder = Folder().load(item['folderId'], level=AccessType.READ, user=user)
-                values = ('workflow: ' + workflow['name'], 'Mean: ' + str(workflow['records']['mean']),
+                values = ('Workflow: ' + workflow['name'], 'Mean: ' + str(workflow['records']['mean']),
                           'StdDev: ' + str(workflow['records']['stdDev']), 'Timestamp: ' + str(workflow['created']))
                 header += ','.join(map(str, values)) + '\n'
                 for roi in workflow['records']['results']:
                     values = ( batchFolder['name'], item['name'], roi['name'],
                                roi['Num_of_Cell']['low'], roi['Num_of_Cell']['mean'],
                                roi['Num_of_Cell']['high'], roi['Num_of_Cell']['pixels'])
+                    header += ','.join(map(str, values)) + '\n'
+                header += '\n'
+        if workflowType == 'rnascope':
+            setContentDisposition('RNAScope_' + workflowName + '.csv')
+            setResponseHeader('Content-Type', 'text/csv')
+            setRawResponse()
+            header = ','.join((
+                'batch',
+                'image',
+                'ROI',
+                'Num of Virion',
+                'Num of ProductiveInfection'
+            )) + '\n'
+            for objectId in objectIds:
+                workflow = Workflow().load(objectId, level=AccessType.READ, user=user)
+                item = Item().load(workflow['itemId'], level=AccessType.READ, user=user)
+                batchFolder = Folder().load(item['folderId'], level=AccessType.READ, user=user)
+                values = ('Workflow: ' + workflow['name'], 'RoundnessThreshold: ' + str(workflow['records']['roundnessThreshold']),
+                          'PixelThreshold: ' + str(workflow['records']['pixelThreshold']), 'PixelsPerVirion: ' + str(workflow['records']['pixelsPerVirion']),
+                          'Timestamp: ' + str(workflow['created']))
+                header += ','.join(map(str, values)) + '\n'
+                for roi in workflow['records']['results']:
+                    values = ( batchFolder['name'], item['name'], roi['name'],
+                               roi['Num_of_Virion'], roi['Num_of_ProductiveInfection'])
                     header += ','.join(map(str, values)) + '\n'
                 header += '\n'
             return header
