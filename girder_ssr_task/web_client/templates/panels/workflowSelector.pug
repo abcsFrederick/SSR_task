@@ -1,0 +1,15 @@
+extends ./panel.pug
+
+block title
+  | #[span.icon-tags] #{title}
+
+block content
+  #workflowsResultSelection
+    .workflowName
+    - var admin = user && user.get && user.get('admin');
+      select.workflowOptions.btn.btn-default(style='width:100%')
+        option(value=0)
+        each workflow, index in workflows
+          option(value=workflow) #{workflow}
+    .versionList
+    .annotationList

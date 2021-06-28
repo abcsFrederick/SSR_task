@@ -1,0 +1,15 @@
+each version in verisons
+  .version-group(data-workflow=version.get('_id'), data-overlay=version.get('overlayItemId'))
+    .version-group-name(data-workflow=version.get('_id'), data-overlay=version.get('overlayItemId'))
+      i.icon-eye-off
+      i.icon-folder
+      i.icon-eye(style="display: none;")
+      i.icon-folder-open(style="display: none;")
+      if workflow === 'cd4+'
+        | Mean: #{version.get('records').mean} StdDev: #{version.get('records').stdDev}
+      if workflow === 'rnascope'
+        | I.: #{version.get('records').pixelThreshold} V.: #{version.get('records').pixelsPerVirion} R.: #{version.get('records').roundnessThreshold}
+      i.icon-download(style="float: right;", title='Download report', data-workflow=version.get('_id'))
+      i.icon-cancel(style="float: right;", title='Remove', data-workflow=version.get('_id'))
+
+    .version-annotations

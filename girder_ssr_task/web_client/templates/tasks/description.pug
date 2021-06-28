@@ -1,0 +1,8 @@
+include mixin.pug
+each task in tasks
+  if currentTask === task
+    .tab-pane.fade.active.in(id="v-pills-"+task, role="tabpanel", aria-labelledby="v-pills-"+task)
+      +description(task)
+  else
+    .tab-pane.fade(id="v-pills-"+task, role="tabpanel", aria-labelledby="v-pills-Link")
+      +description(task)
