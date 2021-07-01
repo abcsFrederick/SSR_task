@@ -15,7 +15,7 @@ def rnascope(self, itemIds, csvPaths, csvFileIds,
              roundnessThresholds, pixelThresholds, pixelsPerVirions,
              includeAnnotations, excludeAnnotations, **kwargs):
     outputPath = kwargs.get('outputPath')
-    print("output path: " + outputPath)
+    print('output path: ' + outputPath)
     start_processing(outputPath, itemIds, csvPaths, csvFileIds,
                      roundnessThresholds, pixelThresholds, pixelsPerVirions,
                      includeAnnotations, excludeAnnotations)
@@ -31,27 +31,27 @@ def start_processing(outputPath, itemIds, csvPaths, csvFileIds,
 
     for indexO in range(NumOfMasks):
         csvPath = csvPaths[indexO]
-        print("Processing CSV at path: " + csvPath)
+        print('Processing CSV at path: ' + csvPath)
         roundnessThreshold = float(roundnessThresholds[indexO])
         pixelThreshold = float(pixelThresholds[indexO])
         pixelsPerVirion = float(pixelsPerVirions[indexO])
-        print("Parameters:\n Roundness: {}\n PixelThreshold: {}\n "
-              "PixelsPerVirion: {}".format(roundnessThreshold, pixelThreshold, pixelsPerVirion))
-        print("includeAnnotations: {}\n excludeAnnotations: {}\n".format(includeAnnotations[indexO], excludeAnnotations[indexO]))
+        print('Parameters:\n Roundness: {}\n PixelThreshold: {}\n '
+              'PixelsPerVirion: {}'.format(roundnessThreshold, pixelThreshold, pixelsPerVirion))
+        print('includeAnnotations: {}\n excludeAnnotations: {}\n'.format(includeAnnotations[indexO], excludeAnnotations[indexO]))
         output = {}
         elementName = 0
         output[csvFileIds[indexO]] = {
-            "itemId": itemIds[indexO],
-            "includeAnnotations": [],
-            "excludeAnnotations": [],
-            "roundnessThreshold": roundnessThreshold,
-            "pixelThreshold": pixelThreshold,
-            "pixelsPerVirion": pixelsPerVirion,
-            "elements": []
+            'itemId': itemIds[indexO],
+            'includeAnnotations': [],
+            'excludeAnnotations': [],
+            'roundnessThreshold': roundnessThreshold,
+            'pixelThreshold': pixelThreshold,
+            'pixelsPerVirion': pixelsPerVirion,
+            'elements': []
         }
         if includeAnnotations[indexO] != 'entireMask':
             print('processing ROIs')
-            print("Union include annotation elements polygons...")
+            print('Union include annotation elements polygons...')
             include_elements = includeAnnotations[indexO]['annotation']['elements']
             include_polygons = []
             for index, include in enumerate(include_elements):
@@ -81,7 +81,7 @@ def start_processing(outputPath, itemIds, csvPaths, csvFileIds,
             elementName = 'WSI'
             output[csvFileIds[indexO]]['includeAnnotations'].append('entireMask')
 
-        print("Union exclude annotation elements polygons...")
+        print('Union exclude annotation elements polygons...')
         exclude_flag = False
         if excludeAnnotations[indexO] != 'noExclude':
             exclude_elements = excludeAnnotations[indexO]['annotation']['elements']
@@ -152,25 +152,25 @@ def start_processing(outputPath, itemIds, csvPaths, csvFileIds,
                                         center = Point(int(row['bboxX']) + int(row['bboxWidth']) / 2,
                                                        int(row['bboxY']) + int(row['bboxHeight']) / 2)
                                         if center.within(Polygon(inner_polygon)):
-                                            if(int(row["pixels"]) > pixelThreshold and float(row["roundness"]) > roundnessThreshold):
+                                            if(int(row['pixels']) > pixelThreshold and float(row['roundness']) > roundnessThreshold):
                                                 productiveInfectionToRemove += 1
-                                            elif(int(row["pixels"]) < pixelsPerVirion):
+                                            elif(int(row['pixels']) < pixelsPerVirion):
                                                 virionToRemove += 1
                                             else:
-                                                virionToRemove += int(row["pixels"]) // pixelsPerVirion
+                                                virionToRemove += int(row['pixels']) // pixelsPerVirion
                                     inner_polygon_Array = np.array(inner_polygon)
                                     inner_polygon_Array = np.insert(inner_polygon_Array, 2, 0, 1)
                                     output[csvFileIds[indexO]]['elements'].append({
-                                        "name": str(elementName),
-                                        "inner_polygon": True,
-                                        "fillColor": "rgba(0,0,0,0)",
-                                        "lineColor": "rgba(0,255,0,0.5)",
-                                        "lineWidth": 2,
-                                        "type": "polyline",
-                                        "closed": True,
-                                        "points": inner_polygon_Array.tolist(),
-                                        "Num_of_Virion": {},
-                                        "Num_of_ProductiveInfection": {}
+                                        'name': str(elementName),
+                                        'inner_polygon': True,
+                                        'fillColor': 'rgba(0,0,0,0)',
+                                        'lineColor': 'rgba(0,255,0,0.5)',
+                                        'lineWidth': 2,
+                                        'type': 'polyline',
+                                        'closed': True,
+                                        'points': inner_polygon_Array.tolist(),
+                                        'Num_of_Virion': {},
+                                        'Num_of_ProductiveInfection': {}
                                     })
                             # reset header if there are inner polygons
                             csvfile.seek(0)
@@ -179,27 +179,27 @@ def start_processing(outputPath, itemIds, csvPaths, csvFileIds,
                                 center = Point(int(row['bboxX']) + int(row['bboxWidth']) / 2,
                                                int(row['bboxY']) + int(row['bboxHeight']) / 2)
                                 if center.within(Polygon(exter_polygon)):
-                                    if(int(row["pixels"]) > pixelThreshold and float(row["roundness"]) > roundnessThreshold):
+                                    if(int(row['pixels']) > pixelThreshold and float(row['roundness']) > roundnessThreshold):
                                         productiveInfection += 1
-                                    elif(int(row["pixels"]) < pixelsPerVirion):
+                                    elif(int(row['pixels']) < pixelsPerVirion):
                                         virion += 1
                                     else:
-                                        virion += int(row["pixels"]) // pixelsPerVirion
+                                        virion += int(row['pixels']) // pixelsPerVirion
                             print('ProductiveInfection: ' + str(productiveInfection - productiveInfectionToRemove))
                             print('Virion: ' + str(virion - virionToRemove))
                             exter_polygon_Array = np.array(exter_polygon)
                             exter_polygon_Array = np.insert(exter_polygon_Array, 2, 0, 1)
                             output[csvFileIds[indexO]]['elements'].append({
-                                "name": str(elementName),
-                                "inner_polygon": False,
-                                "fillColor": "rgba(0,0,0,0)",
-                                "lineColor": "rgb(25,183,20)",
-                                "lineWidth": 3,
-                                "type": "polyline",
-                                "closed": True,
-                                "points": exter_polygon_Array.tolist(),
-                                "Num_of_Virion": virion - virionToRemove,
-                                "Num_of_ProductiveInfection": productiveInfection - productiveInfectionToRemove
+                                'name': str(elementName),
+                                'inner_polygon': False,
+                                'fillColor': 'rgba(0,0,0,0)',
+                                'lineColor': 'rgb(25,183,20)',
+                                'lineWidth': 3,
+                                'type': 'polyline',
+                                'closed': True,
+                                'points': exter_polygon_Array.tolist(),
+                                'Num_of_Virion': virion - virionToRemove,
+                                'Num_of_ProductiveInfection': productiveInfection - productiveInfectionToRemove
                             })
                             elementName += 1
                 else:
@@ -217,25 +217,25 @@ def start_processing(outputPath, itemIds, csvPaths, csvFileIds,
                             center = Point(int(row['bboxX']) + int(row['bboxWidth']) / 2,
                                            int(row['bboxY']) + int(row['bboxHeight']) / 2)
                             if center.within(include):
-                                if(int(row["pixels"]) > pixelThreshold and float(row["roundness"]) > roundnessThreshold):
+                                if(int(row['pixels']) > pixelThreshold and float(row['roundness']) > roundnessThreshold):
                                     productiveInfection += 1
-                                elif(int(row["pixels"]) < pixelsPerVirion):
+                                elif(int(row['pixels']) < pixelsPerVirion):
                                     virion += 1
                                 else:
-                                    virion += int(row["pixels"]) // pixelsPerVirion
+                                    virion += int(row['pixels']) // pixelsPerVirion
                         print('ProductiveInfection: ' + str(productiveInfection))
                         print('Virion: ' + str(virion))
                         output[csvFileIds[indexO]]['elements'].append({
-                            "name": str(elementName),
-                            "inner_polygon": False,
-                            "fillColor": "rgba(0,0,0,0)",
-                            "lineColor": "rgb(25,183,20)",
-                            "lineWidth": 3,
-                            "type": "polyline",
-                            "closed": True,
-                            "points": include_polygon_Array.tolist(),
-                            "Num_of_Virion": virion,
-                            "Num_of_ProductiveInfection": productiveInfection
+                            'name': str(elementName),
+                            'inner_polygon': False,
+                            'fillColor': 'rgba(0,0,0,0)',
+                            'lineColor': 'rgb(25,183,20)',
+                            'lineWidth': 3,
+                            'type': 'polyline',
+                            'closed': True,
+                            'points': include_polygon_Array.tolist(),
+                            'Num_of_Virion': virion,
+                            'Num_of_ProductiveInfection': productiveInfection
                         })
                         elementName += 1
             else:
@@ -252,12 +252,12 @@ def start_processing(outputPath, itemIds, csvPaths, csvFileIds,
                             if(center.within(exclude)):
                                 excludeFlag = True
                     if not excludeFlag:
-                        if(int(row["pixels"]) > pixelThreshold and float(row["roundness"]) > roundnessThreshold):
+                        if(int(row['pixels']) > pixelThreshold and float(row['roundness']) > roundnessThreshold):
                             productiveInfection += 1
-                        elif(int(row["pixels"]) < pixelsPerVirion):
+                        elif(int(row['pixels']) < pixelsPerVirion):
                             virion += 1
                         else:
-                            virion += int(row["pixels"]) // pixelsPerVirion
+                            virion += int(row['pixels']) // pixelsPerVirion
                 print('ProductiveInfection: ' + str(productiveInfection))
                 print('Virion: ' + str(virion))
                 if exclude_flag:
@@ -266,29 +266,29 @@ def start_processing(outputPath, itemIds, csvPaths, csvFileIds,
                         exclude_polygon = list(zip(exclude_x, exclude_y))
                         exclude_polygon = np.insert(exclude_polygon, 2, 0, 1)
                         output[csvFileIds[indexO]]['elements'].append({
-                            "name": str(elementName),
-                            "inner_polygon": True,
-                            "fillColor": "rgba(0,0,0,0)",
-                            "lineColor": "rgba(0,255,0,0.5)",
-                            "lineWidth": 2,
-                            "type": "polyline",
-                            "closed": True,
-                            "points": exclude_polygon.tolist(),
-                            "Num_of_Virion": virion,
-                            "Num_of_ProductiveInfection": productiveInfection
+                            'name': str(elementName),
+                            'inner_polygon': True,
+                            'fillColor': 'rgba(0,0,0,0)',
+                            'lineColor': 'rgba(0,255,0,0.5)',
+                            'lineWidth': 2,
+                            'type': 'polyline',
+                            'closed': True,
+                            'points': exclude_polygon.tolist(),
+                            'Num_of_Virion': virion,
+                            'Num_of_ProductiveInfection': productiveInfection
                         })
                 else:
                     output[csvFileIds[indexO]]['elements'].append({
-                        "name": str(elementName),
-                        "inner_polygon": False,
-                        "fillColor": "rgba(0,0,0,0)",
-                        "lineColor": "rgb(25,183,20)",
-                        "lineWidth": 3,
-                        "type": "polyline",
-                        "closed": True,
-                        "points": [[0, 0, 0], [0, 0, 0]],
-                        "Num_of_Virion": virion,
-                        "Num_of_ProductiveInfection": productiveInfection
+                        'name': str(elementName),
+                        'inner_polygon': False,
+                        'fillColor': 'rgba(0,0,0,0)',
+                        'lineColor': 'rgb(25,183,20)',
+                        'lineWidth': 3,
+                        'type': 'polyline',
+                        'closed': True,
+                        'points': [[0, 0, 0], [0, 0, 0]],
+                        'Num_of_Virion': virion,
+                        'Num_of_ProductiveInfection': productiveInfection
                     })
         outputAnnotations.append(output)
     with open(outputPath, 'w') as outfile:

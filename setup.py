@@ -5,7 +5,7 @@ with open('README.rst') as readme_file:
 
 requirements = [
     'girder>=3',
-    'girder-worker[girder]',
+    'girder-worker[girder]>=0.6.0',
     'girder-worker-utils',
     'girder-jobs',
     'girder-archive',

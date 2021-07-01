@@ -1,7 +1,7 @@
 import os
 import shutil
 import datetime
-import bson
+# import bson
 import json
 import uuid
 import xml.etree.ElementTree as ET
@@ -36,34 +36,38 @@ from .models.workflow import Workflow
 def _notifyUser(event, meta):
     userId = event.info['job']['userId']
     user = UserModel().load(userId, force=True, fields=['email'])
-    outputName = event.info['job'].get('kwargs')['inputs']['outPath']['data'].split('/')[-1]
-    inputName = event.info['job'].get('kwargs')['inputs']['topFolder0']['name']
+    # jobTitle = event.info['job'].get('title')
+    # outputName = event.info['job'].get('kwargs')['inputs']['outPath']['data'].split('/')[-1]
+    # inputName = event.info['job'].get('kwargs')['inputs']['topFolder0']['name']
     email = user['email']
     template = _templateLookup.get_template('job_done.mako')
     params = {}
     params['host'] = Setting().get(SettingKey.EMAIL_FROM_ADDRESS)
     params['brandName'] = 'SSR'  # Setting().get(SettingKey.BRAND_NAME)
-    params['inputName'] = inputName
-    params['outputName'] = outputName
-    if meta.get('task') == 'splitDicom':
+    if event.info['job']['type'] == 'split':
         taskName = 'DICOM Split'
-        parentFolderId = event.info['job'].get('kwargs')['outputs']['splitedVolumn']['parent_id']
-        resultFolder = Folder().findOne({
-            'parentId': bson.ObjectId(parentFolderId),
-            'name': outputName,
-            'parentCollection': 'folder'
-        })
-        downloadLink = os.path.join(params['host'],
-                                    'api', 'v1', 'folder',
-                                    str(resultFolder.get('_id')), 'download')
-        params['link'] = downloadLink
+        params['task'] = taskName
+        # parentFolderId = event.info['job'].get('kwargs')['outputs']['splitedVolumn']['parent_id']
+        # resultFolder = Folder().findOne({
+        #     'parentId': bson.ObjectId(parentFolderId),
+        #     'name': outputName,
+        #     'parentCollection': 'folder'
+        # })
+        # downloadLink = os.path.join(params['host'],
+        #                             'api', 'v1', 'folder',
+        #                             str(resultFolder.get('_id')), 'download')
+        # params['inputName'] = inputName
+        # params['outputName'] = outputName
+        # params['link'] = downloadLink
     else:
-        taskName = meta.get('task')
+        taskName = event.info['job']['type']
+        params['task'] = taskName
+
     text = template.render(**params)
     mail_utils.sendMail(
-        to=email,
-        subject='Job Status: ' + taskName + ' finished',
-        text=text)
+        'Job Status: ' + taskName + ' finished',
+        text,
+        email)
 
 
 def _updateJob(event):
@@ -114,7 +118,6 @@ def _updateJob(event):
                             overlayId = list(mask.keys())[0]
                             includeAnnotations = mask[overlayId]['includeAnnotations']
                             excludeAnnotations = mask[overlayId]['excludeAnnotations']
-
                             # query all includeAnnotations/excludeAnnotations regardless order
                             query = {
                                 "relatedId": overlayId,
@@ -131,7 +134,6 @@ def _updateJob(event):
                                 # make a workflow record
                                 results = []
                                 elements = []
-
                                 # elements: {
                                 #     "name": union_include_element_index,
                                 #     "inner_polygon": True/False,
@@ -180,9 +182,13 @@ def _updateJob(event):
                                 # Annotation().createAnnotation(item, user, {"description":"cd4+", "elements": elements, "name":'workflow'})
 
                                 # we are using workflow id as fake annotation id
-                                doc = {"_id": workflow['_id'],
-                                       "_version": 0,
-                                       "annotation": {"elements": elements}}
+                                doc = {
+                                    "_id": workflow['_id'],
+                                    "_version": 0,
+                                    "annotation": {
+                                        "elements": elements
+                                    }
+                                }
                                 Annotationelement().updateElements(doc)
                                 annotationelements = list(Annotationelement().find({"annotationId": workflow['_id']}))
                                 names = []
@@ -196,8 +202,6 @@ def _updateJob(event):
                                     if 'innerAnnotationElementId' in result:
                                         indexOfIds = [i for i, x in enumerate(names) if x == str(result["name"])]
                                         for indexOfId in indexOfIds:
-                                            print(inner[indexOfId])
-                                            print(type(inner[indexOfId]))
                                             if inner[indexOfId]:
                                                 result['innerAnnotationElementId'].append(ids[indexOfId])
                                             else:
@@ -210,7 +214,10 @@ def _updateJob(event):
                 Notification().createNotification(
                     type='job_email_sent', data=job, user=user,
                     expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
-                shutil.rmtree(tmpPath)
+                if os.path.isfile:
+                    os.remove(tmpPath)
+                else:
+                    shutil.rmtree(tmpPath)
                 _notifyUser(event, meta)
             if status == JobStatus.SUCCESS:
                 Notification().createNotification(
@@ -288,17 +295,19 @@ def _updateJob(event):
                                     del element["Num_of_ProductiveInfection"]
                                     elements.append(element)
 
-                                doc = {"name": "rnascope",
-                                       "itemId": mask[csvFileId]['itemId'],
-                                       "relatedId": csvFileId,
-                                       "records": {
-                                           "roundnessThreshold": roundnessThreshold,
-                                           "pixelThreshold": pixelThreshold,
-                                           "pixelsPerVirion": pixelsPerVirion,
-                                           "includeAnnotations": includeAnnotations,
-                                           # "excludeAnnotations": excludeAnnotations,
-                                           "results": results
-                                       }}
+                                doc = {
+                                    "name": "rnascope",
+                                    "itemId": mask[csvFileId]['itemId'],
+                                    "relatedId": csvFileId,
+                                    "records": {
+                                        "roundnessThreshold": roundnessThreshold,
+                                        "pixelThreshold": pixelThreshold,
+                                        "pixelsPerVirion": pixelsPerVirion,
+                                        "includeAnnotations": includeAnnotations,
+                                        # "excludeAnnotations": excludeAnnotations,
+                                        "results": results
+                                    }
+                                }
 
                                 workflow = Workflow().createWorkflow(doc, user)
 
@@ -333,7 +342,10 @@ def _updateJob(event):
                 Notification().createNotification(
                     type='job_email_sent', data=job, user=user,
                     expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
-                shutil.rmtree(tmpPath)
+                if os.path.isfile:
+                    os.remove(tmpPath)
+                else:
+                    shutil.rmtree(tmpPath)
                 _notifyUser(event, meta)
             if status == JobStatus.SUCCESS:
                 Notification().createNotification(

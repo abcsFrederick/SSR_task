@@ -22,7 +22,8 @@ setup(name='ssr_tasks',
           'numpy',
           'shapely',
           'pyvips',
-          'pillow'
+          'pillow',
+          'pydicom'
       ],
       packages=['ssr_tasks'],
       zip_safe=False)

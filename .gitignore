@@ -4,5 +4,6 @@ gitScript.sh
 *.egg-info
 node_modules/
 __pycache__/
+plugin_tests
 build
 .tox

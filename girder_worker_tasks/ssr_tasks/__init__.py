@@ -9,7 +9,7 @@ class SSRTasksGirderWorkerPlugin(GirderWorkerPluginABC):
         # Return a list of python importable paths to the
         # plugin's path directory
         return [
-            # 'ssr_tasks.test.test',
+            'ssr_tasks.dicom_split.dicom_split',
             'ssr_tasks.rnascope.rnascope',
             'ssr_tasks.cd4plus.cd4plus',
             # 'ssr_tasks.tasks.example'

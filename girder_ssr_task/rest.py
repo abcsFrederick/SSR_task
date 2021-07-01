@@ -70,6 +70,7 @@ class SSR_task(Resource):
         self.route("GET", ("workflow",), self.findWorkflows)
         self.route("GET", ("workflow", ":id",), self.getWorkflow)
         self.route("DELETE", ("workflow", ":id",), self.deleteWorkflow)
+
     # Find link record based on original item ID or parentId(to check chirdren links)
     # Return only record that have READ access(>=0) to user.
     @access.user(scope=TokenScope.DATA_READ)
@@ -399,7 +400,7 @@ class SSR_task(Resource):
     @access.public
     @autoDescribeRoute(
         Description("Split multiple in one dicom volumn.")
-        .jsonParam("ids", "girder folder\'s ids or SAIP study id", required=True)
+        .jsonParam("inputIds", "girder folder\'s ids or SAIP study id", required=True)
         .jsonParam("subfolders", "subfolders", required=True)
         .jsonParam("n", "number of split", required=True)
         .jsonParam("axis", "axis of split", required=True)
@@ -412,24 +413,24 @@ class SSR_task(Resource):
         .param("inputType", "Type of input", required=True,
                enum=["girder", "archive"], strip=True)
     )
-    def dicom_split(self, ids, inputType, subfolders, n, axis, order, orderT, orderB, offset, pushFolderId, pushFolderName):
+    def dicom_split(self, inputIds, inputType, subfolders, n, axis, order, orderT, orderB, offset, pushFolderId, pushFolderName):
         self.user = self.getCurrentUser()
         self.token = self.getCurrentToken()
         if inputType == "archive":
             # get full path by id
-            study_description, fetchFolder = ArchiveFolder().fullPath(ids, "study")
-            if not os.path.isdir(fetchFolder):
-                raise ValidationException("path %s is not exist" % fetchFolder)
+            study_description, intputFolders = ArchiveFolder().fullPath(inputIds, "study")
+            if not os.path.isdir(intputFolders):
+                raise ValidationException("path %s is not exist" % intputFolders)
         elif inputType == "girder":
-            fetchFolder = []
-            for eachId in ids:
-                fetchFolder.append(Folder().load(eachId, level=AccessType.READ, user=self.user))
+            intputFolders = []
+            for eachId in inputIds:
+                intputFolders.append(Folder().load(eachId, level=AccessType.READ, user=self.user))
 
         pushFolder = Folder().load(pushFolderId, level=AccessType.READ, user=self.user)
-        return DicomSplit().createJob(fetchFolder, self.user,
-                                      self.token, inputType, subfolders,
+        return DicomSplit().createJob(intputFolders, inputIds, inputType, subfolders,
                                       axis, n, order, orderT, orderB, offset,
-                                      pushFolder, pushFolderName, ids, pushFolderId, slurm=False)
+                                      pushFolder, pushFolderName, self.user,
+                                      self.token, pushFolderId, slurm=False)
 
     @access.public
     @autoDescribeRoute(

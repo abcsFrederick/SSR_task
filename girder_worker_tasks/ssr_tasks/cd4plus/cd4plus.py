@@ -20,7 +20,7 @@ def cd4plus(self, itemIds, maskPaths, overlayItemIds,
     outputPath = kwargs.get('outputPath')
     mean = kwargs.get('mean')
     stdDev = kwargs.get('stdDev')
-    print("output path: " + outputPath)
+    print('output path: ' + outputPath)
     start_processing(outputPath, itemIds, maskPaths, overlayItemIds, mean, stdDev,
                      includeAnnotations, excludeAnnotations)
     return outputPath
@@ -36,7 +36,7 @@ def start_processing(outputPath, itemIds, maskPaths, overlayItemIds, mean, stdDe
     outputAnnotations = []
     for indexO in range(NumOfMasks):
         maskPath = maskPaths[indexO]
-        print("Processing Mask at path: " + maskPath)
+        print('Processing Mask at path: ' + maskPath)
         try:
             image = pyvips.Image.new_from_file(maskPath, access='sequential')
             # image = Image.open(maskPath)
@@ -45,14 +45,14 @@ def start_processing(outputPath, itemIds, maskPaths, overlayItemIds, mean, stdDe
         output = {}
         elementName = 0
         output[overlayItemIds[indexO]] = {
-            "itemId": itemIds[indexO],
-            "includeAnnotations": [],
-            "excludeAnnotations": [],
-            "elements": []
+            'itemId': itemIds[indexO],
+            'includeAnnotations': [],
+            'excludeAnnotations': [],
+            'elements': []
         }
         if includeAnnotations[indexO] != 'entireMask':
             print('processing ROIs')
-            print("Union include annotation elements polygons...")
+            print('Union include annotation elements polygons...')
             include_elements = includeAnnotations[indexO]['annotation']['elements']
             include_polygons = []
             for index, include in enumerate(include_elements):
@@ -92,7 +92,7 @@ def start_processing(outputPath, itemIds, maskPaths, overlayItemIds, mean, stdDe
             include_union_polygons = [Polygon(include_rectangle)]
         # print(include_union_polygons)
 
-        print("Union exclude annotation elements polygons...")
+        print('Union exclude annotation elements polygons...')
         exclude_flag = False
         if excludeAnnotations[indexO] != 'noExclude':
             exclude_elements = excludeAnnotations[indexO]['annotation']['elements']
@@ -131,7 +131,7 @@ def start_processing(outputPath, itemIds, maskPaths, overlayItemIds, mean, stdDe
             right = np.amax(x, axis=0)
             top = np.amin(y, axis=0)
             bottom = np.amax(y, axis=0)
-            print("image to numpy array....")
+            print('image to numpy array....')
             start = time.time()
             tile = image.crop(round(left), round(top), right - left, bottom - top)
             tileInArray = np.ndarray(buffer=tile.write_to_memory(), dtype=np.uint8, shape=[tile.height, tile.width])
@@ -143,14 +143,14 @@ def start_processing(outputPath, itemIds, maskPaths, overlayItemIds, mean, stdDe
             end = time.time()
             print(end - start)
 
-            print("numpy array to PIL....")
+            print('numpy array to PIL....')
             start = time.time()
             im = Image.fromarray(tileInArray)
             end = time.time()
             print(end - start)
             include_polygon_x, include_polygon_y = include.exterior.xy
 
-            print("Calculate polygon x y....")
+            print('Calculate polygon x y....')
             start = time.time()
             include_polygon_x = np.array(include_polygon_x) - left
             include_polygon_y = np.array(include_polygon_y) - top
@@ -184,7 +184,7 @@ def start_processing(outputPath, itemIds, maskPaths, overlayItemIds, mean, stdDe
 
             if differenceROIs.type == 'Polygon':
                 differenceROIs = [differenceROIs]
-            print("Processing mask....")
+            print('Processing mask....')
             # if differenceROIs.type == 'MultiPolygon':
             for indexD, differenceROI in enumerate(differenceROIs):
                 img = Image.new('L', (tileInArray.shape[1], tileInArray.shape[0]), 1)
@@ -201,18 +201,18 @@ def start_processing(outputPath, itemIds, maskPaths, overlayItemIds, mean, stdDe
                         inner_polygon_Array[:, 1] += top
                         inner_polygon_Array = np.insert(inner_polygon_Array, 2, 0, 1)
                         output[overlayItemIds[indexO]]['elements'].append({
-                            "name": str(elementName),
-                            "inner_polygon": True,
-                            "fillColor": "rgba(0,0,0,0.5)",
-                            "lineColor": "rgba(0,255,0,0.5)",
-                            "lineWidth": 2,
-                            "type": "polyline",
-                            "closed": True,
-                            "points": inner_polygon_Array.tolist(),
-                            "Num_of_Cell": {}
+                            'name': str(elementName),
+                            'inner_polygon': True,
+                            'fillColor': 'rgba(0,0,0,0.5)',
+                            'lineColor': 'rgba(0,255,0,0.5)',
+                            'lineWidth': 2,
+                            'type': 'polyline',
+                            'closed': True,
+                            'points': inner_polygon_Array.tolist(),
+                            'Num_of_Cell': {}
                         })
 
-                print("Making final mask image....")
+                print('Making final mask image....')
                 start = time.time()
                 # final_masked_img = np.ma.array(im, mask=mask, fill_value=0)
 
@@ -227,7 +227,7 @@ def start_processing(outputPath, itemIds, maskPaths, overlayItemIds, mean, stdDe
                 end = time.time()
                 print(end - start)
 
-                print("Computing number of cell....")
+                print('Computing number of cell....')
                 start = time.time()
                 final_masked_img_nonzero = np.count_nonzero(final_masked_img)
                 end = time.time()
@@ -242,19 +242,19 @@ def start_processing(outputPath, itemIds, maskPaths, overlayItemIds, mean, stdDe
                 diff_polygon_Array[:, 1] += top
                 diff_polygon_Array = np.insert(diff_polygon_Array, 2, 0, 1)
                 output[overlayItemIds[indexO]]['elements'].append({
-                    "name": str(elementName),
-                    "inner_polygon": False,
-                    "fillColor": "rgba(25,183,20,0.2)",
-                    "lineColor": "rgb(25,183,20)",
-                    "lineWidth": 3,
-                    "type": "polyline",
-                    "closed": True,
-                    "points": diff_polygon_Array.tolist(),
-                    "Num_of_Cell": {
-                        "low": NumOfCell_low,
-                        "mean": NumOfCell_mean,
-                        "high": NumOfCell_high,
-                        "pixels": final_masked_img_nonzero
+                    'name': str(elementName),
+                    'inner_polygon': False,
+                    'fillColor': 'rgba(25,183,20,0.2)',
+                    'lineColor': 'rgb(25,183,20)',
+                    'lineWidth': 3,
+                    'type': 'polyline',
+                    'closed': True,
+                    'points': diff_polygon_Array.tolist(),
+                    'Num_of_Cell': {
+                        'low': NumOfCell_low,
+                        'mean': NumOfCell_mean,
+                        'high': NumOfCell_high,
+                        'pixels': final_masked_img_nonzero
                     }
                 })
                 if elementName != 'WSI':
@@ -264,7 +264,7 @@ def start_processing(outputPath, itemIds, maskPaths, overlayItemIds, mean, stdDe
             im.close()
         outputAnnotations.append(output)
         # else:
-        #     print("It does not have any ROI")
-        #     outputAnnotations.append("")
+        #     print('It does not have any ROI')
+        #     outputAnnotations.append(')
     with open(outputPath, 'w') as outfile:
         json.dump(outputAnnotations, outfile)

@@ -24,7 +24,7 @@
     "devDependencies": {
         "@girder/eslint-config": "*",
         "@girder/pug-lint-config": "*",
-        "eslint": "^5",
+        "eslint": "^5.16.0",
         "eslint-config-semistandard": "^13",
         "eslint-config-standard": "^12",
         "eslint-plugin-backbone": "*",
