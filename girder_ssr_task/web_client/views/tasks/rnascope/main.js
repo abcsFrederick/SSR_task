@@ -208,7 +208,7 @@ var rnascopeDialogView = View.extend({
                 timeout: 4000
             });
         });
-        // this.$el.modal('hide');
+        this.$el.modal('hide');
     },
     validate() {
         if (this.WSIs === undefined || this.$('#h-cd4plus-mean').val() === '' || this.$('#h-cd4plus-stdDev').val() === '') {

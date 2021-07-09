@@ -78,7 +78,13 @@ var WorkflowSelector = View.extend({
         });
         this.on('setViewerFinished', this.render);
         // this.listenTo(this.workflowCollection, 'sync remove update reset change:displayed change:loading', this.render);
-        this.listenTo(eventStream, 'g:event.job_status', _.debounce(this._onJobUpdate, 500));
+        // this.listenTo(eventStream, 'g:event.job_status', _.debounce(this._onJobUpdate, 500));
+        this.listenTo(eventStream, 'g:event.job_email_sent', _.bind(function (event) {
+            this.workflowCollection.fetch({'itemId': this.viewer.itemId}).then(() => {
+                this.render();
+                return null;
+            });
+        }, this));
     },
     render() {
         this.workflowList = this.workflowCollection.models;
