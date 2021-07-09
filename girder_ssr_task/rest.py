@@ -594,35 +594,43 @@ class SSR_task(Resource):
             setResponseHeader('Content-Type', 'text/csv')
             setRawResponse()
             header = ','.join((
-                'batch',
-                'image',
-                'ROI',
-                'low',
-                'mean',
-                'high',
-                'pixels'
+                'Batch',
+                'Image',
+                'Date',
+                'Layer Name',
+                'Workflow',
+                'Mean',
+                'Std Dev',
+                'Low',
+                'Medium',
+                'High',
+                'Pixels'
             )) + '\n'
             for objectId in objectIds:
                 workflow = Workflow().load(objectId, level=AccessType.READ, user=user)
                 item = Item().load(workflow['itemId'], level=AccessType.READ, user=user)
                 batchFolder = Folder().load(item['folderId'], level=AccessType.READ, user=user)
-                values = ('Workflow: ' + workflow['name'], 'Mean: ' + str(workflow['records']['mean']),
-                          'StdDev: ' + str(workflow['records']['stdDev']), 'Timestamp: ' + str(workflow['created']))
-                header += ','.join(map(str, values)) + '\n'
                 for roi in workflow['records']['results']:
-                    values = (batchFolder['name'], item['name'], roi['name'],
-                              roi['Num_of_Cell']['low'], roi['Num_of_Cell']['mean'],
-                              roi['Num_of_Cell']['high'], roi['Num_of_Cell']['pixels'])
+                    values = ( batchFolder['name'], item['name'], str(workflow['created']), roi['name'], workflow['name'],
+                               workflow['records']['mean'], workflow['records']['stdDev'],
+                               roi['Num_of_Cell']['low'], roi['Num_of_Cell']['mean'],
+                               roi['Num_of_Cell']['high'], roi['Num_of_Cell']['pixels'])
                     header += ','.join(map(str, values)) + '\n'
                 header += '\n'
+            return header
         if workflowType == 'rnascope':
             setContentDisposition('RNAScope_' + workflowName + '.csv')
             setResponseHeader('Content-Type', 'text/csv')
             setRawResponse()
             header = ','.join((
-                'batch',
-                'image',
-                'ROI',
+                'Batch',
+                'Image',
+                'Date',
+                'Layer Name',
+                'Workflow',
+                'RoundnessThreshold',
+                'PixelThreshold',
+                'PixelsPerVirion',
                 'Num of Virion',
                 'Num of ProductiveInfection'
             )) + '\n'
@@ -630,12 +638,11 @@ class SSR_task(Resource):
                 workflow = Workflow().load(objectId, level=AccessType.READ, user=user)
                 item = Item().load(workflow['itemId'], level=AccessType.READ, user=user)
                 batchFolder = Folder().load(item['folderId'], level=AccessType.READ, user=user)
-                values = ('Workflow: ' + workflow['name'], 'RoundnessThreshold: ' + str(workflow['records']['roundnessThreshold']),
-                          'PixelThreshold: ' + str(workflow['records']['pixelThreshold']), 'PixelsPerVirion: ' + str(workflow['records']['pixelsPerVirion']),
-                          'Timestamp: ' + str(workflow['created']))
-                header += ','.join(map(str, values)) + '\n'
                 for roi in workflow['records']['results']:
-                    values = (batchFolder['name'], item['name'], roi['name'],
+                    values = (batchFolder['name'], item['name'], str(workflow['created']), roi['name'],
+                              workflow['name'], 
+                              workflow['records']['roundnessThreshold'], workflow['records']['pixelThreshold'],
+                              workflow['records']['pixelsPerVirion'],
                               roi['Num_of_Virion'], roi['Num_of_ProductiveInfection'])
                     header += ','.join(map(str, values)) + '\n'
                 header += '\n'
