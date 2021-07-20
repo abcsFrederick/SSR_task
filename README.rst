@@ -2,8 +2,8 @@
 SSR_task |build-status| |codecov-io|
 ====================================
 
-.. |build-status| image:: https://travis-ci.org/abcsFrederick/SSR_task.svg?branch=master
-    :target: https://travis-ci.org/abcsFrederick/SSR_task?branch=master
+.. |build-status| image:: https://circleci.com/gh/abcsFrederick/SSR_task.svg?style=svg
+    :target: https://circleci.com/gh/abcsFrederick/SSR_task
     :alt: Build Status
 
 .. |codecov-io| image:: https://codecov.io/gh/abcsFrederick/SSR_task/branch/master/graphs/badge.svg?branch=master
