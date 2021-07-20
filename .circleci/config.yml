@@ -8,6 +8,12 @@ executors:
       - image: circleci/mongo:4.0-ram
       - image: rabbitmq
 commands:
+  ssl:
+    description: "Install openssl library"
+    steps:
+      - run: 
+        name: Install openssl library
+        command: sudo apt install libcurl4-openssl-dev libssl-dev
   tox:
     description: "Run tox"
     parameters:
@@ -38,6 +44,7 @@ jobs:
     executor: toxandnode
     steps:
       - checkout
+      - ssl
       - tox:
           env: py36
       - coverage
@@ -45,6 +52,7 @@ jobs:
     executor: toxandnode
     steps:
       - checkout
+      - ssl
       - tox:
           env: py37
       - coverage
