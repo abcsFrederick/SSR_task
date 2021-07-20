@@ -16,7 +16,7 @@ commands:
           command: apt update -y
       - run: 
           name: Install openssl and libvip dependencies
-          command: apt install libcurl4-openssl-dev libssl-dev build-essential pkg-config glib2.0-dev libexpat1-dev -y
+          command: apt install libcurl4-openssl-dev libssl-dev build-essential pkg-config libglib2.0-dev libexpat1-dev -y
       - run:
           name: Download libvip library
           command: wget https://github.com/libvips/libvips/releases/download/v8.11.2/vips-8.11.2.tar.gz
