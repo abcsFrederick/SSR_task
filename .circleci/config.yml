@@ -8,7 +8,7 @@ executors:
       - image: circleci/mongo:4.0-ram
       - image: rabbitmq
 commands:
-  ssl:
+  dependencies:
     description: "Install openssl library"
     steps:
       - run: 
@@ -17,6 +17,16 @@ commands:
       - run: 
           name: Install openssl library
           command: apt install libcurl4-openssl-dev libssl-dev -y
+      - run:
+          name: Download libvip library
+          command: wget https://github.com/libvips/libvips/releases/download/v8.11.2/vips-8.11.2.tar.gz
+      - run:
+          name: Configure libvip library
+          command: tar xf vips-x.y.z.tar.gz && cd vips-x.y.z && ./configure
+      - run:
+          name: Install libvip library
+          command: make && make install && ldconfig
+
   tox:
     description: "Run tox"
     parameters:
@@ -47,7 +57,7 @@ jobs:
     executor: toxandnode
     steps:
       - checkout
-      - ssl
+      - dependencies
       - tox:
           env: py36
       - coverage
@@ -55,7 +65,7 @@ jobs:
     executor: toxandnode
     steps:
       - checkout
-      - ssl
+      - dependencies
       - tox:
           env: py37
       - coverage
