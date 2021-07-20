@@ -13,8 +13,7 @@ commands:
     steps:
       - run: 
           name: Update package list
-          command: sudo apt update
-          command: sudo apt remove libcurl4
+          command: apt update -y
       - run: 
           name: Install openssl library
           command: apt install libcurl4-openssl-dev libssl-dev
