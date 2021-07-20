@@ -54,7 +54,7 @@ def start_processing(outputPath, itemIds, csvPaths, csvFileIds,
             print('Union include annotation elements polygons...')
             include_elements = includeAnnotations[indexO]['annotation']['elements']
             include_polygons = []
-            for index, include in enumerate(include_elements):
+            for _index, include in enumerate(include_elements):
                 output[csvFileIds[indexO]]['includeAnnotations'].append(include['id'])
                 include_type = include['type']
                 if include_type == 'polyline':
@@ -88,7 +88,7 @@ def start_processing(outputPath, itemIds, csvPaths, csvFileIds,
             exclude_flag = True
         if exclude_flag:
             exclude_polygons = []
-            for index, exclude in enumerate(exclude_elements):
+            for _index, exclude in enumerate(exclude_elements):
                 output[csvFileIds[indexO]]['excludeAnnotations'].append(exclude['id'])
                 exclude_type = exclude['type']
                 if exclude_type == 'polyline':
@@ -120,7 +120,7 @@ def start_processing(outputPath, itemIds, csvPaths, csvFileIds,
                     print('Processing inclusion layers with exclusion layers...')
                     for indexI, include in enumerate(include_union_polygons):
                         differenceROIs = Polygon(include)
-                        for indexE, exclude in enumerate(exclude_union_polygons):
+                        for _indexE, exclude in enumerate(exclude_union_polygons):
                             intersectionROI = differenceROIs.intersection(Polygon(exclude))
                             intersectionPolygon = list(intersectionROI.exterior.coords)
 
@@ -139,7 +139,7 @@ def start_processing(outputPath, itemIds, csvPaths, csvFileIds,
                         # include_polygon = list(zip(include_x, include_y))
                         # include_polygon_Array = np.array(include_polygon)
                         # include_polygon_Array = np.insert(include_polygon_Array, 2, 0, 1)
-                        for indexD, differenceROI in enumerate(differenceROIs):
+                        for _indexD, differenceROI in enumerate(differenceROIs):
                             exter_x, exter_y = differenceROI.exterior.xy
                             exter_polygon = list(zip(exter_x, exter_y))
                             productiveInfectionToRemove = 0
@@ -248,7 +248,7 @@ def start_processing(outputPath, itemIds, csvPaths, csvFileIds,
                     center = Point(int(row['bboxX']) + int(row['bboxWidth']) / 2,
                                    int(row['bboxY']) + int(row['bboxHeight']) / 2)
                     if exclude_flag:
-                        for indexE, exclude in enumerate(exclude_union_polygons):
+                        for _indexE, exclude in enumerate(exclude_union_polygons):
                             if(center.within(exclude)):
                                 excludeFlag = True
                     if not excludeFlag:
@@ -261,7 +261,7 @@ def start_processing(outputPath, itemIds, csvPaths, csvFileIds,
                 print('ProductiveInfection: ' + str(productiveInfection))
                 print('Virion: ' + str(virion))
                 if exclude_flag:
-                    for indexE, exclude in enumerate(exclude_union_polygons):
+                    for _indexE, exclude in enumerate(exclude_union_polygons):
                         exclude_x, exclude_y = exclude.exterior.xy
                         exclude_polygon = list(zip(exclude_x, exclude_y))
                         exclude_polygon = np.insert(exclude_polygon, 2, 0, 1)

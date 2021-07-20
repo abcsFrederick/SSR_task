@@ -61,7 +61,7 @@ class Cd4Plus(AccessControlledModel):
     def _girder_worker_handler(self, fetchWSIs, fetchMaskFiles, maskFileIds, overlayItemIds, user, token, itemIds,
                                includeAnnotations, excludeAnnotations, mean, stdDev, girder_job_title, girder_job_type):
         maskPaths = []
-        for index, fileId in enumerate(maskFileIds):
+        for _index, fileId in enumerate(maskFileIds):
             maskPaths.append(GirderFileId(fileId))
         tempJson = tempfile.NamedTemporaryFile()
         tempJson.close()

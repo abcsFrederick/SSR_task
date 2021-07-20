@@ -4,7 +4,7 @@ import struct
 from bson import ObjectId
 import os
 import uuid
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET  # noqa: N817
 import re
 
 from girder.api.rest import Resource, filtermodel, loadmodel, setContentDisposition, setResponseHeader, setRawResponse
@@ -39,9 +39,9 @@ from girder_archive.external.aperio_proxy import AperioProxy
 from girder_archive.external.halo_proxy import HaloProxy
 
 
-class SSR_task(Resource):
+class SSRTask(Resource):
     def __init__(self):
-        super(SSR_task, self).__init__()
+        super(SSRTask, self).__init__()
         self.resourceName = "SSR_task"
 
         self.route("GET", ("link",), self.findLink)
@@ -611,10 +611,10 @@ class SSR_task(Resource):
                 item = Item().load(workflow['itemId'], level=AccessType.READ, user=user)
                 batchFolder = Folder().load(item['folderId'], level=AccessType.READ, user=user)
                 for roi in workflow['records']['results']:
-                    values = ( batchFolder['name'], item['name'], str(workflow['created']), roi['name'], workflow['name'],
-                               workflow['records']['mean'], workflow['records']['stdDev'],
-                               roi['Num_of_Cell']['low'], roi['Num_of_Cell']['mean'],
-                               roi['Num_of_Cell']['high'], roi['Num_of_Cell']['pixels'])
+                    values = (batchFolder['name'], item['name'], str(workflow['created']), roi['name'], workflow['name'],
+                              workflow['records']['mean'], workflow['records']['stdDev'],
+                              roi['Num_of_Cell']['low'], roi['Num_of_Cell']['mean'],
+                              roi['Num_of_Cell']['high'], roi['Num_of_Cell']['pixels'])
                     header += ','.join(map(str, values)) + '\n'
                 header += '\n'
             return header
@@ -640,7 +640,7 @@ class SSR_task(Resource):
                 batchFolder = Folder().load(item['folderId'], level=AccessType.READ, user=user)
                 for roi in workflow['records']['results']:
                     values = (batchFolder['name'], item['name'], str(workflow['created']), roi['name'],
-                              workflow['name'], 
+                              workflow['name'],
                               workflow['records']['roundnessThreshold'], workflow['records']['pixelThreshold'],
                               workflow['records']['pixelsPerVirion'],
                               roi['Num_of_Virion'], roi['Num_of_ProductiveInfection'])
@@ -977,7 +977,7 @@ class SSR_task(Resource):
             records = workflow['records']
             if records['results']:
                 results = records['results']
-                for result in results:
+                for _result in results:
                     # annotationElementId = result["annotationElementId"]
                     Annotationelement().removeWithQuery({"annotationId": workflow['_id']})
                     # TODO remove ananotation elements related to that workflow

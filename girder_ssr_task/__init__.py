@@ -4,7 +4,7 @@ import datetime
 # import bson
 import json
 import uuid
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET  # noqa: N817
 
 from girder import plugin, events
 from mako.lookup import TemplateLookup
@@ -145,7 +145,7 @@ def _updateJob(event):
                                 #     "points": inner_polygon_Array.tolist()/diff_polygon_Array.tolist(),
                                 #     "Num_of_Cell": {}/{...}
                                 # }
-                                for index, element in enumerate(mask[overlayId]['elements']):
+                                for _index, element in enumerate(mask[overlayId]['elements']):
                                     record = [result for result in results if result['name'] == element["name"]]
                                     if len(record) != 0:
                                         if element['inner_polygon']:
@@ -194,7 +194,7 @@ def _updateJob(event):
                                 names = []
                                 ids = []
                                 inner = []
-                                for index, element in enumerate(annotationelements):
+                                for _index, element in enumerate(annotationelements):
                                     names.append(element['element']['label']['value'])
                                     ids.append(element['_id'])
                                     inner.append(element['element']['inner_polygon'])
@@ -271,7 +271,7 @@ def _updateJob(event):
                                 #     "Num_of_ProductiveInfection": 43
                                 # }
 
-                                for index, element in enumerate(mask[csvFileId]['elements']):
+                                for _index, element in enumerate(mask[csvFileId]['elements']):
                                     record = [result for result in results if result['name'] == element["name"]]
                                     if len(record) != 0:
                                         if element['inner_polygon']:
@@ -320,7 +320,7 @@ def _updateJob(event):
                                 names = []
                                 ids = []
                                 inner = []
-                                for index, element in enumerate(annotationelements):
+                                for _index, element in enumerate(annotationelements):
                                     names.append(element['element']['label']['value'])
                                     ids.append(element['_id'])
                                     inner.append(element['element']['inner_polygon'])
@@ -635,7 +635,7 @@ class SSRTaskPlugin(plugin.GirderPlugin):
 
     def load(self, info):
         ModelImporter.registerModel('workflow', Workflow, 'SSRTask')
-        info['apiRoot'].SSR_task = rest.SSR_task()
+        info['apiRoot'].SSR_task = rest.SSRTask()
         Link()
         events.bind('jobs.job.update.after', 'SSRTask', _updateJob)
         events.bind('model.file.save.after', 'SSRTask', onFileSave)

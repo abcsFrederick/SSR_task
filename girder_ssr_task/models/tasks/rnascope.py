@@ -68,7 +68,7 @@ class RNAScope(AccessControlledModel):
                                roundnessThresholds, pixelThresholds,
                                pixelsPerVirions, girder_job_title, girder_job_type):
         csvPaths = []
-        for index, fileId in enumerate(csvFileIds):
+        for _index, fileId in enumerate(csvFileIds):
             csvPaths.append(GirderFileId(fileId))
         tempJson = tempfile.NamedTemporaryFile(dir=Setting().get(PluginSettings.GIRDER_WORKER_TMP))
         tempJson.close()

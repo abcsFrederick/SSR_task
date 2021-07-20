@@ -435,7 +435,7 @@ def set_pixel_data(dataset, pixel_array):
 
 
 def checkDirectory(directory, output_dir=None):
-    for root, subdirs, files in os.walk(directory):
+    for root, _subdirs, files in os.walk(directory):
         if len(files):
             if files.pop(0) != '.DS_Store':
                 newRoot = os.path.join(output_dir, root.split('/')[-4])

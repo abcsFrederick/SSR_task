@@ -40,7 +40,7 @@ def start_processing(outputPath, itemIds, maskPaths, overlayItemIds, mean, stdDe
         try:
             image = pyvips.Image.new_from_file(maskPath, access='sequential')
             # image = Image.open(maskPath)
-        except (ImportError, IOError, OSError):
+        except (ImportError, IOError):
             print('Load mask fail')
         output = {}
         elementName = 0
@@ -55,7 +55,7 @@ def start_processing(outputPath, itemIds, maskPaths, overlayItemIds, mean, stdDe
             print('Union include annotation elements polygons...')
             include_elements = includeAnnotations[indexO]['annotation']['elements']
             include_polygons = []
-            for index, include in enumerate(include_elements):
+            for _index, include in enumerate(include_elements):
                 output[overlayItemIds[indexO]]['includeAnnotations'].append(include['id'])
                 include_type = include['type']
                 if include_type == 'polyline':
@@ -99,7 +99,7 @@ def start_processing(outputPath, itemIds, maskPaths, overlayItemIds, mean, stdDe
             exclude_flag = True
         if exclude_flag:
             exclude_polygons = []
-            for index, exclude in enumerate(exclude_elements):
+            for _index, exclude in enumerate(exclude_elements):
                 output[overlayItemIds[indexO]]['excludeAnnotations'].append(exclude['id'])
                 exclude_type = exclude['type']
                 if exclude_type == 'polyline':
@@ -186,7 +186,7 @@ def start_processing(outputPath, itemIds, maskPaths, overlayItemIds, mean, stdDe
                 differenceROIs = [differenceROIs]
             print('Processing mask....')
             # if differenceROIs.type == 'MultiPolygon':
-            for indexD, differenceROI in enumerate(differenceROIs):
+            for _indexD, differenceROI in enumerate(differenceROIs):
                 img = Image.new('L', (tileInArray.shape[1], tileInArray.shape[0]), 1)
                 diff_x, diff_y = differenceROI.exterior.xy
                 diff_polygon = list(zip(diff_x, diff_y))

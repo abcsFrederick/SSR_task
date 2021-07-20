@@ -8,9 +8,9 @@ requirements = [
     'girder-worker[girder]>=0.6.0',
     'girder-worker-utils',
     'girder-jobs',
-    'girder-archive',
+    # 'girder-archive',
     # 'girder-overlays',
-    # 'histomicsui',
+    'histomicsui',
     'girder-large-image-annotation'
 ]
 

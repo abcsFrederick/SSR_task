@@ -19,6 +19,7 @@ class GirderFolderId(GirderClientTransform):
     :param _id: The ID of the file to download.
     :type _id: str
     """
+
     def __init__(self, _id, _name, _subfolders, **kwargs):
         super(GirderFolderId, self).__init__(**kwargs)
         self.folder_id = _id
@@ -34,7 +35,7 @@ class GirderFolderId(GirderClientTransform):
         self.gc.downloadFolderRecursive(self.folder_id, self.folder_path)
 
         self.full_path = []
-        for index, subfolder in enumerate(self.subfolders):
+        for _index, subfolder in enumerate(self.subfolders):
             topName = subfolder.split('/')[0]
             if self.folder_name == topName:
                 self.full_path.append(os.path.join(os.path.dirname(self.folder_path), subfolder))
@@ -90,7 +91,7 @@ class DicomSplit(AccessControlledModel):
                                axis, n_of_split, order, orderT, orderB, offset,
                                pushFolder, pushFolderName, user, token, pushFolderId, girder_job_title, girder_job_type):
         folderPaths = []
-        for index, folder in enumerate(intputFolders):
+        for _index, folder in enumerate(intputFolders):
             folderPaths.append(GirderFolderId(folder['_id'], folder['name'], subfolders))
         tempDir = tempfile.TemporaryDirectory()
         outputPath = os.path.join(tempDir.name, pushFolderName)

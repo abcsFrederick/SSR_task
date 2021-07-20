@@ -7,3 +7,4 @@ __pycache__/
 plugin_tests
 build
 .tox
+package-lock.json
