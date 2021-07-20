@@ -21,11 +21,9 @@ commands:
           name: Download libvip library
           command: wget https://github.com/libvips/libvips/releases/download/v8.11.2/vips-8.11.2.tar.gz
       - run:
-          name: Configure libvip library
-          command: tar xf vips-8.11.2.tar.gz && cd vips-8.11.2 && ./configure
-      - run:
-          name: Install libvip library
-          command: make && make install && ldconfig
+          name: Configure and install libvip library
+          command: tar xf vips-8.11.2.tar.gz && cd vips-8.11.2 && ./configure && make && make install && ldconfig
+
 
   tox:
     description: "Run tox"
