@@ -22,7 +22,7 @@ commands:
           command: wget https://github.com/libvips/libvips/releases/download/v8.11.2/vips-8.11.2.tar.gz
       - run:
           name: Configure libvip library
-          command: tar xf vips-x.y.z.tar.gz && cd vips-x.y.z && ./configure
+          command: tar xf vips-8.11.2.tar.gz && cd vips-8.11.2 && ./configure
       - run:
           name: Install libvip library
           command: make && make install && ldconfig
