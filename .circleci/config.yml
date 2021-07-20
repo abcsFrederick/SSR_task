@@ -16,7 +16,7 @@ commands:
           command: apt update -y
       - run: 
           name: Install openssl library
-          command: apt install libcurl4-openssl-dev libssl-dev
+          command: apt install libcurl4-openssl-dev libssl-dev -y
   tox:
     description: "Run tox"
     parameters:
