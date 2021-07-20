@@ -12,8 +12,8 @@ commands:
     description: "Install openssl library"
     steps:
       - run: 
-        name: Install openssl library
-        command: sudo apt install libcurl4-openssl-dev libssl-dev
+          name: Install openssl library
+          command: apt install libcurl4-openssl-dev libssl-dev
   tox:
     description: "Run tox"
     parameters:
