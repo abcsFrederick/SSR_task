@@ -83,6 +83,7 @@ def testRNAScope(server, fsAssetstore, user):
     assertStatusOk(resp)
 
 
+@pytest.mark.plugin('jobs')
 @pytest.mark.plugin('ssrtask')
 def testDicom_split(server, fsAssetstore, user):
     folderIds, pushFolder = saip_pre_test(user, fsAssetstore)
