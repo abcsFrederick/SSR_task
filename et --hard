@@ -1,0 +1,167 @@
+commit 455d8dc9668ce5d40b7b113f883928a9d946a2cb
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Thu Jul 29 18:35:33 2021 -0400
+
+    unit test
+
+commit 518f6d15e42620fe8ba7c07039149095b7f0514a
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Thu Jul 29 18:34:22 2021 -0400
+
+    unit test
+
+commit be96d916fed70ea767e4f74204333e0a76eccd8f
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Thu Jul 29 18:07:03 2021 -0400
+
+    unit test
+
+commit d1684a6e5b0fd79dd4a90dd9ba9028f582851f98
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Tue Jul 20 13:23:18 2021 -0400
+
+    libvip dependency
+
+commit a7b495fd125d7e4212b6e90023229e8241419118
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Tue Jul 20 13:11:35 2021 -0400
+
+    libvip dependency
+
+commit 5a29e6ca4900614eace8ee93fcae0e051f3530b6
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Tue Jul 20 13:09:00 2021 -0400
+
+    libvip dependency
+
+commit 35baa0f596ab308e581911e7ed58f4512294e1c3
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Tue Jul 20 13:07:06 2021 -0400
+
+    libvip dependency
+
+commit bdccb8e8aa2d2b42e4056077d5742453b30f5c90
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Tue Jul 20 13:02:12 2021 -0400
+
+    libvip dependency
+
+commit e2e5d9802e49be70afbeb5590d5f9fac0958d4d8
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Tue Jul 20 13:00:59 2021 -0400
+
+    libvip dependency
+
+commit 8b87adf798571e0c2e5fa9b28b3ef69fd309a033
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Tue Jul 20 12:43:19 2021 -0400
+
+    ubuntu ssl steps
+
+commit 76619b964a33a9e8aa1f9546058244af55015f72
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Tue Jul 20 12:28:51 2021 -0400
+
+    ubuntu ssl steps
+
+commit ea80cfc2cc531744d2625e7bb3459b38c5889a8a
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Tue Jul 20 12:25:49 2021 -0400
+
+    ubuntu ssl steps
+
+commit f2e602a87f37df444aaa5c1b65233cb508c95436
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Tue Jul 20 12:23:23 2021 -0400
+
+    ubuntu ssl steps
+
+commit 74b0ff29e23b74ff0858f9af9e2c2e9f5264da19
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Tue Jul 20 12:12:49 2021 -0400
+
+    ubuntu ssl steps
+
+commit 9dde3a9fd0a107df05a2a157608ecac26292b7b8
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Tue Jul 20 12:10:50 2021 -0400
+
+    ubuntu ssl steps
+
+commit 0282408e8a0a49d2f0932c4fbce658a51d8594cf
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Tue Jul 20 12:03:12 2021 -0400
+
+    ubuntu ssl steps
+
+commit ae0b56cbda3f4b132cc0528334a2528b947204af
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Tue Jul 20 11:54:18 2021 -0400
+
+    ubuntu ssl lib
+
+commit 0da1d40cc427c19d89d296ab7407a0433ec08974
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Tue Jul 20 11:48:04 2021 -0400
+
+    ubuntu pycurl
+
+commit cde880b24840c0a79fa1d01b25263902bcd68249
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Tue Jul 20 10:58:01 2021 -0400
+
+    remove lockfile add circle config
+
+commit 74c06b5fc1d1343fb10a5630686a340bddf076e4
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Tue Jul 20 10:55:11 2021 -0400
+
+    remove lockfile add circle config
+
+commit 5e1497344a231a3fe17f70106e6f2951a6eaf76e
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Tue Jul 20 10:54:19 2021 -0400
+
+    remove lockfile add circle config
+
+commit 6a3cff58fe5b9a3ff10ac7a74136b56bf8494351
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Fri Jul 9 17:17:31 2021 -0400
+
+    remove
+
+commit 689f17cbee55bea5ac2b5d3f627de538fcb4478f
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Fri Jul 9 16:51:00 2021 -0400
+
+    deploy patch
+
+commit 1af2cc5289a7d488239dbcb873bbbb8da73b707c
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Fri Jul 9 16:47:00 2021 -0400
+
+    deploy patch
+
+commit aa24c7a9c7427c0612ef6f11da86cdd8487e5d7a
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Fri Jul 9 13:29:48 2021 -0400
+
+    deployment patch
+
+commit 69f63767dcd8bee2d724e09e6839dffc0fe3b305
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Fri Jul 2 13:07:27 2021 -0400
+
+    remove backend histomicsui dependency
+
+commit 04fe2aed40282ecfe0466044da3a8eafc251b322
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Thu Jul 1 19:00:00 2021 -0400
+
+    dicom split workflow girder worker migration
+
+commit 961c99bfebdc24fa1ca87d9979605ea1588074d8
+Author: Miao <miaot2@fr-s-ivg-histomics.ncifcrf.gov>
+Date:   Mon Jun 28 14:35:12 2021 -0400
+
+    add tox
