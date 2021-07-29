@@ -2,13 +2,13 @@
 # import json
 import requests
 import tempfile
-from girder.models.setting import Setting
+# from girder.models.setting import Setting
 from girder.models.model_base import AccessControlledModel
 from girder_worker.girder_plugin import utils
 from girder_worker_utils.transforms.girder_io import GirderFileId
 
 # from ..job import Job
-from ...constants import PluginSettings
+# from ...constants import PluginSettings
 
 from ssr_tasks.rnascope.rnascope import rnascope
 
