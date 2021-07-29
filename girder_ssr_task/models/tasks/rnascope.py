@@ -70,7 +70,7 @@ class RNAScope(AccessControlledModel):
         csvPaths = []
         for _index, fileId in enumerate(csvFileIds):
             csvPaths.append(GirderFileId(fileId))
-        tempJson = tempfile.NamedTemporaryFile(dir=Setting().get(PluginSettings.GIRDER_WORKER_TMP))
+        tempJson = tempfile.NamedTemporaryFile()
         tempJson.close()
         outputPath = tempJson.name
         return rnascope.delay(itemIds, csvPaths, csvFileIds,
