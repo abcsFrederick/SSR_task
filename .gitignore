@@ -5,6 +5,6 @@ gitScript.sh
 node_modules/
 __pycache__/
 plugin_tests
+tests/externaldata
 build
 .tox
-package-lock.json
