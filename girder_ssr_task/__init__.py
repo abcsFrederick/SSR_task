@@ -29,7 +29,7 @@ from girder_large_image_annotation.models.annotation import Annotation
 
 from . import rest
 from .constants import PluginSettings, PAIP2021ColonColor
-from .models.tasks.link import Link
+from .models.link import Link
 from .models.workflow import Workflow
 
 
@@ -62,7 +62,6 @@ def _notifyUser(event, meta):
     else:
         taskName = event.info['job']['type']
         params['task'] = taskName
-
     text = template.render(**params)
     mail_utils.sendMail(
         'Job Status: ' + taskName + ' finished',
@@ -82,13 +81,14 @@ def _updateJob(event):
     userId = event.info['job']['userId']
     user = UserModel().load(userId, force=True)
     meta = job.get('meta', {})
+
     if (job.get('handler') == 'celery_handler'):
-        if (meta.get('creator') == 'dicom_split' and
-                meta.get('task') == 'splitDicom'):
+        if job['type'] == 'split':
             status = job['status']
             if status == JobStatus.SUCCESS or status == JobStatus.CANCELED or status == JobStatus.ERROR:
-                tmpPath = job.get('kwargs')['inputs']['outPath']['data']
-                shutil.rmtree(tmpPath)
+                tmpPath = job.get('kwargs')['outputPath']
+                if 'pytest' not in job['title']:
+                    shutil.rmtree(tmpPath)
             if status == JobStatus.SUCCESS:
                 Notification().createNotification(
                     type='job_email_sent', data=job, user=user,
@@ -107,9 +107,9 @@ def _updateJob(event):
         elif job['type'] == 'cd4':
             status = job['status']
             if status == JobStatus.SUCCESS or status == JobStatus.CANCELED or status == JobStatus.ERROR:
-                tmpPath = job.get('kwargs')['inputs']['outPath']['data']
-                mean = job.get('kwargs')['inputs']['mean']
-                stdDev = job.get('kwargs')['inputs']['stdDev']
+                tmpPath = job.get('kwargs')['outputPath']
+                mean = job.get('kwargs')['mean']
+                stdDev = job.get('kwargs')['stdDev']
                 # Update overlay record
                 with open(tmpPath) as json_file:
                     masks = json.load(json_file)
@@ -122,8 +122,8 @@ def _updateJob(event):
                             query = {
                                 "relatedId": overlayId,
                                 "name": "cd4+",
-                                "records.mean": mean["data"],
-                                "records.stdDev": stdDev["data"],
+                                "records.mean": mean,
+                                "records.stdDev": stdDev,
                                 "records.includeAnnotations": {"$size": len(includeAnnotations), "$all": includeAnnotations},
                                 "records.excludeAnnotations": {"$size": len(excludeAnnotations), "$all": excludeAnnotations},
                             }
@@ -170,8 +170,8 @@ def _updateJob(event):
                                     "itemId": mask[overlayId]['itemId'],
                                     "relatedId": overlayId,
                                     "records": {
-                                        "mean": mean["data"],
-                                        "stdDev": stdDev["data"],
+                                        "mean": mean,
+                                        "stdDev": stdDev,
                                         "includeAnnotations": includeAnnotations,
                                         "excludeAnnotations": excludeAnnotations,
                                         "results": results
@@ -214,10 +214,11 @@ def _updateJob(event):
                 Notification().createNotification(
                     type='job_email_sent', data=job, user=user,
                     expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
-                if os.path.isfile:
-                    os.remove(tmpPath)
-                else:
-                    shutil.rmtree(tmpPath)
+                if 'pytest' not in job['title']:
+                    if os.path.isfile:
+                        os.remove(tmpPath)
+                    else:
+                        shutil.rmtree(tmpPath)
                 _notifyUser(event, meta)
             if status == JobStatus.SUCCESS:
                 Notification().createNotification(
@@ -228,7 +229,6 @@ def _updateJob(event):
             status = job['status']
             if status == JobStatus.SUCCESS or status == JobStatus.CANCELED or status == JobStatus.ERROR:
                 tmpPath = job.get('kwargs')['outputPath']
-
                 with open(tmpPath) as json_file:
                     masks = json.load(json_file)
                     for mask in masks:
@@ -342,10 +342,11 @@ def _updateJob(event):
                 Notification().createNotification(
                     type='job_email_sent', data=job, user=user,
                     expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
-                if os.path.isfile:
-                    os.remove(tmpPath)
-                else:
-                    shutil.rmtree(tmpPath)
+                if 'pytest' not in job['title']:
+                    if os.path.isfile:
+                        os.remove(tmpPath)
+                    else:
+                        shutil.rmtree(tmpPath)
                 _notifyUser(event, meta)
             if status == JobStatus.SUCCESS:
                 Notification().createNotification(
@@ -460,8 +461,8 @@ def onFileSave(event):
         wsiName = [os.path.splitext(file_['name'])[0] + '.svs', os.path.splitext(file_['name'])[0] + '.tiff']
         wsiItems = list(Folder().childItems(folder, user={'admin': True}, limit=2,
                                             filters={'name': {'$in': wsiName}}))
-        # print('==========wsiItems========')
-        # print(wsiItems)
+        print('==========wsiItems========')
+        print(wsiItems)
         if len(wsiItems) == 0:
             item = xmlItem
         else:
@@ -577,10 +578,11 @@ def onFileSave(event):
         xmlName = os.path.splitext(file_['name'])[0] + '.xml'
         xmlItems = list(Folder().childItems(folder, user={'admin': True}, limit=2,
                                             filters={'name': xmlName}))
-        # print('==========xmlItems========')
+        print('==========xmlItems========')
         # print(xmlItems[0]['_id'])
         # print('==========item========')
         # print(item['_id'])
+        print(xmlItems)
         if len(xmlItems) != 0:
             query = {'_active': {'$ne': False}}
             query['itemId'] = xmlItems[0]['_id']
@@ -623,7 +625,9 @@ SettingDefault.defaults.update({
 })
 
 SettingDefault.defaults.update({
-    SettingKey.EMAIL_FROM_ADDRESS: 'https://fr-s-ivg-ssr-p1.ncifcrf.gov/'
+    SettingKey.EMAIL_FROM_ADDRESS: 'https://fr-s-ivg-ssr-p1.ncifcrf.gov/',
+    # FIXME hack for testing
+    SettingKey.SERVER_ROOT: 'http://localhost'
 })
 _templateDir = os.path.join(os.path.dirname(__file__), 'mail_templates')
 _templateLookup = TemplateLookup(directories=[_templateDir], collection_size=50)
