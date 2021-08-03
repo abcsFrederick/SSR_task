@@ -7,7 +7,6 @@ from .constants import AnnotationColorMap
 
 
 class Utils(object):
-    """docstring for Utils"""
     def __init__(self):
         super().__init__()
 
