@@ -1,8 +1,0 @@
-li.wsi-list.col-md-12(style='list-style: none;width: 100%;height: auto;overflow: hidden;clear: both;position: relative;')
-  each wsi, index in wsis
-    //- tr(style='height: 80px;width: 100%;overflow: hidden;')
-      //- .aperio-WSIs-select-prepared-zone
-    .wsi-item(item-id=wsi.id, aperio-id=wsi.name(), style='overflow: visible !important;border: none;cursor: default;padding: 5px;width: 100px;height: 50px;float: left;')
-      .large_image_container(style='min-width: 100px;')
-        .large_image_thumbnail(style='width: 100px;')
-          img.loaded(src=`api/v1/item/${wsi.id}/tiles/thumbnail?width=80&height=50`)

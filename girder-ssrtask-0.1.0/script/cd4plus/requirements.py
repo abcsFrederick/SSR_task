@@ -1,4 +1,0 @@
-numpy
-shapely
-pyvips
-pillow

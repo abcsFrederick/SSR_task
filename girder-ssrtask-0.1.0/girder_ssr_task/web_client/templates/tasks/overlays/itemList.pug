@@ -1,8 +1,0 @@
-ul.g-item-list(style='padding:0px')
-  each item in items
-    li.g-item-list-entry(class=(highlightItem && item.id === selectedItemId ? 'g-selected' : ''), public=(isParentPublic ? 'true' : 'false'), style='list-style: none;')
-      a.g-item-list-link(g-item-cid=item.cid)
-        .large_image_container(style='min-width: 100px;')
-          .large_image_thumbnail(style='width: 100px;')
-            img.loaded(src=`api/v1/item/${item.id}/tiles/thumbnail?width=80&height=50`)
-        = item.name()

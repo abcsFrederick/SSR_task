@@ -1,9 +1,0 @@
-each result in records.results
-  if workflow === 'cd4+'
-    .version-element(data-id=result.annotationElementId, data-innerid=result.innerAnnotationElementId)
-      span.version-element-label(title=result.name) #{result.name}:
-      span.version-element-NumOfCell.version-element-label (#{result.Num_of_Cell.low}) (#{result.Num_of_Cell.mean}) (#{result.Num_of_Cell.high})
-  if workflow === 'rnascope'
-    .version-element(data-id=result.annotationElementId, data-innerid=result.innerAnnotationElementId)
-      span.version-element-label(title=result.name) #{result.name}:
-      span.version-element-Nums.version-element-label NoV.(#{result.Num_of_Virion}) NoI.(#{result.Num_of_ProductiveInfection})
