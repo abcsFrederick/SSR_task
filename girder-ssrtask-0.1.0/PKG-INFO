@@ -1,0 +1,57 @@
+Metadata-Version: 2.1
+Name: girder-ssrtask
+Version: 0.1.0
+Summary: Girder v3 adaptation of SSR Task
+Home-page: https://github.com/abcsFrederick/SSR_task
+Author: Tianyi Miao
+Author-email: tymiao1220@gmail.com
+License: Apache Software License 2.0
+Keywords: girder-plugin,ssr_task_girder3
+Platform: UNKNOWN
+Classifier: Development Status :: 2 - Pre-Alpha
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Description-Content-Type: text/x-rst
+
+====================================
+SSR_task |build-status| |codecov-io|
+====================================
+
+.. |build-status| image:: https://circleci.com/gh/abcsFrederick/SSR_task.svg?style=svg
+    :target: https://circleci.com/gh/abcsFrederick/SSR_task
+    :alt: Build Status
+
+.. |codecov-io| image:: https://codecov.io/gh/abcsFrederick/SSR_task/branch/master/graphs/badge.svg?branch=master
+    :target: https://codecov.io/gh/abcsFrederick/SSR_task/branch/master
+    :alt: codecov.io
+
+Girder plugin for SSR Task deploy.
+
+Available Tasks:
+ For Radiology
+ 
+ 1. Dicom Split
+ 
+ 2. Link
+ 
+ For Pathology
+ 
+ 3. Aperio
+ 
+ 4. Halo
+ 
+ 5. Overlays
+ 
+ 6. CD4+
+ 
+ 7. RNAScope
+ 
+ 8. Download_Statistic
+
+Make sure set up girder-worker worker.local.cfg(for fetching) and SSR_task.GIRDER_WORKER_TMP(for writing) setting to the same place you want(large storage prefer). Otherwise fetched input and written output will be saved in different place.
+
+

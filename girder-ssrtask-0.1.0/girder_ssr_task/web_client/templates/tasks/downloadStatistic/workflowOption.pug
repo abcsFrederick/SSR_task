@@ -1,0 +1,4 @@
+select#g-workflow-selector.form-control(required)
+  option(value="", disabled, selected, hidden) Select a workflow...
+  each workflow in workflows
+    option(value=workflow) #{workflow}

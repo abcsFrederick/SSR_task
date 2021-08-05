@@ -1,0 +1,5 @@
+numpy
+girder-worker-utils
+girder-worker[girder]>=0.6.0
+large-image[openslide,pil,tiff]>=1.0.2.dev2
+girder-jobs>=3.0.3

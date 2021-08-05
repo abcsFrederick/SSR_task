@@ -1,0 +1,6 @@
+button.h-workflow-dropdown-link.btn.btn-default.navbar-btn(data-toggle='dropdown')
+  | #[span.icon-tasks] Workflows #[span.icon-down-open]
+ul.h-workflow-dropdown.dropdown-menu(role='menu')
+  each workflow in workflows
+    li.dropdown-workflow
+      a.workflow-list(data-name=workflow) #{workflow.replace('_',' ')}

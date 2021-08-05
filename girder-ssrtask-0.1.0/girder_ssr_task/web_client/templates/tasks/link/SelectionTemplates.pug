@@ -1,0 +1,22 @@
+//- .col-md-4.g-ori-selection-nav-container
+.g-ori-selection-container-header
+  if element === 'original_sortable'
+    .g-selection-container-header-info Total
+      span #{items.length}
+      | of images are selected
+  if element === 'segmentation_sortable'
+    if eligible
+      .g-selection-container-header-info Total
+        span #{items.length}
+        | of segmentations are selected
+    else
+      .g-selection-container-header-info Total
+        span(style='color:red') #{items.length}
+        | of segmentations are selected
+.col-md-12.g-ori-selection-container
+  div(id=element)
+    each item in items
+      li.selection-list(tag=item._id)
+        //- --console.log(item)
+        span #{item.name}
+        i.icon-sort
