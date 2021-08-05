@@ -110,4 +110,4 @@ def testWebClient(boundServer, fsAssetstore, db, admin, user, spec):  # noqa
     enableTasks()
     createWorkfolw(fsAssetstore, user)
     spec = os.path.join(os.path.dirname(__file__), 'web_client_specs', spec)
-    runWebClientTest(boundServer, spec, 15000)
+    runWebClientTest(boundServer, spec, 25000)
