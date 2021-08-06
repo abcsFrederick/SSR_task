@@ -663,7 +663,10 @@ class SSRTask(Resource):
             id, ext = os.path.splitext(item["name"])
             if ("largeImage" in item) and ext in [".tif", ".svs", ".tiff"]:
                 aperio = AperioProxy(username, password)
-                htmlString = aperio.getAnn(id)
+                try:
+                    htmlString = aperio.getAnn(id)
+                except Exception:
+                    raise AccessException('Connection denied.')
                 if htmlString.find("Invalid userid/password:") == 0:
                     raise AccessException("username or password is invalid.")
                 elif htmlString.find("Image record not found in database") == 0:

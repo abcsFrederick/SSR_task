@@ -75,7 +75,8 @@ girderTest.promise.done(function () {
                 $('.query-batch-aperio').click();
             });
             waitsFor(function () {
-                return  $('.alert:contains("username or password is invalid.")').length > 0
+                return  $('.alert:contains("Connection denied.")').length > 0 
+                    || $('.alert:contains("username or password is invalid.")').length > 0
                     || $('.alert:contains("Image record not found in database.")').length > 0;
             }, 'authentication fails or no image found in database');
         });
