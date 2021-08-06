@@ -72,6 +72,7 @@ girderTest.promise.done(function () {
                 expect($('.g-validation-failed-message')[0].innerText).toBe('Username/password or no WSI folder selected.');
                 $('#h-db-username').val('test');
                 $('#h-db-password').val('test');
+                // Skip because it will cause Cors origin request in CI
                 // $('.query-batch-aperio').click();
             });
             // waitsFor(function () {
