@@ -55,7 +55,7 @@ const OpenAnnotatedImage = View.extend({
                 timeout: 4000
             });
         });
-        // this.$el.modal('hide');
+        this.$el.modal('hide');
     },
     validate() {
         if (this.$('#aperio-image-id').val() === '' || this.$('#h-db-username').val() === '' || this.$('#h-db-username').val() === '') {
