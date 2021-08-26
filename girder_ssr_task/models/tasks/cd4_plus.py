@@ -22,7 +22,7 @@ class Cd4Plus(AccessControlledModel):
         wsi = ''
         for fetchWSI in fetchWSIs:
             wsi = wsi + fetchWSI['name'] + ' '  # noqa
-        girder_job_title = 'CD4+ for counting cell for WSI %s in girder' % wsi
+        girder_job_title = 'CD4+ for counting cell of WSI %s in girder' % wsi
         girder_job_type = 'cd4'
 
         includeAnnotations = []

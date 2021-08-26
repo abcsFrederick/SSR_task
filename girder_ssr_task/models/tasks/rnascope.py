@@ -23,7 +23,7 @@ class RNAScope(AccessControlledModel):
         wsi = ''
         for fetchWSI in fetchWSIs:
             wsi = wsi + fetchWSI['name'] + ' '  # noqa
-        girder_job_title = 'RNAScope workflow for WSI %s in girder' % wsi
+        girder_job_title = 'RNAScope workflow of WSI %s in girder' % wsi
         girder_job_type = 'rnascope'
 
         includeAnnotations = []

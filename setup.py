@@ -8,7 +8,7 @@ requirements = [
     'girder-worker[girder]>=0.6.0',
     'girder-worker-utils',
     'girder-jobs',
-    # 'girder-archive',
+    'girder-slurm',
     # 'girder-overlays',
     'histomicsui',
     'girder-large-image-annotation'
@@ -36,7 +36,7 @@ setup(
     name='girder-ssrtask',
     packages=find_packages(exclude=['plugin_tests']),
     url='https://github.com/abcsFrederick/SSR_task',
-    version='0.1.0',
+    version='0.4.0',
     zip_safe=False,
     entry_points={
         'girder.plugin': [

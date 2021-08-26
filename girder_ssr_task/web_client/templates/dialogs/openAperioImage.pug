@@ -1,0 +1,25 @@
+.modal-dialog
+  .modal-content
+    form#batch-aperio-form.modal-form(role="form")
+      .modal-header
+        button.close(data-dismiss="modal", aria-hidden="true", type="button") &times;
+        h4.modal-title= title
+      .modal-body
+        .row
+          .form-group
+            label Image ID
+            input#aperio-image-id.form-control
+        .row
+          ul.nav.navbar-nav
+            li
+              a#AperioLogin.loginNav.active(style="padding: 10px 10px;", url="SSR_task/aperio_anno") Aperio
+        .row
+          .loginForm
+            // label(for='h-aperio-name') Parameters
+            input#h-db-username.input-sm.form-control(
+              type='text', placeholder='username')
+            input#h-db-password.input-sm.form-control(
+              type='password', placeholder='password')
+        .g-validation-failed-message
+      .modal-footer
+        button.btn.btn-small.btn-primary.query-image-aperio(type='button') Query

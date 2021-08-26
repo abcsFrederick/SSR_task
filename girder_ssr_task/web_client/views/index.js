@@ -4,6 +4,7 @@ import * as widgets from './widgets';
 import * as body from './body';
 import * as tasks from './tasks';
 import * as panels from './panels';
+import * as dialogs from './dialogs';
 
 export {
     configuration,
@@ -11,5 +12,6 @@ export {
     widgets,
     body,
     tasks,
-    panels
+    panels,
+    dialogs
 };

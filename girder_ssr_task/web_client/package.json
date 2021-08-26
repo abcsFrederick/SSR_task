@@ -24,7 +24,7 @@
     "devDependencies": {
         "@girder/eslint-config": "*",
         "@girder/pug-lint-config": "*",
-        "eslint": "^5.16.0",
+        "eslint": "^5",
         "eslint-config-semistandard": "^13",
         "eslint-config-standard": "^12",
         "eslint-plugin-backbone": "*",
@@ -67,7 +67,8 @@
         "root": true
     },
     "pugLintConfig": {
-        "extends": "@girder/pug-lint-config"
+        "extends": "@girder/pug-lint-config",
+        "validateLineBreaks": null
     },
     "stylintrc": {
         "blocks": false,

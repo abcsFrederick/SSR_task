@@ -6,6 +6,7 @@ import * as downloadStatistic from './downloadStatistic';
 import * as link from './link';
 import * as overlays from './overlays';
 import * as rnascope from './rnascope';
+import * as inference from './inference';
 
 export {
     aperio,
@@ -15,5 +16,6 @@ export {
     downloadStatistic,
     link,
     overlays,
-    rnascope
+    rnascope,
+    inference
 };

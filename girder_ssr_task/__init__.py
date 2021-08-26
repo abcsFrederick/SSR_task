@@ -13,6 +13,7 @@ from girder.models.notification import Notification
 from girder.models.file import File
 from girder.models.item import Item
 from girder.models.folder import Folder
+from girder.models.collection import Collection
 from girder.api.v1.token import Token
 from girder.utility.model_importer import ModelImporter
 from girder.constants import AccessType
@@ -355,8 +356,11 @@ def _updateJob(event):
                 _notifyUser(event, meta)
         else:
             return
-    elif (meta.get('handler') == 'slurm_handler'):
-        pass
+    elif (job.get('handler') == 'slurm_handler'):
+        if job['type'] == 'infer_rnascope':
+            status = job['status']
+            if status == JobStatus.SUCCESS or status == JobStatus.CANCELED or status == JobStatus.ERROR:
+                _notifyUser(event, meta)
 
 
 def onFileSave(event):
@@ -576,11 +580,7 @@ def onFileSave(event):
         xmlName = os.path.splitext(file_['name'])[0] + '.xml'
         xmlItems = list(Folder().childItems(folder, user={'admin': True}, limit=2,
                                             filters={'name': xmlName}))
-        print('==========xmlItems========')
-        # print(xmlItems[0]['_id'])
-        # print('==========item========')
-        # print(item['_id'])
-        print(xmlItems)
+
         if len(xmlItems) != 0:
             query = {'_active': {'$ne': False}}
             query['itemId'] = xmlItems[0]['_id']
@@ -618,7 +618,8 @@ SettingDefault.defaults.update({
         "Overlays": False,
         "CD4+": False,
         "RNAScope": False,
-        "Download_Statistic": False
+        "Download_Statistic": False,
+        "Inference": False
     }
 })
 
@@ -639,5 +640,9 @@ class SSRTaskPlugin(plugin.GirderPlugin):
         ModelImporter.registerModel('workflow', Workflow, 'SSRTask')
         info['apiRoot'].SSR_task = rest.SSRTask()
         Link()
+        try:
+            Collection().find({'name': 'AperioDB'})[0]
+        except Exception:
+            Collection().createCollection('AperioDB')
         events.bind('jobs.job.update.after', 'SSRTask', _updateJob)
         events.bind('model.file.save.after', 'SSRTask', onFileSave)

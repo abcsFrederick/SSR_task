@@ -139,7 +139,7 @@ def testStatistic_download(server, fsAssetstore, user):
                           body=body)
     assertStatusOk(resp)
     respStr = resp.body[0].decode('utf8')
-    assert respStr.replace('\n', ',').split(',')[-3] == '200'
+    assert respStr.replace('\n', ',').split(',')[-3] == '101'
 
 
 def createWorkflowHelper(fsAssetstore, user, workflowName):
@@ -226,5 +226,6 @@ def testGetSettings(server, fsAssetstore, user):
         'Link': False, 'Overlays': False,
         'DicomSplit': False,
         'RNAScope': False, 'CD4+': False,
-        'Download_Statistic': False
+        'Download_Statistic': False,
+        'Inference': False
     }

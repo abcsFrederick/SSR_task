@@ -10,6 +10,7 @@ import AperioWorkflowView from '../tasks/aperio/main';
 import HaloWorkflowView from '../tasks/halo/main';
 import DownloadStatisticView from '../tasks/downloadStatistic/main';
 import RNAScopeView from '../tasks/rnascope/main';
+import InferenceView from '../tasks/inference/main';
 
 import WorkflowsTemplate from '../../templates/body/WorkflowsHeader.pug';
 
@@ -59,6 +60,13 @@ var WorkflowsHeader = View.extend({
             }
             if (taskName === 'rnascope') {
                 this.workflowView = new RNAScopeView({
+                    el: $('#g-dialog-container'),
+                    parentView: this,
+                    workflow: $(evt.currentTarget).attr('data-name')
+                });
+            }
+            if (taskName === 'inference') {
+                this.workflowView = new InferenceView({
                     el: $('#g-dialog-container'),
                     parentView: this,
                     workflow: $(evt.currentTarget).attr('data-name')

@@ -3,6 +3,7 @@ import ujson
 import struct
 from bson import ObjectId
 import os
+import datetime
 # import uuid
 # import xml.etree.ElementTree as ET  # noqa: N817
 import re
@@ -11,11 +12,13 @@ from girder.api.rest import Resource, filtermodel, loadmodel, setContentDisposit
 from girder.api.describe import Description, autoDescribeRoute
 from girder.api import access
 # from girder.models.user import User
+from girder.models.assetstore import Assetstore
 from girder.models.file import File
 from girder.models.item import Item
 from girder.models.folder import Folder
+from girder.models.collection import Collection
 from girder.constants import AccessType, TokenScope, SortDir
-from girder.exceptions import ValidationException, AccessException  # , GirderException
+from girder.exceptions import ValidationException, AccessException, GirderException
 from girder.models.setting import Setting
 from girder.utility import JsonEncoder
 from girder.utility.progress import setResponseTimeLimit
@@ -24,11 +27,13 @@ from girder_archive.models.folder import Folder as ArchiveFolder
 from girder_archive.models.item import Item as ArchiveItem
 # from girder_overlays.models.overlay import Overlay
 # from girder_large_image_annotation.models.annotation import Annotation
+from girder_large_image.models.image_item import ImageItem
 from girder_large_image_annotation.models.annotationelement import Annotationelement
 
 from .constants import PluginSettings, CSV_DIRECTORY
 from .models.tasks.dicom_split import DicomSplit
 from .models.tasks.cd4_plus import Cd4Plus
+from .models.tasks.cd4_plus_infer import Cd4PlusInfer
 from .models.tasks.rnascope import RNAScope
 
 from .models.link import Link
@@ -53,6 +58,7 @@ class SSRTask(Resource):
         self.route("POST", ("dicom_split",), self.dicom_split)
 
         self.route("POST", ("cd4_plus",), self.cd4_plus)
+        self.route("POST", ("cd4_plus_infer",), self.cd4_plus_infer)
 
         self.route("POST", ("rnascope",), self.rnascope)
 
@@ -62,6 +68,8 @@ class SSRTask(Resource):
         self.route("POST", ("workflow", "statistic", "download",), self.statistic_download)
 
         self.route("POST", ("aperio_anno",), self.aperio_anno)
+        self.route("POST", ("aperio_img",), self.aperio_img)
+
         self.route('POST', ("halo_anno",), self.halo_anno)
 
         self.route("GET", ("settings",), self.getSettings)
@@ -514,6 +522,33 @@ class SSRTask(Resource):
         return Cd4Plus().createJob(fetchWSIItems, fetchMaskFiles, maskFileIds, overlayItemIds, self.user, self.token, itemIds,
                                    includeAnnotationIds, excludeAnnotationIds, mean, stdDev, slurm=False)
 
+    @access.public
+    @autoDescribeRoute(
+        Description("Split multiple in one dicom volumn.")
+        .jsonParam("imageId", "WSI image id.", required=True)
+        .param("outputId", "The ID of the output item where the output file will be uploaded.")
+        .param("username", "username of aperio portal.", required=True)
+        .param("password", "password of aperio portal.", required=True)
+        .param("workflow", "workflow type", required=True,
+               enum=["cd4", "rnascope"], strip=True)
+    )
+    def cd4_plus_infer(self, imageId, outputId, username, password, workflow):
+        self.user = self.getCurrentUser()
+        self.token = self.getCurrentToken()
+
+        aperio = AperioProxy(username, password)
+        try:
+            imagePath = aperio.getImagePath(str(imageId))
+        except Exception:
+            raise AccessException('Connection denied.')
+        if imagePath.find("Invalid userid/password:") == 0:
+            raise AccessException("username or password is invalid.")
+        elif imagePath.find("Image record not found in database") == 0:
+            raise AccessException("Image record not found in database.")
+
+        Cd4PlusInfer().createJob(imagePath, outputId, workflow=workflow,
+                                 user=self.user, token=self.token, slurm=True)
+
     @access.token
     @filtermodel(model='job', plugin='jobs')
     @autoDescribeRoute(
@@ -617,7 +652,7 @@ class SSRTask(Resource):
                               roi['Num_of_Cell']['low'], roi['Num_of_Cell']['mean'],
                               roi['Num_of_Cell']['high'], roi['Num_of_Cell']['pixels'])
                     header += ','.join(map(str, values)) + '\n'
-                header += '\n'
+                # header += '\n'
             return header
         if workflowType == 'rnascope':
             setContentDisposition('RNAScope_' + workflowName + '.csv')
@@ -645,13 +680,70 @@ class SSRTask(Resource):
                               workflow['records']['roundnessThreshold'], workflow['records']['pixelThreshold'],
                               workflow['records']['pixelsPerVirion'],
                               roi['Num_of_Virion'], roi['Num_of_ProductiveInfection'])
-                    header += ','.join(map(str, values)) + '\n'
-                header += '\n'
+                    header += ','.join(map(str, values))  # + '\n'
+                # header += '\n'
             return header
 
     @access.user
     @autoDescribeRoute(
-        Description("Split multiple in one dicom volumn.")
+        Description("Make a file and symlink to physical location on aperio partition.")
+        .jsonParam("imageId", "Image Id.", required=True)
+        .param("username", "username of aperio portal.", required=True)
+        .param("password", "password of aperio portal.", required=True)
+    )
+    def aperio_img(self, imageId, username, password):
+        user = self.getCurrentUser()
+        aperio = AperioProxy(username, password)
+        try:
+            imagePath = aperio.getImagePath(imageId)
+        except Exception:
+            raise AccessException('Connection denied.')
+        if imagePath.find("Invalid userid/password:") == 0:
+            raise AccessException("username or password is invalid.")
+        elif imagePath.find("Image record not found in database") == 0:
+            raise AccessException("Image record not found in database.")
+        # Create file under where?
+        try:
+            aperioDBCollection = Collection().find({'name': 'AperioDB'})[0]
+        except Exception:
+            raise GirderException('Missing AperioDB collection.')
+
+        folderName = os.path.basename(os.path.dirname(imagePath))
+        fileName = os.path.basename(imagePath)
+
+        folder = Folder().createFolder(
+            parent=aperioDBCollection, name=folderName, parentType='collection', reuseExisting=True, creator=user)
+
+        item = Item().createItem(fileName, folder=folder, reuseExisting=True, creator=user)
+        files = list(Item().childFiles(item))
+        exist = list(filter(lambda x: x['name'] == fileName, files))
+        if not len(exist):
+            fileDoc = {
+                'name': fileName,
+                'creatorId': user['_id'],
+                'created': datetime.datetime.utcnow(),
+                'assetstoreId': Assetstore().getCurrent()['_id'],
+                'mimeType': 'application/svs',
+                'size': os.path.getsize(imagePath),
+                'itemId': item['_id'],
+                'path': imagePath,
+                'imported': True,
+                'exts': [
+                    'svs'
+                ]
+            }
+            file = File().save(fileDoc)
+            try:
+                ImageItem().createImageItem(item, file, createJob=False)
+                Item().recalculateSize(item)
+            except Exception:
+                raise GirderException('Saved file %s cannot be automatically used as a largeImage' % str(file['_id']))
+
+        return item
+
+    @access.user
+    @autoDescribeRoute(
+        Description("Query annotation from Aperio database.")
         .jsonParam("itemIds", "item ids of WSIs.", required=True)
         .param("username", "username of aperio portal.", required=True)
         .param("password", "password of aperio portal.", required=True)
