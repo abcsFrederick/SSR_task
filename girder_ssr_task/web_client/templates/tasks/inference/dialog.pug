@@ -5,16 +5,19 @@
         button.close(data-dismiss="modal", aria-hidden="true", type="button") &times;
         h4.modal-title= title
       .modal-body
-        .form-check.form-check-inline
-          input#cd4_infer(type="radio", name="inferOption", value='cd4')
-          label(for="cd4_infer") CD4+
-          input#rnascope_infer(type="radio", name="inferOption", value='rnascope')
-          label(for="rnascope_infer") RNAScope
-          #infer-WSIs-select.h-task-infer-select.button.btn.btn-default.form-check-inline(type='button')
-            | #[span.icon-folder] Select a WSIs Folder
-        #h-task-infer-container.hidden
+        .btn-group(data-toggle="buttons")
+          label
+            input#cd4_infer(type="radio", name="inferOption", value='cd4')
+            | CD4+
+          label
+            input#rnascope_infer(type="radio", name="inferOption", value='rnascope')
+            | RNAScope
+        // #infer-WSIs-select.h-task-infer-select.button.btn.btn-default.form-check-inline(type='button')
+        //   | #[span.icon-folder] Select a WSIs Folder
+        // #h-task-infer-container.hidden
         .row
-          input#aperio-image-id.form-control
+          input#aperio-image-id.form-control.query-id(placeholder="Image ID")
+          input#aperio-request-id.form-control.query-id(placeholder="Request ID")
         .row
           ul#infer-preview.preparehaloZone.g-item-list(style='padding: 0px;')
         .row

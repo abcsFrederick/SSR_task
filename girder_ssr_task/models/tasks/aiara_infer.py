@@ -1,6 +1,9 @@
 import os
 import shutil
 import json
+import datetime
+
+from girder.models.notification import Notification
 from girder.models.setting import Setting
 from girder.constants import AccessType
 
@@ -14,17 +17,26 @@ from girder_slurm import utils as slurmUtils
 from girder_slurm.constants import PluginSettings
 
 
-class Cd4PlusInfer(AccessControlledModel):
+class AIARAInfer(AccessControlledModel):
     def initialize(self):
-        self.name = 'cd4PlusInfer'
+        self.name = 'AIARAInfer'
 
-    def createJob(self, imagePath, outputId, workflow, user, token, slurm=True):
+    def createJob(self, inputId, imagePaths, outputId, imageId_itemId, workflow, user, token, slurm=True):
         # hard copy image to /hpc mount partition
         SHARED_PARTITION = Setting().get(PluginSettings.SHARED_PARTITION)
         shared_partition_work_directory = os.path.join(SHARED_PARTITION, 'tmp')
-        imagePath_copy = os.path.join(shared_partition_work_directory, os.path.basename(imagePath))
-        print(imagePath_copy)
-        shutil.copy(imagePath, imagePath_copy)
+        tmp_dir = os.path.join(shared_partition_work_directory, inputId)  # inputId+time
+        os.makedirs(tmp_dir, exist_ok=True)
+        for index, imagePath in enumerate(imagePaths):
+            imagePath_copy = os.path.join(tmp_dir, os.path.basename(imagePath))
+            progress = index + 1 
+            print(imagePath)
+            print(imagePath_copy)
+            shutil.copy(imagePath, imagePath_copy)
+            Notification().createNotification(
+                type='copy_to_cluster', data='Preparing file %s/%s.' % (
+                progress, len(imagePaths)), user=user, expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
+
         if workflow == 'cd4':
             title = 'CD4+ for counting cell of WSI %s on remote HPC' % imagePath
             taskEntry = 'w_cd4plus.py'
@@ -41,11 +53,17 @@ class Cd4PlusInfer(AccessControlledModel):
         jobToken = Job().createJobToken(job)
         inputs = {
             # can be image or directory
-            'input': slurmLocalInput.localInputSpec(imagePath_copy)
+            'input': slurmLocalInput.localInputSpec(tmp_dir)
         }
-        reference = json.dumps({'jobId': str(job['_id']), 'isInfer_cd4Plus': True})
+        if workflow == 'cd4':
+            reference = json.dumps({'jobId': str(job['_id']), 'isInfer_cd4Plus': True})
+        elif workflow == 'rnascope':
+            # inputItemId = str(imageId_itemId[imagePath])
+            # leafFoldersAsItems as false to keep the reference #1594 in girder_client does not carry reference
+            reference = json.dumps({'jobId': str(job['_id']), 'isInfer_rnascope': True,
+                                    'imageIdItemIdMap': imageId_itemId, 'leafFoldersAsItems': False})
         pushFolder = Folder().load(outputId, level=AccessType.READ, user=user)
-        print(pushFolder)
+
         outputs = {
             'whateverName': slurmGirderOutput.girderOutputSpec(pushFolder, token,
                                                                parentType='folder',

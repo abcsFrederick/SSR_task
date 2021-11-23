@@ -33,7 +33,7 @@ from girder_large_image_annotation.models.annotationelement import Annotationele
 from .constants import PluginSettings, CSV_DIRECTORY
 from .models.tasks.dicom_split import DicomSplit
 from .models.tasks.cd4_plus import Cd4Plus
-from .models.tasks.cd4_plus_infer import Cd4PlusInfer
+from .models.tasks.aiara_infer import AIARAInfer
 from .models.tasks.rnascope import RNAScope
 
 from .models.link import Link
@@ -58,7 +58,7 @@ class SSRTask(Resource):
         self.route("POST", ("dicom_split",), self.dicom_split)
 
         self.route("POST", ("cd4_plus",), self.cd4_plus)
-        self.route("POST", ("cd4_plus_infer",), self.cd4_plus_infer)
+        self.route("POST", ("aiara_infer",), self.aiara_infer)
 
         self.route("POST", ("rnascope",), self.rnascope)
 
@@ -525,29 +525,39 @@ class SSRTask(Resource):
     @access.public
     @autoDescribeRoute(
         Description("Split multiple in one dicom volumn.")
-        .jsonParam("imageId", "WSI image id.", required=True)
-        .param("outputId", "The ID of the output item where the output file will be uploaded.")
+        .jsonParam("inputId", "Input Id.", required=True)
         .param("username", "username of aperio portal.", required=True)
         .param("password", "password of aperio portal.", required=True)
-        .param("workflow", "workflow type", required=True,
+        .param("workflow", "Workflow type", required=True,
                enum=["cd4", "rnascope"], strip=True)
+        .param("inputType", "Input type", required=True,
+               enum=["imageId", "requestId"], strip=True)
     )
-    def cd4_plus_infer(self, imageId, outputId, username, password, workflow):
+    def aiara_infer(self, inputId, username, password, workflow, inputType):
         self.user = self.getCurrentUser()
         self.token = self.getCurrentToken()
 
         aperio = AperioProxy(username, password)
         try:
-            imagePath = aperio.getImagePath(str(imageId))
+            if inputType == 'imageId':
+                imagePaths = [aperio.getImagePath(str(inputId))]
+            if inputType == 'requestId':
+                imagePaths = aperio.getImagePathsByRequestId(inputId)
         except Exception:
             raise AccessException('Connection denied.')
-        if imagePath.find("Invalid userid/password:") == 0:
-            raise AccessException("username or password is invalid.")
-        elif imagePath.find("Image record not found in database") == 0:
-            raise AccessException("Image record not found in database.")
 
-        Cd4PlusInfer().createJob(imagePath, outputId, workflow=workflow,
-                                 user=self.user, token=self.token, slurm=True)
+        imageId_itemId = {}
+        for imagePath in imagePaths:
+            file, item, outputFolder = aperio.importToGirder(inputId, imagePath, user=self.user)
+            if 'largeImage' not in item:
+                try:
+                    ImageItem().createImageItem(item, file, createJob=False)
+                    Item().recalculateSize(item)
+                except Exception:
+                    raise GirderException('Saved file %s cannot be automatically used as a largeImage' % str(file['_id']))
+            imageId_itemId[os.path.splitext(os.path.basename(imagePath))[0]] = str(item['_id'])
+        AIARAInfer().createJob(inputId, imagePaths, outputFolder['_id'], imageId_itemId, workflow=workflow,
+                               user=self.user, token=self.token, slurm=True)
 
     @access.token
     @filtermodel(model='job', plugin='jobs')
@@ -687,59 +697,30 @@ class SSRTask(Resource):
     @access.user
     @autoDescribeRoute(
         Description("Make a file and symlink to physical location on aperio partition.")
-        .jsonParam("imageId", "Image Id.", required=True)
+        .jsonParam("requestId", "Request Id.", required=True)
         .param("username", "username of aperio portal.", required=True)
         .param("password", "password of aperio portal.", required=True)
     )
-    def aperio_img(self, imageId, username, password):
+    def aperio_img(self, requestId, username, password):
         user = self.getCurrentUser()
         aperio = AperioProxy(username, password)
         try:
-            imagePath = aperio.getImagePath(imageId)
+            # imagePath = aperio.getImagePath(imageId)
+            imagePaths = aperio.getImagePathsByRequestId(requestId)
         except Exception:
             raise AccessException('Connection denied.')
-        if imagePath.find("Invalid userid/password:") == 0:
-            raise AccessException("username or password is invalid.")
-        elif imagePath.find("Image record not found in database") == 0:
-            raise AccessException("Image record not found in database.")
         # Create file under where?
-        try:
-            aperioDBCollection = Collection().find({'name': 'AperioDB'})[0]
-        except Exception:
-            raise GirderException('Missing AperioDB collection.')
-
-        folderName = os.path.basename(os.path.dirname(imagePath))
-        fileName = os.path.basename(imagePath)
-
-        folder = Folder().createFolder(
-            parent=aperioDBCollection, name=folderName, parentType='collection', reuseExisting=True, creator=user)
-
-        item = Item().createItem(fileName, folder=folder, reuseExisting=True, creator=user)
-        files = list(Item().childFiles(item))
-        exist = list(filter(lambda x: x['name'] == fileName, files))
-        if not len(exist):
-            fileDoc = {
-                'name': fileName,
-                'creatorId': user['_id'],
-                'created': datetime.datetime.utcnow(),
-                'assetstoreId': Assetstore().getCurrent()['_id'],
-                'mimeType': 'application/svs',
-                'size': os.path.getsize(imagePath),
-                'itemId': item['_id'],
-                'path': imagePath,
-                'imported': True,
-                'exts': [
-                    'svs'
-                ]
-            }
-            file = File().save(fileDoc)
-            try:
-                ImageItem().createImageItem(item, file, createJob=False)
-                Item().recalculateSize(item)
-            except Exception:
-                raise GirderException('Saved file %s cannot be automatically used as a largeImage' % str(file['_id']))
-
-        return item
+        items = []
+        for imagePath in imagePaths:
+            file, item, _ = aperio.importToGirder(requestId, imagePath, user=user)
+            items.append(item)
+            if 'largeImage' not in item:
+                try:
+                    ImageItem().createImageItem(item, file, createJob=False)
+                    Item().recalculateSize(item)
+                except Exception:
+                    raise GirderException('Saved file %s cannot be automatically used as a largeImage' % str(file['_id']))
+        return items[0]
 
     @access.user
     @autoDescribeRoute(

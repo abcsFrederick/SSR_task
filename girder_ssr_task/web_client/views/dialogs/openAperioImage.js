@@ -30,7 +30,7 @@ const OpenAnnotatedImage = View.extend({
         }
         let username = $('#h-db-username').val(),
             password = $('#h-db-password').val();
-        let imageId = $('#aperio-image-id').val();
+        let requestId = $('#aperio-request-id').val();
 
         restRequest({
             url: this.auth_url,
@@ -38,7 +38,7 @@ const OpenAnnotatedImage = View.extend({
             data: {
                 username: username,
                 password: password,
-                imageId: JSON.stringify(imageId)
+                requestId: JSON.stringify(requestId)
             }
         }).done((model) => {
             // annotation refresh
@@ -55,10 +55,10 @@ const OpenAnnotatedImage = View.extend({
                 timeout: 4000
             });
         });
-        this.$el.modal('hide');
+        // this.$el.modal('hide');
     },
     validate() {
-        if (this.$('#aperio-image-id').val() === '' || this.$('#h-db-username').val() === '' || this.$('#h-db-username').val() === '') {
+        if (this.$('#aperio-request-id').val() === '' || this.$('#h-db-username').val() === '' || this.$('#h-db-username').val() === '') {
             return false;
         }
         return true;
