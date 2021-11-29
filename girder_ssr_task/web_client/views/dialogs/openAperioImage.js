@@ -9,7 +9,17 @@ import template from '../../templates/dialogs/openAperioImage.pug';
 let dialog;
 const OpenAnnotatedImage = View.extend({
     events: {
-        'click .query-image-aperio': 'query'
+        'click .query-image-aperio': 'query',
+        'input .query-id': function() {
+            this.$('#aperio-request-id').prop('disabled', false);
+            this.$('#aperio-image-id').prop('disabled', false);
+            if (this.$('#aperio-image-id').val() !== '') {
+                this.$('#aperio-request-id').prop('disabled', true);
+            }
+            if (this.$('#aperio-request-id').val() !== '') {
+                this.$('#aperio-image-id').prop('disabled', true);
+            }
+        }
     },
 
     initialize() {
@@ -30,15 +40,16 @@ const OpenAnnotatedImage = View.extend({
         }
         let username = $('#h-db-username').val(),
             password = $('#h-db-password').val();
-        let requestId = $('#aperio-request-id').val();
-
+        console.log(this.$('.g-validation-failed-message'))
+        this.$('.g-validation-failed-message').html('Fatching from Aperio archive...');
         restRequest({
             url: this.auth_url,
             method: 'POST',
             data: {
                 username: username,
                 password: password,
-                requestId: JSON.stringify(requestId)
+                inputId: JSON.stringify(this.$('#aperio-image-id').val() || this.$('#aperio-request-id').val()),
+                inputType: this.$('#aperio-image-id').val() === '' ? 'requestId' : 'imageId'
             }
         }).done((model) => {
             // annotation refresh
@@ -58,7 +69,7 @@ const OpenAnnotatedImage = View.extend({
         // this.$el.modal('hide');
     },
     validate() {
-        if (this.$('#aperio-request-id').val() === '' || this.$('#h-db-username').val() === '' || this.$('#h-db-username').val() === '') {
+        if ((this.$('#aperio-request-id').val() === '' && this.$('#aperio-image-id').val() === '') || this.$('#h-db-username').val() === '' || this.$('#h-db-username').val() === '') {
             return false;
         }
         return true;

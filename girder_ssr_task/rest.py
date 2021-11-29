@@ -697,22 +697,26 @@ class SSRTask(Resource):
     @access.user
     @autoDescribeRoute(
         Description("Make a file and symlink to physical location on aperio partition.")
-        .jsonParam("requestId", "Request Id.", required=True)
+        .jsonParam("inputId", "Input Id.", required=True)
         .param("username", "username of aperio portal.", required=True)
         .param("password", "password of aperio portal.", required=True)
+        .param("inputType", "Input type", required=True,
+               enum=["imageId", "requestId"], strip=True)
     )
-    def aperio_img(self, requestId, username, password):
+    def aperio_img(self, inputId, username, password, inputType):
         user = self.getCurrentUser()
         aperio = AperioProxy(username, password)
         try:
-            # imagePath = aperio.getImagePath(imageId)
-            imagePaths = aperio.getImagePathsByRequestId(requestId)
+            if inputType == 'imageId':
+                imagePaths = [aperio.getImagePath(inputId)]
+            if inputType == 'requestId':
+                imagePaths = aperio.getImagePathsByRequestId(inputId)
         except Exception:
             raise AccessException('Connection denied.')
         # Create file under where?
         items = []
         for imagePath in imagePaths:
-            file, item, _ = aperio.importToGirder(requestId, imagePath, user=user)
+            file, item, _ = aperio.importToGirder(inputId, imagePath, user=user)
             items.append(item)
             if 'largeImage' not in item:
                 try:

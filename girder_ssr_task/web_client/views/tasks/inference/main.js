@@ -79,7 +79,7 @@ var InferenceView = View.extend({
                 timeout: 4000
             });
         });
-        // this.$el.modal('hide');
+        this.$el.modal('hide');
     },
     validate() {
         if ((this.$('#aperio-request-id').val() === '' && this.$('#aperio-image-id').val() === '') ||

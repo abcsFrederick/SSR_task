@@ -624,7 +624,7 @@ SettingDefault.defaults.update({
 })
 
 SettingDefault.defaults.update({
-    SettingKey.EMAIL_FROM_ADDRESS: 'https://fr-s-ivg-ssr-p1.ncifcrf.gov/',
+    SettingKey.EMAIL_FROM_ADDRESS: 'https://fr-s-ivg-histomics.ncifcrf.gov/',
     # FIXME hack for testing
     SettingKey.SERVER_ROOT: 'http://localhost'
 })
