@@ -26,7 +26,7 @@ from girder.utility.progress import setResponseTimeLimit
 from girder_archive.models.folder import Folder as ArchiveFolder
 from girder_archive.models.item import Item as ArchiveItem
 # from girder_overlays.models.overlay import Overlay
-# from girder_large_image_annotation.models.annotation import Annotation
+from girder_large_image_annotation.models.annotation import Annotation
 from girder_large_image.models.image_item import ImageItem
 from girder_large_image_annotation.models.annotationelement import Annotationelement
 
@@ -582,28 +582,37 @@ class SSRTask(Resource):
         for itemId in itemIds:
             item = Item().load(itemId, level=AccessType.READ, user=self.user)
             fetchWSIItems.append(item)
-            wsiFolder = Folder().load(item['folderId'], force=True)
-            parentFolder = Folder().load(wsiFolder['parentId'], force=True)
-            regx = re.compile(CSV_DIRECTORY, re.IGNORECASE)
-            csvFolders = list(Folder().childFolders(parentFolder,
-                                                    wsiFolder['parentCollection'],
-                                                    user={'admin': True}, limit=2,
-                                                    filters={'name': regx}))
-            if not csvFolders or len(csvFolders) > 1:
-                raise ValidationException("csv folder is missing or more than on csv type folder existed")
-            query = {
-                "name": os.path.splitext(item['name'])[0] + '.csv',
-                "folderId": csvFolders[0]['_id']
-            }
-            csvItem = list(Item().find(query, limit=2))[0]
 
-            query = {
-                "itemId": csvItem['_id'],
-                # "mimeType": {"$regex": "^text/csv"}
-                "exts": {"$all": ['csv']}
-            }
+            # find annotation and annotation file makes more sense
+            anno = list(Annotation().find({'itemId': item['_id'], "fileId": {"$exists": True}}))
+            if not anno or len(anno) < 1:
+                raise ValidationException("WSI"+ str(item['_id']) + "does not have annotations.")
+            lastAnno = anno[-1]
+            csvFileId = lastAnno['fileId']
+            file = File().load(csvFileId, user={'admin': True})
 
-            file = list(File().find(query, limit=2))[0]
+            # wsiFolder = Folder().load(item['folderId'], force=True)
+            # parentFolder = Folder().load(wsiFolder['parentId'], force=True)
+            # regx = re.compile(CSV_DIRECTORY, re.IGNORECASE)
+            # csvFolders = list(Folder().childFolders(parentFolder,
+            #                                         wsiFolder['parentCollection'],
+            #                                         user={'admin': True}, limit=2,
+            #                                         filters={'name': regx}))
+            # if not csvFolders or len(csvFolders) > 1:
+            #     raise ValidationException("csv folder is missing or more than on csv type folder existed")
+            # query = {
+            #     "name": os.path.splitext(item['name'])[0] + '.csv',
+            #     "folderId": csvFolders[0]['_id']
+            # }
+            # csvItem = list(Item().find(query, limit=2))[0]
+
+            # query = {
+            #     "itemId": csvItem['_id'],
+            #     # "mimeType": {"$regex": "^text/csv"}
+            #     "exts": {"$all": ['csv']}
+            # }
+
+            # file = list(File().find(query, limit=2))[0]
 
             fetchCSVFiles.append(file)
             csvFileIds.append(str(file['_id']))

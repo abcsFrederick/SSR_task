@@ -67,16 +67,12 @@ class RNAScope(AccessControlledModel):
                                includeAnnotations, excludeAnnotations,
                                roundnessThresholds, pixelThresholds,
                                pixelsPerVirions, girder_job_title, girder_job_type):
-        print('----------')
         csvPaths = []
         for _index, fileId in enumerate(csvFileIds):
-            print('----------')
             csvPaths.append(GirderFileId(fileId))
         tempJson = tempfile.NamedTemporaryFile()
         tempJson.close()
         outputPath = tempJson.name
-        print(outputPath)
-        print(rnascope)
         return rnascope.delay(itemIds, csvPaths, csvFileIds,
                               roundnessThresholds, pixelThresholds, pixelsPerVirions,
                               includeAnnotations, excludeAnnotations,
