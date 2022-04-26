@@ -8,3 +8,4 @@ plugin_tests
 tests/externaldata
 build
 .tox
+script_test

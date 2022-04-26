@@ -2,6 +2,8 @@
 SSR_task |build-status| |codecov-io|
 ====================================
 
+With git action
+
 .. |build-status| image:: https://circleci.com/gh/abcsFrederick/SSR_task.svg?style=svg
     :target: https://circleci.com/gh/abcsFrederick/SSR_task
     :alt: Build Status

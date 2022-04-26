@@ -48,7 +48,10 @@ var DicomSplit = View.extend({
         'keyup .offset': 'setOffset'
     },
     initialize(settings) {
-        this.defualtPool = [{'order': ['1', '1', '1'],
+        this.defualtPool = [{'order': ['1', '1', '1', '1'],
+            'axis': '1',
+            'TB': '0'},
+        {'order': ['1', '1', '1'],
             'axis': '1',
             'TB': '0'},
         {'order': ['0', '1', '1'],
@@ -115,7 +118,7 @@ var DicomSplit = View.extend({
         this.order = new Array(this.allPatientsLength);
         this.orderT = new Array(this.allPatientsLength);
         this.orderB = new Array(this.allPatientsLength);
-        this.offset = new Array(this.allPatientsLength).fill('5');
+        this.offset = new Array(this.allPatientsLength).fill('-3');
     },
     parseAndValidateSpec: function () {
         for (let index = 0; index < this.allPatientsLength; index++) {
@@ -165,7 +168,7 @@ var DicomSplit = View.extend({
     },
     setOffset: function (e) {
         let index = $(e.currentTarget).parent().attr('index');
-        this.offset[index] = $(e.currentTarget).val() || 5;
+        this.offset[index] = $(e.currentTarget).val() || -3;
         console.log(this.offset[index]);
     },
     appendRender: function (patients, experimentName, from) {
