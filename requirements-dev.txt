@@ -1,3 +1,4 @@
+ujson
 numpy
 girder-worker-utils
 girder-worker[girder]>=0.6.0

@@ -123,7 +123,6 @@ class Utils(object):
                 for region in root.iter("Region"):
                     # rectangle
                     if region.get("Type") == "1":
-                        print('in rectangle')
                         xList = []
                         yList = []
                         for vertex in region.iter('Vertex'):

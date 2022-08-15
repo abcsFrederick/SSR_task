@@ -13,10 +13,13 @@ form#g-SSR-task-settings-form(role="form")
 
     .g-SSR-task-list-container
       each eabled, task in settings["SSR_task.TASKS"]
-        .g-SSR-task-list
-          input.g-SSR-task-switch(type="checkbox", task=task, checked=(eabled ? "checked" : undefined))
-          .g-SSR-name
-            span #{task}
-          .g-SSR-description
+        if task == 'NNModels'
+          --console.log('do nothings')
+        else  
+          .g-SSR-task-list
+            input.g-SSR-task-switch(type="checkbox", task=task, checked=(eabled ? "checked" : undefined))
+            .g-SSR-name
+              span #{task}
+            .g-SSR-description
   p#g-SSR-task-settings-error-message.g-validation-failed-message
   input.btn.btn-sm.btn-primary(type="submit", value="Save")
