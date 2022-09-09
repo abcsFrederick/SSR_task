@@ -89,16 +89,24 @@ class Utils(object):
         if root.tag == "Annotations":
             # TODO:update if exist
             for Anno in root.iter("Annotation"):
+                for attribute in Anno.iter('Attribute'):
+                    attr_name = ''
+                    attr_val = ''
+                    if attribute.attrib.get('Name') is not None:
+                        attr_name = attribute.attrib.get('Name')
+                    if attribute.attrib.get('Value') is not None:
+                        attr_val = attribute.attrib.get('Value')
+                    attr = " ".join([attr_name, attr_val])
                 query = {'_active': {'$ne': False}}
                 query['itemId'] = item['_id']
                 if Anno.get("Name") is not None:
-                    layerName = str(Anno.get("Id")) + " " + Anno.get("Name")
+                    layerName = str(Anno.get("Id")) + " " + attr + " " + Anno.get("Name")
                     if Anno.get("Name") in AnnotationColorMap:
                         color = AnnotationColorMap[Anno.get("Name")]
                     else:
                         color = "rgb(0,0,255)"
                 else:
-                    layerName = str(Anno.get("Id"))
+                    layerName = str(Anno.get("Id")) + " " + attr
                     color = "rgb(0,0,255)"
                 query['annotation.name'] = layerName
 
@@ -120,7 +128,7 @@ class Utils(object):
                     annotation = annotations[0]
                     annotation["annotation"]["elements"] = []
 
-                for region in root.iter("Region"):
+                for region in Anno.iter("Region"):
                     # rectangle
                     if region.get("Type") == "1":
                         xList = []
