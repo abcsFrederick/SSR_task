@@ -189,10 +189,12 @@ class DICOMSplitterTB:
 
 
 class DICOMSplitter:
-    def __init__(self, pixel_array=None, axis=0, n=2):
+    def __init__(self, pixel_array=None, axis=0, n=2, top=0, bottom=0):
         self._pixel_array = pixel_array
         self._axis = axis
         self._n = n
+        self._top = top
+        self._bottom = bottom
 
     @property
     def pixel_array(self):
@@ -218,10 +220,27 @@ class DICOMSplitter:
     def n(self, n):
         self._n = n
 
+    @property
+    def top(self):
+        return self._top
+
+    @top.setter
+    def top(self, top):
+        self._top = top
+
+    @property
+    def bottom(self):
+        return self._bottom
+
+    @bottom.setter
+    def n(self, bottom):
+        self._bottom = bottom
+
     def __iter__(self):
         self.index = 0
         if self._pixel_array is not None:
             size = self._pixel_array.shape[self._axis]
+            self.sizeToCut = int(self._pixel_array.shape[0 if self._axis == 1 else 0])
             self.size = int(math.floor(size / self._n))
         return self
 
@@ -248,11 +267,14 @@ class DICOMSplitter:
         stop[self._axis] = start[self._axis] + self.size
         indices = numpy.arange(start[self._axis], stop[self._axis])
         self.index += 1
+
+        start[0 if self._axis == 1 else 1] = self._top * 1.0 / 100 * self.sizeToCut
+        stop[0 if self._axis == 1 else 1] = self.sizeToCut * (1 - self._bottom * 1.0 / 100)
         # print(self.index)
         # print(start)
         # print(indices)
         # print(numpy.take(self._pixel_array, indices, self._axis).shape)
-        return index, start, numpy.take(self._pixel_array, indices, self._axis)
+        return index, start, self._pixel_array[start[0]:stop[0], start[1]:stop[1]] # numpy.take(self._pixel_array, indices, self._axis)
 
 
 def x667_uuid():
@@ -568,7 +590,6 @@ def split_dicom_directory(directory, axis=0, n=3, nTB=None, offset=5, keep_origi
 def start_processing(outputPath, folderPaths, axis, order, orderT, orderB,
                      offset, n_of_split):
     for index, folderPath in enumerate(folderPaths):
-        print(folderPath)
         if not orderT[index]:
             n = int(n_of_split[index])
             kwargs = {

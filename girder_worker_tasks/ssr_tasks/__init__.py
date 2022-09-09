@@ -12,5 +12,6 @@ class SSRTasksGirderWorkerPlugin(GirderWorkerPluginABC):
             'ssr_tasks.dicom_split.dicom_split',
             'ssr_tasks.rnascope.rnascope',
             'ssr_tasks.cd4plus.cd4plus',
+            'ssr_tasks.unzip.unzip'
             # 'ssr_tasks.tasks.example'
         ]

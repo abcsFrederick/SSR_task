@@ -10,8 +10,9 @@ requirements = [
     'girder-jobs',
     'girder-slurm',
     # 'girder-overlays',
-    'histomicsui',
-    'girder-large-image-annotation'
+    'histomicsui==1.0.0',
+    'girder-large-image-annotation==1.6.2',
+    'large-image[openslide,tiff,pil]'
 ]
 
 setup(

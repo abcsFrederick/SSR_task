@@ -699,7 +699,7 @@ class SSRTask(Resource):
                               workflow['records']['roundnessThreshold'], workflow['records']['pixelThreshold'],
                               workflow['records']['pixelsPerVirion'],
                               roi['Num_of_Virion'], roi['Num_of_ProductiveInfection'])
-                    header += ','.join(map(str, values))  # + '\n'
+                    header += ','.join(map(str, values)) + '\n'
                 # header += '\n'
             return header
 

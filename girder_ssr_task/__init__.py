@@ -32,7 +32,13 @@ from . import rest
 from .constants import PluginSettings, PAIP2021ColonColor
 from .models.link import Link
 from .models.workflow import Workflow
-
+try:
+    from girder_nn_model.models.nnmodel import NNModel
+    NNmodelEnabled = True
+except ImportError:
+    NNmodelEnabled = False
+    print('No NNModel plugin enabled')
+    pass   
 
 def _notifyUser(event, meta):
     userId = event.info['job']['userId']
@@ -216,15 +222,10 @@ def _updateJob(event):
                     type='job_email_sent', data=job, user=user,
                     expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
                 if 'pytest' not in job['title']:
-                    if os.path.isfile:
+                    if os.path.isfile(tmpPath):
                         os.remove(tmpPath)
                     else:
                         shutil.rmtree(tmpPath)
-                _notifyUser(event, meta)
-            if status == JobStatus.SUCCESS:
-                Notification().createNotification(
-                    type='job_email_sent', data=job, user=user,
-                    expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
                 _notifyUser(event, meta)
         elif job['type'] == 'rnascope':
             status = job['status']
@@ -344,15 +345,10 @@ def _updateJob(event):
                     type='job_email_sent', data=job, user=user,
                     expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
                 if 'pytest' not in job['title']:
-                    if os.path.isfile:
+                    if os.path.isfile(tmpPath):
                         os.remove(tmpPath)
                     else:
                         shutil.rmtree(tmpPath)
-                _notifyUser(event, meta)
-            if status == JobStatus.SUCCESS:
-                Notification().createNotification(
-                    type='job_email_sent', data=job, user=user,
-                    expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
                 _notifyUser(event, meta)
         else:
             return
@@ -365,7 +361,7 @@ def _updateJob(event):
 
 def onFileSave(event):
     file_ = event.info
-    if file_.get('mimeType') == 'application/zip' and 'zip' in file_.get('exts'):
+    if file_.get('mimeType') == 'application/zip' or 'zip' in file_.get('exts'):
         try:
             # zipExt = file_['exts'].index('zip')
             # if zipExt:
@@ -598,19 +594,23 @@ def onFileSave(event):
             Item().remove(xmlItems[0])
 
 
-@setting_utilities.validator({
-    PluginSettings.GIRDER_WORKER_TMP,
-    PluginSettings.TASKS
-})
-def validateString(doc):
-    pass
+@setting_utilities.default(PluginSettings.GIRDER_WORKER_TMP)
+def _defaultGIRDER_WORKER_TMP():
+    return '/tmp/girder_worker'
 
-
-# Default settings values
-# Need to modify for new Task
-SettingDefault.defaults.update({
-    PluginSettings.GIRDER_WORKER_TMP: '/tmp/girder_worker',
-    PluginSettings.TASKS: {
+@setting_utilities.default(PluginSettings.TASKS)
+def _defaultTASK():
+    # inference and NNModel should be merged together later on
+    if NNmodelEnabled:
+        available_model = []
+        for nnmodel in list(NNModel().find()):
+            print(nnmodel)
+            available_model.append({
+                'name': nnmodel['name'],
+                'id': nnmodel['_id']})
+    else:
+        available_model = False
+    return {
         "Link": False,
         "DicomSplit": False,
         "Aperio": False,
@@ -619,9 +619,34 @@ SettingDefault.defaults.update({
         "CD4+": False,
         "RNAScope": False,
         "Download_Statistic": False,
-        "Inference": False
+        "Inference": False,
+        "NNModels": available_model
     }
+
+@setting_utilities.validator({
+    PluginSettings.TASKS
 })
+def validateString(doc):
+    print(doc)
+    pass
+
+
+# Default settings values
+# Need to modify for new Task
+# SettingDefault.defaults.update({
+#     PluginSettings.GIRDER_WORKER_TMP: '/tmp/girder_worker',
+#     PluginSettings.TASKS: {
+#         "Link": False,
+#         "DicomSplit": False,
+#         "Aperio": False,
+#         "Halo": False,
+#         "Overlays": False,
+#         "CD4+": False,
+#         "RNAScope": False,
+#         "Download_Statistic": False,
+#         "Inference": False
+#     }
+# })
 
 SettingDefault.defaults.update({
     SettingKey.EMAIL_FROM_ADDRESS: 'https://fr-s-ivg-histomics.ncifcrf.gov/',
