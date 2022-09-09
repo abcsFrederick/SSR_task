@@ -7,6 +7,7 @@ import { restRequest } from '@girder/core/rest';
 var rnascopeModel = Model.extend({
     resourceName: 'SSR_task/rnascope',
     itemIds: null,
+    name: '',
     // overlayItemIds: null,
     includeAnnotationIds: null,
     excludeAnnotationIds: null,
@@ -21,6 +22,7 @@ var rnascopeModel = Model.extend({
             url: `${this.resourceName}`,
             method: 'POST',
             data: {
+                'name': JSON.stringify(this.get('name')),
                 'itemIds': JSON.stringify(this.get('itemIds')),
                 // 'overlayItemIds': JSON.stringify(this.get('overlayItemIds')),
                 'includeAnnotationIds': JSON.stringify(this.get('includeAnnotationIds')),

@@ -192,6 +192,7 @@ var rnascopeDialogView = View.extend({
 
         this.rnascope = new RNAScopeModel();
         this.rnascope.set({
+            name: this.$('#workflowName').val(),
             itemIds: items,
             // overlayItemIds: overlayItemIds,
             includeAnnotationIds: includeAnnotations,
