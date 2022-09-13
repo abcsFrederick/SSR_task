@@ -9,6 +9,7 @@ import numpy as np
 
 from shapely.geometry import Polygon
 from shapely.ops import unary_union
+from shapely.validation import make_valid
 
 # from girder_worker.utils import girder_job
 Image.MAX_IMAGE_PIXELS = 10000000000
@@ -61,7 +62,7 @@ def start_processing(outputPath, itemIds, maskPaths, overlayItemIds, mean, stdDe
                 if include_type == 'polyline':
                     include_polygon = np.delete(include['points'], 2, 1)
                     include_polygon = tuple(map(tuple, include_polygon))
-                    include_polygons.append(Polygon(include_polygon))
+                    include_polygons.append(make_valid(Polygon(include_polygon)))
 
                 if include_type == 'rectangle':
                     include_pixelX, include_pixelY, include_pixelZ = include['center']
@@ -105,7 +106,7 @@ def start_processing(outputPath, itemIds, maskPaths, overlayItemIds, mean, stdDe
                 if exclude_type == 'polyline':
                     exclude_polygon = np.delete(exclude['points'], 2, 1)
                     exclude_polygon = tuple(map(tuple, exclude_polygon))
-                    exclude_polygons.append(Polygon(exclude_polygon))
+                    exclude_polygons.append(make_valid(Polygon(exclude_polygon)))
 
                 if exclude_type == 'rectangle':
                     exclude_pixelX, exclude_pixelY, exclude_pixelZ = exclude['center']
