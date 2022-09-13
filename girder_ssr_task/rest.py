@@ -563,7 +563,6 @@ class SSRTask(Resource):
     @filtermodel(model='job', plugin='jobs')
     @autoDescribeRoute(
         Description("Split multiple in one dicom volumn.")
-        .jsonParam("name", "Customized workflow name.", required=True)
         .jsonParam("itemIds", "item ids of WSIs.", required=True)
         # .jsonParam("overlayItemIds", "overlay item ids.", required=True)
         .jsonParam("includeAnnotationIds", "include annotation ids.", required=True)
@@ -572,7 +571,7 @@ class SSRTask(Resource):
         .jsonParam("pixelThresholds", "pixelThresholds", required=True)
         .jsonParam("pixelsPerVirions", "pixelsPerVirions", required=True)
     )
-    def rnascope(self, name, itemIds, includeAnnotationIds, excludeAnnotationIds, roundnessThresholds, pixelThresholds, pixelsPerVirions):
+    def rnascope(self, itemIds, includeAnnotationIds, excludeAnnotationIds, roundnessThresholds, pixelThresholds, pixelsPerVirions):
         self.user = self.getCurrentUser()
         self.token = self.getCurrentToken()
 
@@ -618,7 +617,7 @@ class SSRTask(Resource):
             fetchCSVFiles.append(file)
             csvFileIds.append(str(file['_id']))
 
-        result = RNAScope().createJob(name, fetchWSIItems, fetchCSVFiles, csvFileIds, self.user, self.token,
+        result = RNAScope().createJob(fetchWSIItems, fetchCSVFiles, csvFileIds, self.user, self.token,
                                       itemIds, includeAnnotationIds, excludeAnnotationIds, roundnessThresholds,
                                       pixelThresholds, pixelsPerVirions)
 
@@ -627,7 +626,8 @@ class SSRTask(Resource):
     # @access.token
     # @filtermodel(model='job', plugin='jobs')
     # @autoDescribeRoute(
-    #     Description("test girder worker 3.")
+    #     D
+    #     escription("test girder worker 3.")
     #     )
     # def test(self):
     #     return RNAScope().test()
