@@ -45,15 +45,16 @@ var DicomSplit = View.extend({
             e.preventDefault();
         },
         'drop .pattern-drop-zone': 'patternDropped',
-        'keyup .offset': 'setOffset'
+        'keyup .offset': 'setOffset',
+        'click .removeExp': 'removeExperiment'
     },
     initialize(settings) {
-        this.defualtPool = [{'order': ['1', '1', '1', '1'],
+       this.defualtPool = [{'order': ['1', '1', '1', '1'],
             'axis': '1',
             'TB': '0'},
         {'order': ['1', '1', '1'],
-            'axis': '1',
-            'TB': '0'},
+             'axis': '1',
+             'TB': '0'},
         {'order': ['0', '1', '1'],
             'axis': '1',
             'TB': '0'},
@@ -99,7 +100,8 @@ var DicomSplit = View.extend({
                 from: settings.from,
                 patients: settings.patients,
                 pool: this.defualtPool,
-                hierarchyType: settings.hierarchyType
+                hierarchyType: settings.hierarchyType,
+                droppedFolderId: settings.droppedFolderId
             }));
         }
 
@@ -112,28 +114,51 @@ var DicomSplit = View.extend({
         //     }));
         // }
         this.allPatientsLength = settings.patients['MRI'].length + settings.patients['PTCT'].length;
+        
+        this.index = [];
+        for (let i = 0; i < settings.patients['MRI'].length; i++) {
+            this.index.push(settings.patients['MRI'][i]._id)
+        }
+        for (let i = 0; i < settings.patients['PTCT'].length; i++) {
+            this.index.push(settings.patients['PTCT'][i]._id)
+        }
         this.subfolders = new Array(this.allPatientsLength);
         this.n = new Array(this.allPatientsLength);
         this.axis = new Array(this.allPatientsLength);
         this.order = new Array(this.allPatientsLength);
         this.orderT = new Array(this.allPatientsLength);
         this.orderB = new Array(this.allPatientsLength);
-        this.offset = new Array(this.allPatientsLength).fill('-3');
+        this.offset = new Array(this.allPatientsLength).fill('5');
     },
     parseAndValidateSpec: function () {
-        for (let index = 0; index < this.allPatientsLength; index++) {
-            if (this.subfolders[index] === undefined) {
+        this.selectedIndex = [...this.index];
+        this.selectedSubfolders = [...this.subfolders];
+        this.selectedN = [...this.n];
+        this.selectedAxis = [...this.axis];
+        this.selectedOrder = [...this.order];
+        this.selectedOrderT = [...this.orderT];
+        this.selectedOrderB = [...this.orderB];
+        this.selectedOffset = [...this.offset];
+
+        let studyCheckbox = $('#paramPool .studyCheckbox');
+        for (let index = 0; index < studyCheckbox.length; index++) {
+            if (!studyCheckbox[index].checked) {
+                let indexForList = this.selectedIndex.indexOf($(studyCheckbox[index]).attr('index'));
+                this.selectedIndex.splice(indexForList, 1);
+                this.selectedSubfolders.splice(indexForList, 1);
+                this.selectedN.splice(indexForList, 1);
+                this.selectedAxis.splice(indexForList, 1);
+                this.selectedOrder.splice(indexForList, 1);
+                this.selectedOrderT.splice(indexForList, 1);
+                this.selectedOrderB.splice(indexForList, 1);
+                this.selectedOffset.splice(indexForList, 1);
+            }
+        }
+
+        for (let index = 0; index < this.selectedSubfolders.length; index++) {
+            if (this.selectedSubfolders[index] === undefined) {
                 return 0;
             }
-            // this.n.push($(this.$('.nOfSplit input')[index]).val());
-            // this.axis.push($(this.$('.axis select')[index]).val());
-            // let checkboxes = $('.order[pid='' + this.settings.patients[index]._id + ''] input');
-            // let eachOrder = [];
-            // for (let checkboxIndex = 0; checkboxIndex < checkboxes.length; checkboxIndex++) {
-            //     eachOrder.push($(checkboxes[checkboxIndex]).is(':checked') ? 1 : 0);
-            // }
-            // eachOrder = eachOrder.join(',');
-            // this.order.push(eachOrder);
         }
         return 1;
     },
@@ -154,12 +179,14 @@ var DicomSplit = View.extend({
             orderT: orderT,
             orderB: orderB
         }));
-        this.subfolders[index] = pname;
-        this.n[index] = order.length;
-        this.axis[index] = axis;
-        this.order[index] = event.dataTransfer.getData('order');
-        this.orderT[index] = event.dataTransfer.getData('orderT');
-        this.orderB[index] = event.dataTransfer.getData('orderB');
+
+        let indexForList = this.index.indexOf(index);
+        this.subfolders[indexForList] = pname;
+        this.n[indexForList] = order.length;
+        this.axis[indexForList] = axis;
+        this.order[indexForList] = event.dataTransfer.getData('order');
+        this.orderT[indexForList] = event.dataTransfer.getData('orderT');
+        this.orderB[indexForList] = event.dataTransfer.getData('orderB');
         // e.stopPropagation();
         // e.preventDefault();
 
@@ -168,27 +195,69 @@ var DicomSplit = View.extend({
     },
     setOffset: function (e) {
         let index = $(e.currentTarget).parent().attr('index');
-        this.offset[index] = $(e.currentTarget).val() || -3;
-        console.log(this.offset[index]);
+        let indexForList = this.index.indexOf(index);
+        this.offset[indexForList] = $(e.currentTarget).val() || 5;
     },
-    appendRender: function (patients, experimentName, from) {
+    appendRender: function (patients, experimentName, from, droppedFolderId) {
         let currentIndex = this.subfolders.length;
         let newPatientsLength = patients['MRI'].length + patients['PTCT'].length;
         let newPatientsArray = new Array(newPatientsLength);
+        
+        for (let i = 0; i < patients['MRI'].length; i++) {
+            this.index.push(patients['MRI'][i]._id)
+        }
+        for (let i = 0; i < patients['PTCT'].length; i++) {
+            this.index.push(patients['PTCT'][i]._id)
+        }
+
         this.subfolders = this.subfolders.concat(newPatientsArray);
         this.n = this.n.concat(newPatientsArray);
         this.axis = this.axis.concat(newPatientsArray);
         this.order = this.order.concat(newPatientsArray);
         this.orderT = this.orderT.concat(newPatientsArray);
         this.orderB = this.orderB.concat(newPatientsArray);
-        this.offset = this.offset.concat(newPatientsArray);
+        this.offset = this.offset.concat(newPatientsArray.fill("5"));
         this.$('#paramPool tbody').append(AppendTableTemplate({
             currentIndex: currentIndex,
             experimentName: experimentName,
             from: from,
             patients: patients,
-            hierarchyType: this.settings.hierarchyType
+            hierarchyType: this.settings.hierarchyType,
+            droppedFolderId: droppedFolderId
         }));
+    },
+    removeExperiment: function (e) {
+        let droppedFolderId = $(e.currentTarget).parent().parent().attr('data-droppedFolderId');
+        let droppedAreaJquery = $('[data-droppedFolderId=' + droppedFolderId + '] .pattern-drop-zone');
+        // $('[data-droppedFolderId=' + droppedFolderId + ']').remove();
+        for (let i = 0; i < droppedAreaJquery.length; i++) {
+            let index = $(droppedAreaJquery[i]).attr('index');
+            let indexForList = this.index.indexOf(index);
+            this.index.splice(indexForList, 1);
+            this.subfolders.splice(indexForList, 1);
+            this.n.splice(indexForList, 1);
+            this.axis.splice(indexForList, 1);
+            this.order.splice(indexForList, 1);
+            this.orderT.splice(indexForList, 1);
+            this.orderB.splice(indexForList, 1);
+            this.offset.splice(indexForList, 1);
+        }
+
+        this.parentView.dicomSplit.get('ids').splice(this.parentView.dicomSplit.get('ids').indexOf(droppedFolderId), 1);
+        
+        console.log(this.parentView.dicomSplit.get('ids'))
+        // remove dropped folder id from this.parentView.dicomSplit.get('ids')
+        this.parentView.openedFolders.splice(this.parentView.openedFolders.indexOf(droppedFolderId), 1);
+
+        $('[data-droppedFolderId=' + droppedFolderId + ']').remove();
+        // console.log(this.index)
+        // console.log(this.subfolders)
+        // console.log(this.n)
+        // console.log(this.axis)
+        // console.log(this.order)
+        // console.log(this.orderT)
+        // console.log(this.orderB)
+        // console.log(this.offset)
     }
     // renderBox(e) {
     //     let nOfSplit = $(e.currentTarget).val(),

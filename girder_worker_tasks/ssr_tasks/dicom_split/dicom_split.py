@@ -51,8 +51,8 @@ class DICOMDirectory:
             self.filenames = os.listdir(self._directory)
         return self
 
-    # def __next__(self):
-    def next(self):
+    def __next__(self):
+    # def next(self):
         while self.filenames:
             filename = self.filenames.pop(0)
             path = os.path.join(self._directory, filename)
@@ -129,8 +129,8 @@ class DICOMSplitterTB:
             self.sizeR = int(math.floor(sizeR / 2)) - self._offsetInPx
         return self
 
-    # def __next__(self):
-    def next(self):
+    def __next__(self):
+    # def next(self):
         if self.index == self._nTotal:
             raise StopIteration
         index = self.index
@@ -233,19 +233,19 @@ class DICOMSplitter:
         return self._bottom
 
     @bottom.setter
-    def n(self, bottom):
+    def bottom(self, bottom):
         self._bottom = bottom
 
     def __iter__(self):
         self.index = 0
         if self._pixel_array is not None:
             size = self._pixel_array.shape[self._axis]
-            self.sizeToCut = int(self._pixel_array.shape[0 if self._axis == 1 else 0])
+            self.sizeToCut = int(self._pixel_array.shape[0 if self._axis == 1 else 1])
             self.size = int(math.floor(size / self._n))
         return self
 
-    # def __next__(self):
-    def next(self):
+    def __next__(self):
+    # def next(self):
         if self.index == self._n:
             raise StopIteration
 
@@ -270,10 +270,7 @@ class DICOMSplitter:
 
         start[0 if self._axis == 1 else 1] = self._top * 1.0 / 100 * self.sizeToCut
         stop[0 if self._axis == 1 else 1] = self.sizeToCut * (1 - self._bottom * 1.0 / 100)
-        # print(self.index)
-        # print(start)
-        # print(indices)
-        # print(numpy.take(self._pixel_array, indices, self._axis).shape)
+        
         return index, start, self._pixel_array[start[0]:stop[0], start[1]:stop[1]] # numpy.take(self._pixel_array, indices, self._axis)
 
 
@@ -286,7 +283,7 @@ def parse_patient(patient, delimiter='_'):
     root = str(patient).split(delimiter)[0]
     ids = str(patient).split(delimiter)[1:]
     trailing = ''
-    if ids[-1] in map(str, range(1, 10)):
+    if ids[-1] in map(str, range(1, 20)):
         warnings.warn('patient %s ends with %s, removing...' % (patient,
                                                                 ids[-1]))
         trailing = delimiter + ids.pop()
@@ -457,7 +454,7 @@ def set_pixel_data(dataset, pixel_array):
 
 
 def checkDirectory(directory, output_dir=None):
-    for root, _subdirs, files in os.walk(directory):
+    for root, subdirs, files in os.walk(directory):
         if len(files):
             if files.pop(0) != '.DS_Store':
                 newRoot = os.path.join(output_dir, root.split('/')[-4])
@@ -590,6 +587,7 @@ def split_dicom_directory(directory, axis=0, n=3, nTB=None, offset=5, keep_origi
 def start_processing(outputPath, folderPaths, axis, order, orderT, orderB,
                      offset, n_of_split):
     for index, folderPath in enumerate(folderPaths):
+        print(folderPath)
         if not orderT[index]:
             n = int(n_of_split[index])
             kwargs = {

@@ -50,7 +50,7 @@ var dicomsplitModel = Model.extend({
             url: `${this.resourceName}`,
             method: 'POST',
             data: {
-                'ids': JSON.stringify(this.get('ids')),
+                'inputIds': JSON.stringify(this.get('ids')),
                 'inputType': this.get('inputType'),
                 'subfolders': JSON.stringify(this.get('subfolders')),
                 'n': JSON.stringify(this.get('n')),

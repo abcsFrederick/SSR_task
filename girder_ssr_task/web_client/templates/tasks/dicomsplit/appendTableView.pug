@@ -1,47 +1,60 @@
-tr
+tr(data-droppedFolderId=droppedFolderId)
   td.experimentLabel(colspan='3')
     label #{experimentName}
-if patients['MRI'].length
+    label.removeExp x
+if patients['MRI'].length !== 0
   //- tr
   //-   td.modalityLabel(colspan='3')
   //-     label MRI
   each patient, index in patients['MRI']
-    tr
-      if from === 'Archive'
+    if from === 'Archive'
+      tr(data-droppedFolderId=droppedFolderId)
         td.thumb
+          input.studyCheckbox(type="checkbox", checked=true)
           img(src="static/built/mnt/scippy_images/" + patient.patient_path + '/' + patient.study_path + '/' + patient.series_path + '/' + patient.thumbnailId)
         td.name #{patient.name}
         td.pattern-drop-zone(pname="/mnt/scippy_images/" + patient.experiment + '/' + patient.patient_path + '/' + patient.study_path + '/' + patient.series_path, index=index)
           i.icon-docs Drop a pattern from pool
-      else
+    else
+      tr(data-droppedFolderId=droppedFolderId)
         td.thumb
+          input.studyCheckbox(type="checkbox", checked=true, index=patient._id)
           img(src="api/v1/file/" + patient.thumbnailId + "/download")
-        td.name #{patient.name}
-        td.pattern-drop-zone(pname=patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=currentIndex + index)
+        td.name
+          span.patientName #{patient.patient_name.split(' ')[0]} 
+          span #{patient.name}
+        td.pattern-drop-zone(pname=patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=patient._id)
           i.icon-docs Drop a pattern from pool
-if patients['PTCT'].length
+
+
+if patients['PTCT'].length !== 0
   //- tr
   //-   td.modalityLabel(colspan='3')
   //-     label PTCT
   each patient, index in patients['PTCT']
-    tr
-      if from === 'Archive'
-        if index % 2 === 0
-          tr
-            td.patientNameLabel(colspan='3')
-              label #{patient.name}
+    if from === 'Archive'
+      if index % 2 === 0
+        tr(data-droppedFolderId=droppedFolderId)
+          td.patientNameLabel(colspan='3')
+            label #{patient.name}
+      tr(data-droppedFolderId=droppedFolderId)
         td.thumb
+          input.studyCheckbox(type="checkbox", checked=true)
           img(src="static/built/mnt/scippy_images/" + patient.patient_path + '/' + patient.study_path + '/' + patient.series_path + '/' + patient.thumbnailId)
         td.name #{patient.name}
         td.pattern-drop-zone(pname="/mnt/scippy_images/" + patient.experiment + '/' + patient.patient_path + '/' + patient.study_path + '/' + patient.series_path, index=index)
           i.icon-docs Drop a pattern from pool
-      else
-        if index % 2 === 0
-          tr
-            td.patientNameLabel(colspan='3')
-              label #{patient.patient_name}
+    else
+      if index % 2 === 0
+        tr(data-droppedFolderId=droppedFolderId)
+          td.patientNameLabel(colspan='3')
+            label #{patient.patient_name}
+      tr(data-droppedFolderId=droppedFolderId)
         td.thumb
+          input.studyCheckbox(type="checkbox", checked=true, index=patient._id)
           img(src="api/v1/file/" + patient.thumbnailId + "/download")
-        td.name #{patient.name}
-        td.pattern-drop-zone(pname=patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=currentIndex + patients['MRI'].length + index)
+        td.name
+          span.patientName #{patient.patient_name.split(' ')[0]} 
+          span #{patient.name}
+        td.pattern-drop-zone(pname=patient.experiment + '/' + patient.patient_name + '/' + patient.study_name + '/' + patient.name, index=patient._id)
           i.icon-docs Drop a pattern from pool

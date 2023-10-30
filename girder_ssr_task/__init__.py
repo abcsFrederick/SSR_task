@@ -1,10 +1,10 @@
 import os
 import shutil
 import datetime
-# import bson
+import bson
 import json
 import uuid
-import xml.etree.ElementTree as ET  # noqa: N817
+import xml.etree.ElementTree as ET
 
 from girder import plugin, events
 from mako.lookup import TemplateLookup
@@ -13,7 +13,6 @@ from girder.models.notification import Notification
 from girder.models.file import File
 from girder.models.item import Item
 from girder.models.folder import Folder
-from girder.models.collection import Collection
 from girder.api.v1.token import Token
 from girder.utility.model_importer import ModelImporter
 from girder.constants import AccessType
@@ -30,7 +29,8 @@ from girder_large_image_annotation.models.annotation import Annotation
 
 from . import rest
 from .constants import PluginSettings, PAIP2021ColonColor
-from .models.link import Link
+from .models.tasks.link import Link
+from .models.tasks.radiology.parseZipFile import ParseZipFile
 from .models.workflow import Workflow
 try:
     from girder_nn_model.models.nnmodel import NNModel
@@ -38,37 +38,38 @@ try:
 except ImportError:
     NNmodelEnabled = False
     print('No NNModel plugin enabled')
-    pass   
+    pass
 
 def _notifyUser(event, meta):
     userId = event.info['job']['userId']
     user = UserModel().load(userId, force=True, fields=['email'])
-    # jobTitle = event.info['job'].get('title')
-    # outputName = event.info['job'].get('kwargs')['inputs']['outPath']['data'].split('/')[-1]
+    jobTitle = event.info['job'].get('title')
+    outputName = event.info['job'].get('kwargs')['outputPath'].split('/')[-1]
     # inputName = event.info['job'].get('kwargs')['inputs']['topFolder0']['name']
     email = user['email']
     template = _templateLookup.get_template('job_done.mako')
     params = {}
     params['host'] = Setting().get(SettingKey.EMAIL_FROM_ADDRESS)
     params['brandName'] = 'SSR'  # Setting().get(SettingKey.BRAND_NAME)
-    if event.info['job']['type'] == 'split':
+
+    params['jobTitle'] = jobTitle
+    params['outputName'] = outputName
+    if event.info['job']['type'] == 'dicom_split':
         taskName = 'DICOM Split'
-        params['task'] = taskName
-        # parentFolderId = event.info['job'].get('kwargs')['outputs']['splitedVolumn']['parent_id']
-        # resultFolder = Folder().findOne({
-        #     'parentId': bson.ObjectId(parentFolderId),
-        #     'name': outputName,
-        #     'parentCollection': 'folder'
-        # })
-        # downloadLink = os.path.join(params['host'],
-        #                             'api', 'v1', 'folder',
-        #                             str(resultFolder.get('_id')), 'download')
-        # params['inputName'] = inputName
-        # params['outputName'] = outputName
-        # params['link'] = downloadLink
+        parentFolderId = event.info['job'].get('kwargs')['outputFolderId']
+
+        resultFolder = Folder().findOne({
+            'parentId': bson.ObjectId(parentFolderId),
+            'name': outputName,
+            'parentCollection': 'folder'
+        })
+        downloadLink = os.path.join(params['host'],
+                                    'api', 'v1', 'folder',
+                                    str(resultFolder.get('_id')), 'download')
+        params['link'] = downloadLink
     else:
         taskName = event.info['job']['type']
-        params['task'] = taskName
+
     text = template.render(**params)
     mail_utils.sendMail(
         'Job Status: ' + taskName + ' finished',
@@ -88,14 +89,12 @@ def _updateJob(event):
     userId = event.info['job']['userId']
     user = UserModel().load(userId, force=True)
     meta = job.get('meta', {})
-
     if (job.get('handler') == 'celery_handler'):
-        if job['type'] == 'split':
+        if (job.get('type') == 'dicom_split'):
             status = job['status']
             if status == JobStatus.SUCCESS or status == JobStatus.CANCELED or status == JobStatus.ERROR:
                 tmpPath = job.get('kwargs')['outputPath']
-                if 'pytest' not in job['title']:
-                    shutil.rmtree(tmpPath)
+                shutil.rmtree(tmpPath)
             if status == JobStatus.SUCCESS:
                 Notification().createNotification(
                     type='job_email_sent', data=job, user=user,
@@ -104,8 +103,7 @@ def _updateJob(event):
         elif job['type'] == 'unzip':
             status = job['status']
             if status == JobStatus.SUCCESS or status == JobStatus.CANCELED or status == JobStatus.ERROR:
-                zipItemId = job.get('kwargs')['inputs']['in_path']['id']
-                file = File().load(zipItemId, user=user, force=True)
+                file = File().load(job.get('kwargs')['fileId'], user=user, force=True)
                 item = Item().load(file['itemId'], user=user, force=True)
                 Item().remove(item)
                 Notification().createNotification(
@@ -114,9 +112,9 @@ def _updateJob(event):
         elif job['type'] == 'cd4':
             status = job['status']
             if status == JobStatus.SUCCESS or status == JobStatus.CANCELED or status == JobStatus.ERROR:
-                tmpPath = job.get('kwargs')['outputPath']
-                mean = job.get('kwargs')['mean']
-                stdDev = job.get('kwargs')['stdDev']
+                tmpPath = job.get('kwargs')['inputs']['outPath']['data']
+                mean = job.get('kwargs')['inputs']['mean']
+                stdDev = job.get('kwargs')['inputs']['stdDev']
                 # Update overlay record
                 with open(tmpPath) as json_file:
                     masks = json.load(json_file)
@@ -129,8 +127,8 @@ def _updateJob(event):
                             query = {
                                 "relatedId": overlayId,
                                 "name": "cd4+",
-                                "records.mean": mean,
-                                "records.stdDev": stdDev,
+                                "records.mean": mean["data"],
+                                "records.stdDev": stdDev["data"],
                                 "records.includeAnnotations": {"$size": len(includeAnnotations), "$all": includeAnnotations},
                                 "records.excludeAnnotations": {"$size": len(excludeAnnotations), "$all": excludeAnnotations},
                             }
@@ -152,7 +150,7 @@ def _updateJob(event):
                                 #     "points": inner_polygon_Array.tolist()/diff_polygon_Array.tolist(),
                                 #     "Num_of_Cell": {}/{...}
                                 # }
-                                for _index, element in enumerate(mask[overlayId]['elements']):
+                                for index, element in enumerate(mask[overlayId]['elements']):
                                     record = [result for result in results if result['name'] == element["name"]]
                                     if len(record) != 0:
                                         if element['inner_polygon']:
@@ -177,8 +175,8 @@ def _updateJob(event):
                                     "itemId": mask[overlayId]['itemId'],
                                     "relatedId": overlayId,
                                     "records": {
-                                        "mean": mean,
-                                        "stdDev": stdDev,
+                                        "mean": mean["data"],
+                                        "stdDev": stdDev["data"],
                                         "includeAnnotations": includeAnnotations,
                                         "excludeAnnotations": excludeAnnotations,
                                         "results": results
@@ -201,7 +199,7 @@ def _updateJob(event):
                                 names = []
                                 ids = []
                                 inner = []
-                                for _index, element in enumerate(annotationelements):
+                                for index, element in enumerate(annotationelements):
                                     names.append(element['element']['label']['value'])
                                     ids.append(element['_id'])
                                     inner.append(element['element']['inner_polygon'])
@@ -221,16 +219,21 @@ def _updateJob(event):
                 Notification().createNotification(
                     type='job_email_sent', data=job, user=user,
                     expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
-                if 'pytest' not in job['title']:
-                    if os.path.isfile(tmpPath):
-                        os.remove(tmpPath)
-                    else:
-                        shutil.rmtree(tmpPath)
+                if os.path.isfile:
+                    os.remove(tmpPath)
+                else:
+                    shutil.rmtree(tmpPath)
+                _notifyUser(event, meta)
+            if status == JobStatus.SUCCESS:
+                Notification().createNotification(
+                    type='job_email_sent', data=job, user=user,
+                    expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
                 _notifyUser(event, meta)
         elif job['type'] == 'rnascope':
             status = job['status']
             if status == JobStatus.SUCCESS or status == JobStatus.CANCELED or status == JobStatus.ERROR:
                 tmpPath = job.get('kwargs')['outputPath']
+
                 with open(tmpPath) as json_file:
                     masks = json.load(json_file)
                     for mask in masks:
@@ -273,7 +276,7 @@ def _updateJob(event):
                                 #     "Num_of_ProductiveInfection": 43
                                 # }
 
-                                for _index, element in enumerate(mask[csvFileId]['elements']):
+                                for index, element in enumerate(mask[csvFileId]['elements']):
                                     record = [result for result in results if result['name'] == element["name"]]
                                     if len(record) != 0:
                                         if element['inner_polygon']:
@@ -322,7 +325,7 @@ def _updateJob(event):
                                 names = []
                                 ids = []
                                 inner = []
-                                for _index, element in enumerate(annotationelements):
+                                for index, element in enumerate(annotationelements):
                                     names.append(element['element']['label']['value'])
                                     ids.append(element['_id'])
                                     inner.append(element['element']['inner_polygon'])
@@ -344,116 +347,35 @@ def _updateJob(event):
                 Notification().createNotification(
                     type='job_email_sent', data=job, user=user,
                     expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
-                if 'pytest' not in job['title']:
-                    if os.path.isfile(tmpPath):
-                        os.remove(tmpPath)
-                    else:
-                        shutil.rmtree(tmpPath)
+                if os.path.isfile:
+                    os.remove(tmpPath)
+                else:
+                    shutil.rmtree(tmpPath)
+                _notifyUser(event, meta)
+            if status == JobStatus.SUCCESS:
+                Notification().createNotification(
+                    type='job_email_sent', data=job, user=user,
+                    expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
                 _notifyUser(event, meta)
         else:
             return
-    elif (job.get('handler') == 'slurm_handler'):
-        if job['type'] == 'infer_rnascope':
-            status = job['status']
-            if status == JobStatus.SUCCESS or status == JobStatus.CANCELED or status == JobStatus.ERROR:
-                _notifyUser(event, meta)
+    elif (meta.get('handler') == 'slurm_handler'):
+        pass
 
 
 def onFileSave(event):
     file_ = event.info
-    if file_.get('mimeType') == 'application/zip' or 'zip' in file_.get('exts'):
+    user = UserModel().load(file_['creatorId'], force=True)
+    if file_['name'][:5] == 'thmb_' and 'jpg' in file_.get('exts'):
+        item = Item().load(file_['itemId'], user=user)
+        item['radiologyImage'] = True
+        Item().save(item)
+    if 'zip' in file_.get('exts'):
         try:
-            # zipExt = file_['exts'].index('zip')
-            # if zipExt:
-            user = UserModel().load(file_['creatorId'], force=True)
-
-            file = File().load(file_['_id'], user=user, force=True)
-            item = Item().load(file_['itemId'], user=user, force=True)
-            folder = Folder().load(item['folderId'], user=user, force=True)
-            # zipfolder = Folder().createFolder(parent=folder, name=item['name'] + ' zip',
-            #                       parentType='folder', creator=user)
-
-            token = Token().currentSession()
-
-            path = os.path.join(os.path.dirname(__file__), 'unzip.py')
-            with open(path, 'r') as f:
-                script = f.read()
-            title = 'Unzip zip experiment: %s' % file_['name']
-            job = Job().createJob(
-                title=title, type='unzip', handler='worker_handler',
-                user=user)
-
-            jobToken = Job().createJobToken(job)
-            folderName = os.path.splitext(file_['name'])[0]
-            existing = Folder().findOne({
-                'parentId': folder['_id'],
-                'name': folderName,
-                'parentCollection': 'folder'
-            })
-            if existing:
-                Item().remove(item)
-                Notification().createNotification(
-                    type='upload_same', data=job, user=user,
-                    expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
-                return
-            outputName = folderName
-
-            task = {
-                'mode': 'python',
-                'script': script,
-                'name': title,
-                'inputs': [{
-                    'id': 'in_path',
-                    'target': 'filepath',
-                    'type': 'string',
-                    'format': 'text'
-                }, {
-                    'id': 'out_filename',
-                    'type': 'string',
-                    'format': 'text'
-                }],
-                'outputs': [{
-                    'id': 'out_path',
-                    'target': 'filepath',
-                    'type': 'string',
-                    'format': 'text'
-                }]
-            }
-            inputs = {
-                'in_path': workerUtils.girderInputSpec(
-                    file, resourceType='file', token=token),
-                # 'in_path': {
-                #     'mode': 'local',
-                #     'path': os.path.join(assetstore['root'], file_['path'])
-                # },
-                'out_filename': {
-                    'mode': 'inline',
-                    'type': 'string',
-                    'format': 'text',
-                    'data': outputName
-                }
-            }
-            outputs = {
-                'out_path': workerUtils.girderOutputSpec(
-                    parent=folder, token=token, parentType='folder')
-            }
-            job['kwargs'] = {
-                'task': task,
-                'inputs': inputs,
-                'outputs': outputs,
-                'jobInfo': workerUtils.jobInfoSpec(job, jobToken),
-                'auto_convert': False,
-                'validate': False
-            }
-            Notification().createNotification(
-                type='job_unzip_start', data=job, user=user,
-                expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
-            job = Job().save(job)
-            Job().scheduleJob(job)
+            ParseZipFile().createJob(file_)
         except Exception:
             pass
     if 'xml' in file_.get('exts'):
-        user = UserModel().load(file_['creatorId'], force=True)
         xmlItem = Item().load(file_['itemId'], force=True)
 
         folder = Folder().load(xmlItem['folderId'], force=True)
@@ -461,6 +383,8 @@ def onFileSave(event):
         wsiName = [os.path.splitext(file_['name'])[0] + '.svs', os.path.splitext(file_['name'])[0] + '.tiff']
         wsiItems = list(Folder().childItems(folder, user={'admin': True}, limit=2,
                                             filters={'name': {'$in': wsiName}}))
+        # print('==========wsiItems========')
+        # print(wsiItems)
         if len(wsiItems) == 0:
             item = xmlItem
         else:
@@ -568,7 +492,6 @@ def onFileSave(event):
         if len(wsiItems) != 0:
             Item().remove(xmlItem)
     if 'tif' in file_.get('exts') or 'svs' in file_.get('exts'):
-        user = UserModel().load(file_['creatorId'], force=True)
         item = Item().load(file_['itemId'], force=True)
 
         folder = Folder().load(item['folderId'], force=True)
@@ -576,7 +499,10 @@ def onFileSave(event):
         xmlName = os.path.splitext(file_['name'])[0] + '.xml'
         xmlItems = list(Folder().childItems(folder, user={'admin': True}, limit=2,
                                             filters={'name': xmlName}))
-
+        # print('==========xmlItems========')
+        # print(xmlItems[0]['_id'])
+        # print('==========item========')
+        # print(item['_id'])
         if len(xmlItems) != 0:
             query = {'_active': {'$ne': False}}
             query['itemId'] = xmlItems[0]['_id']
@@ -624,34 +550,31 @@ def _defaultTASK():
     }
 
 @setting_utilities.validator({
+    PluginSettings.GIRDER_WORKER_TMP,
     PluginSettings.TASKS
 })
 def validateString(doc):
-    print(doc)
     pass
 
 
 # Default settings values
 # Need to modify for new Task
-# SettingDefault.defaults.update({
-#     PluginSettings.GIRDER_WORKER_TMP: '/tmp/girder_worker',
-#     PluginSettings.TASKS: {
-#         "Link": False,
-#         "DicomSplit": False,
-#         "Aperio": False,
-#         "Halo": False,
-#         "Overlays": False,
-#         "CD4+": False,
-#         "RNAScope": False,
-#         "Download_Statistic": False,
-#         "Inference": False
-#     }
-# })
+SettingDefault.defaults.update({
+    PluginSettings.GIRDER_WORKER_TMP: '/tmp/girder_worker',
+    PluginSettings.TASKS: {
+        "Link": False,
+        "DicomSplit": False,
+        "Aperio": False,
+        "Halo": False,
+        "Overlays": False,
+        "CD4+": False,
+        "RNAScope": False,
+        "Download_Statistic": False
+    }
+})
 
 SettingDefault.defaults.update({
-    SettingKey.EMAIL_FROM_ADDRESS: 'https://fr-s-ivg-histomics.ncifcrf.gov/',
-    # FIXME hack for testing
-    SettingKey.SERVER_ROOT: 'http://localhost'
+    SettingKey.EMAIL_FROM_ADDRESS: 'https://fsivgl-ssr02p.ncifcrf.gov/'
 })
 _templateDir = os.path.join(os.path.dirname(__file__), 'mail_templates')
 _templateLookup = TemplateLookup(directories=[_templateDir], collection_size=50)
@@ -663,11 +586,7 @@ class SSRTaskPlugin(plugin.GirderPlugin):
 
     def load(self, info):
         ModelImporter.registerModel('workflow', Workflow, 'SSRTask')
-        info['apiRoot'].SSR_task = rest.SSRTask()
+        info['apiRoot'].SSR_task = rest.SSR_task()
         Link()
-        try:
-            Collection().find({'name': 'AperioDB'})[0]
-        except Exception:
-            Collection().createCollection('AperioDB')
         events.bind('jobs.job.update.after', 'SSRTask', _updateJob)
         events.bind('model.file.save.after', 'SSRTask', onFileSave)

@@ -19,7 +19,6 @@ class GirderFolderId(GirderClientTransform):
     :param _id: The ID of the file to download.
     :type _id: str
     """
-
     def __init__(self, _id, _name, _subfolders, **kwargs):
         super(GirderFolderId, self).__init__(**kwargs)
         self.folder_id = _id
@@ -35,7 +34,7 @@ class GirderFolderId(GirderClientTransform):
         self.gc.downloadFolderRecursive(self.folder_id, self.folder_path)
 
         self.full_path = []
-        for _index, subfolder in enumerate(self.subfolders):
+        for index, subfolder in enumerate(self.subfolders):
             topName = subfolder.split('/')[0]
             if self.folder_name == topName:
                 self.full_path.append(os.path.join(os.path.dirname(self.folder_path), subfolder))
@@ -45,6 +44,18 @@ class GirderFolderId(GirderClientTransform):
         if hasattr(self, 'folder_path'):
             shutil.rmtree(os.path.dirname(self.folder_path),
                           ignore_errors=True)
+
+
+# Reserve the top level folder and upload to the girder
+class GirderUploadToFolderTop(GirderUploadToFolder):
+     def transform(self, path):
+        self.output_file_path = path
+        if os.path.isdir(path):
+            folder = self.gc.createFolder(self.folder_id, os.path.basename(path), reuseExisting=True)
+            self._uploadFolder(path, folder['_id'])
+        else:
+            self.gc.uploadFileToFolder(self.folder_id, path, **self.upload_kwargs)
+        return self.folder_id
 
 
 class DicomSplit(AccessControlledModel):
@@ -70,28 +81,28 @@ class DicomSplit(AccessControlledModel):
     #                 File().remove(file_)
     #     return super(Histogram, self).remove(histogram, **kwargs)
 
-    def createJob(self, intputFolders, inputIds, inputType, subfolders,
+    def createJob(self, inputFolders, inputIds, inputType, subfolders,
                   axis, n_of_split, order, orderT, orderB, offset,
                   pushFolder, pushFolderName, user, token, pushFolderId, slurm=False):
-        girder_job_type = 'split'
+        girder_job_type = 'dicom_split'
         if inputType == 'girder':
             experiments = ''
-            for folder in intputFolders:
+            for folder in inputFolders:
                 experiments = experiments + folder['name'] + ' '  # noqa
             girder_job_title = 'Dicom split for experiments %s in girder' % experiments
         elif inputType == 'archive':
-            girder_job_title = 'Dicom split for folder %s in SAIP archive' % intputFolders
+            girder_job_title = 'Dicom split for folder %s in SAIP archive' % inputFolders
 
         if not slurm:
-            return self._girder_worker_handler(intputFolders, inputIds, inputType, subfolders,
+            return self._girder_worker_handler(inputFolders, inputIds, inputType, subfolders,
                                                axis, n_of_split, order, orderT, orderB, offset,
                                                pushFolder, pushFolderName, user, token, pushFolderId, girder_job_title, girder_job_type)
 
-    def _girder_worker_handler(self, intputFolders, inputIds, inputType, subfolders,
+    def _girder_worker_handler(self, inputFolders, inputIds, inputType, subfolders,
                                axis, n_of_split, order, orderT, orderB, offset,
                                pushFolder, pushFolderName, user, token, pushFolderId, girder_job_title, girder_job_type):
         folderPaths = []
-        for _index, folder in enumerate(intputFolders):
+        for index, folder in enumerate(inputFolders):
             folderPaths.append(GirderFolderId(folder['_id'], folder['name'], subfolders))
         tempDir = tempfile.TemporaryDirectory()
         outputPath = os.path.join(tempDir.name, pushFolderName)
@@ -101,7 +112,7 @@ class DicomSplit(AccessControlledModel):
                                  n_of_split=n_of_split, outputPath=outputPath,
                                  inputType=inputType, inputIds=inputIds, outputFolderId=pushFolderId,
                                  girder_job_title=girder_job_title, girder_job_type=girder_job_type,
-                                 girder_result_hooks=[GirderUploadToFolder(pushFolderId)])
+                                 girder_result_hooks=[GirderUploadToFolderTop(pushFolderId)])
         # if slurm is True:
         #     job = Job().createJob(title=title, type='split',
         #                           handler='slurm_handler', user=user)
