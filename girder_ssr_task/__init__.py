@@ -44,17 +44,19 @@ def _notifyUser(event, meta):
     userId = event.info['job']['userId']
     user = UserModel().load(userId, force=True, fields=['email'])
     jobTitle = event.info['job'].get('title')
-    outputName = event.info['job'].get('kwargs')['outputPath'].split('/')[-1]
     # inputName = event.info['job'].get('kwargs')['inputs']['topFolder0']['name']
     email = user['email']
     template = _templateLookup.get_template('job_done.mako')
     params = {}
     params['host'] = Setting().get(SettingKey.EMAIL_FROM_ADDRESS)
+    print(SettingKey.EMAIL_FROM_ADDRESS)
+    print(SettingKey.BRAND_NAME)
     params['brandName'] = 'SSR'  # Setting().get(SettingKey.BRAND_NAME)
 
     params['jobTitle'] = jobTitle
-    params['outputName'] = outputName
     if event.info['job']['type'] == 'dicom_split':
+        outputName = event.info['job'].get('kwargs')['outputPath'].split('/')[-1]
+        params['outputName'] = outputName
         taskName = 'DICOM Split'
         parentFolderId = event.info['job'].get('kwargs')['outputFolderId']
 
@@ -112,9 +114,12 @@ def _updateJob(event):
         elif job['type'] == 'cd4':
             status = job['status']
             if status == JobStatus.SUCCESS or status == JobStatus.CANCELED or status == JobStatus.ERROR:
-                tmpPath = job.get('kwargs')['inputs']['outPath']['data']
-                mean = job.get('kwargs')['inputs']['mean']
-                stdDev = job.get('kwargs')['inputs']['stdDev']
+                # tmpPath = job.get('kwargs')['inputs']['outPath']['data']
+                # mean = job.get('kwargs')['inputs']['mean']
+                # stdDev = job.get('kwargs')['inputs']['stdDev']
+                tmpPath = job.get('kwargs')['outputPath']
+                mean = job.get('kwargs')['mean']
+                stdDev = job.get('kwargs')['stdDev']
                 # Update overlay record
                 with open(tmpPath) as json_file:
                     masks = json.load(json_file)
@@ -127,8 +132,10 @@ def _updateJob(event):
                             query = {
                                 "relatedId": overlayId,
                                 "name": "cd4+",
-                                "records.mean": mean["data"],
-                                "records.stdDev": stdDev["data"],
+                                # "records.mean": mean["data"],
+                                # "records.stdDev": stdDev["data"],
+                                "records.mean": mean,
+                                "records.stdDev": stdDev,
                                 "records.includeAnnotations": {"$size": len(includeAnnotations), "$all": includeAnnotations},
                                 "records.excludeAnnotations": {"$size": len(excludeAnnotations), "$all": excludeAnnotations},
                             }
@@ -175,8 +182,10 @@ def _updateJob(event):
                                     "itemId": mask[overlayId]['itemId'],
                                     "relatedId": overlayId,
                                     "records": {
-                                        "mean": mean["data"],
-                                        "stdDev": stdDev["data"],
+                                        # "mean": mean["data"],
+                                        # "stdDev": stdDev["data"],
+                                        "mean": mean,
+                                        "stdDev": stdDev,
                                         "includeAnnotations": includeAnnotations,
                                         "excludeAnnotations": excludeAnnotations,
                                         "results": results
@@ -219,16 +228,21 @@ def _updateJob(event):
                 Notification().createNotification(
                     type='job_email_sent', data=job, user=user,
                     expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
-                if os.path.isfile:
-                    os.remove(tmpPath)
-                else:
-                    shutil.rmtree(tmpPath)
+                # if os.path.isfile:
+                #     os.remove(tmpPath)
+                # else:
+                #     shutil.rmtree(tmpPath)
+                if 'pytest' not in job['title']:
+                    if os.path.isfile(tmpPath):
+                        os.remove(tmpPath)
+                    else:
+                        shutil.rmtree(tmpPath)
                 _notifyUser(event, meta)
-            if status == JobStatus.SUCCESS:
-                Notification().createNotification(
-                    type='job_email_sent', data=job, user=user,
-                    expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
-                _notifyUser(event, meta)
+            # if status == JobStatus.SUCCESS:
+            #     Notification().createNotification(
+            #         type='job_email_sent', data=job, user=user,
+            #         expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
+            #     _notifyUser(event, meta)
         elif job['type'] == 'rnascope':
             status = job['status']
             if status == JobStatus.SUCCESS or status == JobStatus.CANCELED or status == JobStatus.ERROR:
@@ -347,21 +361,30 @@ def _updateJob(event):
                 Notification().createNotification(
                     type='job_email_sent', data=job, user=user,
                     expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
-                if os.path.isfile:
-                    os.remove(tmpPath)
-                else:
-                    shutil.rmtree(tmpPath)
-                _notifyUser(event, meta)
-            if status == JobStatus.SUCCESS:
-                Notification().createNotification(
-                    type='job_email_sent', data=job, user=user,
-                    expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
+                if 'pytest' not in job['title']:
+                    if os.path.isfile(tmpPath):
+                        os.remove(tmpPath)
+                    else:
+                        shutil.rmtree(tmpPath)
+            #     if os.path.isfile:
+            #         os.remove(tmpPath)
+            #     else:
+            #         shutil.rmtree(tmpPath)
+            #     _notifyUser(event, meta)
+            # if status == JobStatus.SUCCESS:
+            #     Notification().createNotification(
+            #         type='job_email_sent', data=job, user=user,
+            #         expires=datetime.datetime.utcnow() + datetime.timedelta(seconds=30))
                 _notifyUser(event, meta)
         else:
             return
-    elif (meta.get('handler') == 'slurm_handler'):
-        pass
-
+    # elif (meta.get('handler') == 'slurm_handler'):
+    #     pass
+    elif (job.get('handler') == 'slurm_handler'):
+        if job['type'] == 'infer_rnascope':
+            status = job['status']
+            if status == JobStatus.SUCCESS or status == JobStatus.CANCELED or status == JobStatus.ERROR:
+                _notifyUser(event, meta)
 
 def onFileSave(event):
     file_ = event.info
@@ -569,12 +592,14 @@ SettingDefault.defaults.update({
         "Overlays": False,
         "CD4+": False,
         "RNAScope": False,
-        "Download_Statistic": False
+        "Download_Statistic": False,
+        "Inference": False
     }
 })
 
 SettingDefault.defaults.update({
-    SettingKey.EMAIL_FROM_ADDRESS: 'https://fsivgl-ssr02p.ncifcrf.gov/'
+    # SettingKey.EMAIL_FROM_ADDRESS: 'https://fsivgl-ssr02p.ncifcrf.gov/'
+    SettingKey.EMAIL_FROM_ADDRESS: 'https://fsivgl-histo02d.ncifcrf.gov/'
 })
 _templateDir = os.path.join(os.path.dirname(__file__), 'mail_templates')
 _templateLookup = TemplateLookup(directories=[_templateDir], collection_size=50)
