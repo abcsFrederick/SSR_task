@@ -41,7 +41,7 @@ const OpenAnnotatedImage = View.extend({
         let username = $('#h-db-username').val(),
             password = $('#h-db-password').val();
         console.log(this.$('.g-validation-failed-message'))
-        this.$('.g-validation-failed-message').html('Fatching from Aperio archive...');
+        this.$('.g-validation-failed-message').html('Fetching from Aperio archive...');
         restRequest({
             url: this.auth_url,
             method: 'POST',

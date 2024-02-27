@@ -44,17 +44,19 @@ def _notifyUser(event, meta):
     userId = event.info['job']['userId']
     user = UserModel().load(userId, force=True, fields=['email'])
     jobTitle = event.info['job'].get('title')
-    outputName = event.info['job'].get('kwargs')['outputPath'].split('/')[-1]
     # inputName = event.info['job'].get('kwargs')['inputs']['topFolder0']['name']
     email = user['email']
     template = _templateLookup.get_template('job_done.mako')
     params = {}
     params['host'] = Setting().get(SettingKey.EMAIL_FROM_ADDRESS)
+    print(SettingKey.EMAIL_FROM_ADDRESS)
+    print(SettingKey.BRAND_NAME)
     params['brandName'] = 'SSR'  # Setting().get(SettingKey.BRAND_NAME)
 
     params['jobTitle'] = jobTitle
-    params['outputName'] = outputName
     if event.info['job']['type'] == 'dicom_split':
+        outputName = event.info['job'].get('kwargs')['outputPath'].split('/')[-1]
+        params['outputName'] = outputName
         taskName = 'DICOM Split'
         parentFolderId = event.info['job'].get('kwargs')['outputFolderId']
 
