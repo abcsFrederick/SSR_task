@@ -8,7 +8,8 @@ import numpy as np
 
 from shapely.geometry import Polygon, Point
 from shapely.ops import unary_union
-from shapely.validation import make_valid
+from shapely.validation import make_valid, explain_validity
+import shapely
 
 
 @app.task(bind=True)
@@ -16,6 +17,7 @@ def rnascope(self, itemIds, csvPaths, csvFileIds,
              roundnessThresholds, pixelThresholds, pixelsPerVirions,
              includeAnnotations, excludeAnnotations, **kwargs):
     outputPath = kwargs.get('outputPath')
+    print(shapely.__version__)
     print('output path: ' + outputPath)
     start_processing(outputPath, itemIds, csvPaths, csvFileIds,
                      roundnessThresholds, pixelThresholds, pixelsPerVirions,
@@ -61,7 +63,9 @@ def start_processing(outputPath, itemIds, csvPaths, csvFileIds,
                 if include_type == 'polyline':
                     include_polygon = np.delete(include['points'], 2, 1)
                     include_polygon = tuple(map(tuple, include_polygon))
-                    include_polygons.append(make_valid(Polygon(include_polygon)))
+                    include_polygons.append(Polygon(include_polygon).buffer(0))
+                    print(include['label'])
+                    print(explain_validity(Polygon(include_polygon)))
 
                 if include_type == 'rectangle':
                     include_pixelX, include_pixelY, include_pixelZ = include['center']
@@ -95,7 +99,7 @@ def start_processing(outputPath, itemIds, csvPaths, csvFileIds,
                 if exclude_type == 'polyline':
                     exclude_polygon = np.delete(exclude['points'], 2, 1)
                     exclude_polygon = tuple(map(tuple, exclude_polygon))
-                    exclude_polygons.append(make_valid(Polygon(exclude_polygon)))
+                    exclude_polygons.append(Polygon(exclude_polygon).buffer(0))
 
                 if exclude_type == 'rectangle':
                     exclude_pixelX, exclude_pixelY, exclude_pixelZ = exclude['center']
@@ -119,9 +123,9 @@ def start_processing(outputPath, itemIds, csvPaths, csvFileIds,
                 print('Processing inclusion layers...')
                 if exclude_flag:
                     print('Processing inclusion layers with exclusion layers...')
-                    for indexI, include in enumerate(include_union_polygons):
+                    for indexI, include in enumerate(include_union_polygons.geoms):
                         differenceROIs = Polygon(include)
-                        for _indexE, exclude in enumerate(exclude_union_polygons):
+                        for _indexE, exclude in enumerate(exclude_union_polygons.geoms):
                             intersectionROI = differenceROIs.intersection(Polygon(exclude))
                             intersectionPolygon = list(intersectionROI.exterior.coords)
 
@@ -140,7 +144,7 @@ def start_processing(outputPath, itemIds, csvPaths, csvFileIds,
                         # include_polygon = list(zip(include_x, include_y))
                         # include_polygon_Array = np.array(include_polygon)
                         # include_polygon_Array = np.insert(include_polygon_Array, 2, 0, 1)
-                        for _indexD, differenceROI in enumerate(differenceROIs):
+                        for _indexD, differenceROI in enumerate(differenceROIs.geoms):
                             exter_x, exter_y = differenceROI.exterior.xy
                             exter_polygon = list(zip(exter_x, exter_y))
                             productiveInfectionToRemove = 0
@@ -204,7 +208,7 @@ def start_processing(outputPath, itemIds, csvPaths, csvFileIds,
                             })
                             elementName += 1
                 else:
-                    for indexI, include in enumerate(include_union_polygons):
+                    for indexI, include in enumerate(include_union_polygons.geoms):
                         print('running on include:', indexI)
                         csvfile.seek(0)
                         reader = csv.DictReader(csvfile)
@@ -249,7 +253,7 @@ def start_processing(outputPath, itemIds, csvPaths, csvFileIds,
                     center = Point(int(row['bboxX']) + int(row['bboxWidth']) / 2,
                                    int(row['bboxY']) + int(row['bboxHeight']) / 2)
                     if exclude_flag:
-                        for _indexE, exclude in enumerate(exclude_union_polygons):
+                        for _indexE, exclude in enumerate(exclude_union_polygons.geoms):
                             if(center.within(exclude)):
                                 excludeFlag = True
                     if not excludeFlag:
@@ -262,7 +266,7 @@ def start_processing(outputPath, itemIds, csvPaths, csvFileIds,
                 print('ProductiveInfection: ' + str(productiveInfection))
                 print('Virion: ' + str(virion))
                 if exclude_flag:
-                    for _indexE, exclude in enumerate(exclude_union_polygons):
+                    for _indexE, exclude in enumerate(exclude_union_polygons.geoms):
                         exclude_x, exclude_y = exclude.exterior.xy
                         exclude_polygon = list(zip(exclude_x, exclude_y))
                         exclude_polygon = np.insert(exclude_polygon, 2, 0, 1)

@@ -45,10 +45,12 @@ class AIARAInfer(AccessControlledModel):
             title = 'RNAScope workflow of WSI %s on remote HPC' % imagePath
             taskEntry = 'w_rnascope.py'
             taskName = 'infer_rnascope'
+        env = 'infer_env'
         job = slurmModel().createJob(title=title, type=taskName,
                                      taskName=taskName,
                                      taskEntry=taskEntry,
-                                     modules=['tensorflow'],
+                                     env=env,
+                                     modules=['tensorflow/2.12'],
                                      handler='slurm_handler', user=user)
         jobToken = Job().createJobToken(job)
         inputs = {

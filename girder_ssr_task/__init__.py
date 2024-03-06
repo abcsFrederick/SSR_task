@@ -46,14 +46,14 @@ def _notifyUser(event, meta):
     jobTitle = event.info['job'].get('title')
     # inputName = event.info['job'].get('kwargs')['inputs']['topFolder0']['name']
     email = user['email']
-    template = _templateLookup.get_template('job_done.mako')
+    dicom_split_template = _templateLookup.get_template('dicom_split_done.mako')
+    aiara_infer_template = _templateLookup.get_template('aiara_infer_done.mako')
     params = {}
     params['host'] = Setting().get(SettingKey.EMAIL_FROM_ADDRESS)
-    print(SettingKey.EMAIL_FROM_ADDRESS)
-    print(SettingKey.BRAND_NAME)
-    params['brandName'] = 'SSR'  # Setting().get(SettingKey.BRAND_NAME)
+    params['brandName'] = Setting().get(SettingKey.BRAND_NAME)
 
     params['jobTitle'] = jobTitle
+    text = ''
     if event.info['job']['type'] == 'dicom_split':
         outputName = event.info['job'].get('kwargs')['outputPath'].split('/')[-1]
         params['outputName'] = outputName
@@ -69,10 +69,10 @@ def _notifyUser(event, meta):
                                     'api', 'v1', 'folder',
                                     str(resultFolder.get('_id')), 'download')
         params['link'] = downloadLink
+        text = dicom_split_template.render(**params)
     else:
         taskName = event.info['job']['type']
-
-    text = template.render(**params)
+        text = aiara_infer_template.render(**params)
     mail_utils.sendMail(
         'Job Status: ' + taskName + ' finished',
         text,
